@@ -1,30 +1,52 @@
-//
-//    rDUINOScope - Arduino based telescope control system (GOTO).
-//    Copyright (C) 2016 Dessislav Gouzgounov (Desso)
-//    This program is free software: you can redistribute it and/or modify
-//    it under the terms of the GNU General Public License as published by
-//    the Free Software Foundation, either version 3 of the License, or
-//    any later version.
-//
-//    PROJECT Website: http://rduinoscope.byethost24.com
-//
-//    This program is distributed in the hope that it will be useful,
-//    but WITHOUT ANY WARRANt_y; without even the implied warrant_y of
-//    MERCHANTABILIt_y or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//    GNU General Public License for more details.
-//
-//    You should have received a copy of the GNU General Public License
-//    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-//
-//    ALLIGNMENT Method: 1 Star Alignment - The method I have implemented is part of Mr. Ralph Pass alignment procedure described on http://rppass.com/
-//                       Mr. Pass helped rDUINOScope by providing the calculations needed to implement the method. http://rppass.com/align.pdf - the actual PDF
-//
-//                       Iterative Alignment - The method is based on article from "New" Hamilton Astronomy.com website: http://astro.hcadvantage.com
-//                       Actual PDF document: http://astro.hcadvantage.com/ASTRO_ARTICLES/Polar_Alignment_Part_II.pdf
-//
-//
-//
-////////////////////////////////////////////////
+/**
+    DobDSC - Arduino/ESP32 Dobsonia telescope Push-To system
+    Copyright (C) 2018 A Flight
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    any later version.
+
+    Inspiration and sources used in development:
+
+    Toshimi Taki's methods and Equations for Pointing Telescope
+    http://www.geocities.jp/toshimi_taki/aim/aim.htm
+
+    Astronomical Algorithms
+    Jean Meeus
+    http://www.willbell.com/math/mc1.htm
+
+    How to compute planetary positions
+    Paul Schlyter, Stockholm, Sweden
+    http://www.stjarnhimlen.se/comp/ppcomp.html
+
+    DobsonianDSC - Simple low cost circuit to connect an inexpensive optical rotary encoder (for azimuth) and a high resolution accelerometer (for altitude) to a dobsonian style telescope
+    Copyright GNU GPL (c) 2017 vlaate
+    https://github.com/vlaate/DobsonianDSC
+
+    rDUINOScope - Arduino based telescope control system (GOTO).
+    Copyright GNU GPL (c) 2016 Dessislav Gouzgounov (Desso)  
+    http://rduinoscope.byethost24.com
+
+    Stellarduino - A multi platform, Arduino powered, open source, and open hardware telescope controller and PC interface.
+    Copyright (c) 2013 Casey Fulton
+    https://github.com/caseyfw/Stellarduino
+
+    OnStep - Arduino telescope goto for equatorial and alt/az mounts
+    http://www.stellarjourney.com/index.php?r=site/equipment_onstep
+
+    Arduino-Telescope-Control - Telescope control with Stellarium, Python and Arduino
+    Copyright MIT (c) 2012 Juan Ramón 
+    https://github.com/juanrmn/Arduino-Telescope-Control
+
+    DSCClient - Digital Setting Circles program for my telescope with equatorial platform
+    Copyright GNU GPL (c) AlexyBobkov 
+    https://github.com/AlexeyBobkov/DSCClient
+
+    arduino_planet_ephi_positions - Arduino calculates ephemeride planet positions
+    mobifu1
+    https://github.com/mobifu1/arduino_planet_ephi_positions
+
+**/
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // DEFINES AND INIT
