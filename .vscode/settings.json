@@ -1,0 +1,32 @@
+{
+    "terminal.integrated.env.windows": {
+        "PATH": "C:\\Users\\Alex\\.platformio\\penv\\Scripts;C:\\Users\\Alex\\.platformio\\penv;c:\\users\\alex\\algs4\\java\\bin;c:\\program files\\microsoft mpi\\bin\\;c:\\python36\\scripts\\;c:\\python36\\;c:\\program files\\imagemagick-7.0.3-q16;c:\\programdata\\oracle\\java\\javapath;c:\\windows\\system32;c:\\windows;c:\\windows\\system32\\wbem;c:\\windows\\system32\\windowspowershell\\v1.0\\;c:\\program files\\microsoft sql server\\110\\tools\\binn\\;c:\\program files (x86)\\skype\\phone\\;c:\\php\\;c:\\programdata\\composersetup\\bin;c:\\programdata\\chocolatey\\bin;c:\\program files (x86)\\gow\\bin;c:\\program files\\git\\cmd;c:\\tools\\go\\bin;c:\\program files\\openssh-win64;c:\\program files (x86)\\windows kits\\10\\windows performance toolkit\\;c:\\users\\alex\\appdata\\roaming\\npm;e:\\cuda\\devkit\\lib\\x64;e:\\cuda\\devkit\\extras\\cupti\\libx64;d:\\anaconda3\\library\\bin\\graphviz;c:\\windows\\system32;c:\\windows;c:\\windows\\system32\\wbem;c:\\windows\\system32\\windowspowershell\\v1.0\\;c:\\program files\\redhat\\java-1.9.0-openjdk-1.9.0.1-1\\bin;c:\\users\\alex\\desktop\\phone\\platform-tools-latest-windows\\platform-tools;c:\\program files\\git\\cmd;c:\\program files\\nodejs\\;c:\\program files (x86)\\yarn\\bin\\;c:\\windows\\system32\\openssh\\;C:\\Program Files (x86)\\NVIDIA Corporation\\PhysX\\Common;C:\\Program Files\\Microsoft VS Code\\bin;C:\\Users\\Alex\\AppData\\Local\\Programs\\Python\\Python36-32\\Scripts\\;C:\\Users\\Alex\\AppData\\Local\\Programs\\Python\\Python36-32\\;C:\\Users\\Alex\\algs4\\java\\bin;C:\\Users\\Alex\\algs4\\bin;C:\\Users\\Alex\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Program Files\\Heroku\\bin;C:\\Users\\Alex\\AppData\\Roaming\\Composer\\vendor\\bin;C:\\Program Files\\PostgreSQL\\9.6\\bin;C:\\tools\\cmder;C:\\Python27;C:\\Python27\\Scripts;C:\\Program Files\\Nanobox;E:\\CUDA\\DevKit\\bin;E:\\CUDA\\DevKit\\extras\\CUPTI\\libx64;D:\\Anaconda3\\Library\\bin\\graphviz;C:\\Program Files\\Java\\jdk-9.0.1\\bin;C:\\Users\\Alex\\AppData\\Local\\now-cli;C:\\Users\\Alex\\AppData\\Local\\Google\\Cloud SDK\\google-cloud-sdk\\bin;D:\\Program Files\\Hasura\\;C:\\Users\\Alex\\AppData\\Roaming\\npm;C:\\Users\\Alex\\AppData\\Local\\Yarn\\bin;C:\\Users\\Alex\\AppData\\Local\\hyper\\app-2.0.0\\resources\\bin;C:\\Users\\Alex\\AppData\\Local\\Microsoft\\WindowsApps;c:\\users\\alex\\algs4\\java\\bin;c:\\program files\\microsoft mpi\\bin\\;c:\\python36\\scripts\\;c:\\python36\\;c:\\program files\\imagemagick-7.0.3-q16;c:\\programdata\\oracle\\java\\javapath;c:\\windows\\system32;c:\\windows;c:\\windows\\system32\\wbem;c:\\windows\\system32\\windowspowershell\\v1.0\\;c:\\program files\\microsoft sql server\\110\\tools\\binn\\;c:\\program files (x86)\\skype\\phone\\;c:\\php\\;c:\\programdata\\composersetup\\bin;c:\\programdata\\chocolatey\\bin;c:\\program files (x86)\\gow\\bin;c:\\program files\\git\\cmd;c:\\tools\\go\\bin;c:\\program files\\openssh-win64;c:\\program files (x86)\\windows kits\\10\\windows performance toolkit\\;c:\\users\\alex\\appdata\\roaming\\npm;e:\\cuda\\devkit\\lib\\x64;e:\\cuda\\devkit\\extras\\cupti\\libx64;d:\\anaconda3\\library\\bin\\graphviz;c:\\windows\\system32;c:\\windows;c:\\windows\\system32\\wbem;c:\\windows\\system32\\windowspowershell\\v1.0\\;c:\\program files\\redhat\\java-1.9.0-openjdk-1.9.0.1-1\\bin;c:\\users\\alex\\desktop\\phone\\platform-tools-latest-windows\\platform-tools;c:\\program files\\git\\cmd;c:\\program files\\nodejs\\;c:\\program files (x86)\\yarn\\bin\\;c:\\windows\\system32\\openssh\\;C:\\Program Files (x86)\\NVIDIA Corporation\\PhysX\\Common;C:\\Program Files\\Microsoft VS Code\\bin;C:\\Users\\Alex\\AppData\\Local\\Programs\\Python\\Python36-32\\Scripts\\;C:\\Users\\Alex\\AppData\\Local\\Programs\\Python\\Python36-32\\;C:\\Users\\Alex\\algs4\\java\\bin;C:\\Users\\Alex\\algs4\\bin;C:\\Users\\Alex\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Program Files\\Heroku\\bin;C:\\Users\\Alex\\AppData\\Roaming\\Composer\\vendor\\bin;C:\\Program Files\\PostgreSQL\\9.6\\bin;C:\\tools\\cmder;C:\\Python27;C:\\Python27\\Scripts;C:\\Program Files\\Nanobox;E:\\CUDA\\DevKit\\bin;E:\\CUDA\\DevKit\\extras\\CUPTI\\libx64;D:\\Anaconda3\\Library\\bin\\graphviz;C:\\Program Files\\Java\\jdk-9.0.1\\bin;C:\\Users\\Alex\\AppData\\Local\\now-cli;C:\\Users\\Alex\\AppData\\Local\\Google\\Cloud SDK\\google-cloud-sdk\\bin;D:\\Program Files\\Hasura\\;C:\\Users\\Alex\\AppData\\Roaming\\npm;C:\\Users\\Alex\\AppData\\Local\\Yarn\\bin;C:\\Users\\Alex\\AppData\\Local\\hyper\\app-2.0.0\\resources\\bin;C:\\Users\\Alex\\AppData\\Local\\Microsoft\\WindowsApps",
+        "PLATFORMIO_CALLER": "vscode"
+    },
+    "files.associations": {
+        "*.java": "java",
+        "cmath": "cpp",
+        "array": "cpp",
+        "*.tcc": "cpp",
+        "chrono": "cpp",
+        "limits": "cpp",
+        "valarray": "cpp",
+        "fstream": "cpp",
+        "complex": "cpp",
+        "future": "cpp",
+        "system_error": "cpp",
+        "typeinfo": "cpp",
+        "cstdlib": "cpp",
+        "deque": "cpp",
+        "unordered_map": "cpp",
+        "unordered_set": "cpp",
+        "vector": "cpp",
+        "initializer_list": "cpp",
+        "functional": "cpp",
+        "type_traits": "cpp",
+        "tuple": "cpp",
+        "utility": "cpp",
+        "exception": "cpp",
+        "istream": "cpp"
+    }
+}
