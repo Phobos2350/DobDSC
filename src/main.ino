@@ -3290,9 +3290,9 @@ double basic_ApparentAlt(double sinSec, double cosZ1, double cosZ2, double sinZ1
 }
 
 // BEST Z1/Z2
-// nRange to range is search area in degrees
-// incr is increment +/- degrees
-void basic_BestZ12(int n, double startRange, double endRange, double resolution)
+// nRange to range is search area in radians
+// incr is increment +/- radians
+void basic_BestZ12(int n, double range, double resolution)
 {
     double ra1, dec1;
     double ra2, dec2;
@@ -3302,14 +3302,9 @@ void basic_BestZ12(int n, double startRange, double endRange, double resolution)
     double alt1, alt2, az1, az2, pointingErrorRMS, pointingErrorRMSTotal, altError, azError;
     pointingErrorRMSTotal = 0;
 
-    // Covnert search ranges and resolution to Radians
-    startRange *= DEG_TO_RAD;
-    endRange *= DEG_TO_RAD;
-    resolution *= DEG_TO_RAD;
-
-    for (Z1_ERR = startRange; Z1_ERR < endRange; Z1_ERR += resolution)
+    for (Z1_ERR = 0; Z1_ERR < range; Z1_ERR += resolution)
     {
-        for (Z2_ERR = startRange; Z2_ERR < endRange; Z2_ERR += resolution)
+        for (Z2_ERR = 0; Z2_ERR < range; Z2_ERR += resolution)
         {
             for (int i = 0; i < n; n++)
             {
@@ -3383,10 +3378,8 @@ void basic_BestZ3(int n, double startRange, double endRange, double resolution)
 
 void basic_CalcBestZ12()
 {
-    // handles searching for Z1/2 up to +/- 10 degrees
-    basic_BestZ12(3, -5.0, 5.0, 1.0);                                                   // 10 iterations
-    basic_BestZ12(3, (Z1_ERR * DEG_TO_RAD) - 1.0, (Z1_ERR * DEG_TO_RAD) + 1.0, 0.1);    // 10 iterations
-    basic_BestZ12(3, (Z1_ERR * DEG_TO_RAD) - 0.5, (Z1_ERR * DEG_TO_RAD) + 0.5, 0.062);  // 16 iterations
+    // handles searching for Z1/2 up to +/- 1 degree
+    basic_BestZ12(3, DEG_TO_RAD, ARCMIN_TO_RAD);                                                   // 10 iterations
 }
 
 void basic_CalcBestZ3()
