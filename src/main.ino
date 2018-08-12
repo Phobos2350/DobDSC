@@ -3257,30 +3257,27 @@ void basic_BestZ3(int n, double startRange, double endRange, double resolution)
 
 void basic_CalcBestZ12()
 {
-    if (BASIC_ALIGN_READY > 2 && CORRECT_MOUNT_ERRS)
-    {
-        // handles searching for Z1/2 up to +/- 10 degrees
-        basic_BestZ12(3, -10.0, 10.0, 2.0);                  // 10 iterations
-        basic_BestZ12(3, Z1_ERR - 2.0, Z1_ERR + 2.0, 0.5);   // 8 iterations
-        basic_BestZ12(3, Z1_ERR - 0.5, Z1_ERR + 0.5, 0.062); // 16 iterations
-    }
+    // handles searching for Z1/2 up to +/- 10 degrees
+    basic_BestZ12(3, -5.0, 5.0, 1.0);                                                   // 10 iterations
+    basic_BestZ12(3, (Z1_ERR * DEG_TO_RAD) - 1.0, (Z1_ERR * DEG_TO_RAD) + 1.0, 0.1);    // 10 iterations
+    basic_BestZ12(3, (Z1_ERR * DEG_TO_RAD) - 0.5, (Z1_ERR * DEG_TO_RAD) + 0.5, 0.062);  // 16 iterations
 }
 
 void basic_CalcBestZ3()
 {
-    if (BASIC_ALIGN_READY > 2 && CORRECT_MOUNT_ERRS)
-    {
-        // handles searching for Z3 up to +/- 10 degrees
-        basic_BestZ3(3, -10.0, 10.0, 2.0);                  // 10 iterations
-        basic_BestZ3(3, Z3_ERR - 2.0, Z3_ERR + 2.0, 0.5);   // 8 iterations
-        basic_BestZ3(3, Z3_ERR - 0.5, Z3_ERR + 0.5, 0.062); // 16 iterations
-    }
+    // handles searching for Z3 up to +/- 10 degrees
+    basic_BestZ3(3, -10.0, 10.0, 2.0);                                                  // 10 iterations
+    basic_BestZ3(3, (Z3_ERR * RAD_TO_DEG) - 2.0, (Z3_ERR * RAD_TO_DEG) + 2.0, 0.5);     // 8 iterations
+    basic_BestZ3(3, (Z3_ERR * RAD_TO_DEG) - 0.5, (Z3_ERR * RAD_TO_DEG) + 0.5, 0.062);   // 16 iterations
 }
 
 void basic_BestZ123()
 {
-    basic_CalcBestZ3();
-    basic_CalcBestZ12();
+    if (BASIC_ALIGN_READY && CORRECT_MOUNT_ERRS)
+    {
+        basic_CalcBestZ3();
+        basic_CalcBestZ12();
+    }
 }
 
 void invertMatrix(float m[3][3], float res[3][3])
@@ -6140,10 +6137,9 @@ void attendTcpRequests()
 void attendBTRequests()
 {
 
-    char skySafariCommand[1];
-    SerialBT.readBytes(skySafariCommand, 1);
+    byte skySafariCommand = SerialBT.read();
 
-    if (skySafariCommand[1] == 81) // 81 is ascii for Q, which is the only command skysafari sends to "basic encoders"
+    if (skySafariCommand == 81) // 81 is ascii for Q, which is the only command skysafari sends to "basic encoders"
     {
         char encoderResponse[20];
         int iAzimuthReading = azEnc.read();
@@ -6152,9 +6148,9 @@ void attendBTRequests()
 #ifdef SERIAL_DEBUG
         Serial.println(encoderResponse);
 #endif
-        SerialBT.println(encoderResponse);
+        SerialBT.print(encoderResponse);
     }
-    else if (skySafariCommand[1] == 72) // 'H' - request for encoder resolution, e.g. 10000-10000\n
+    else if (skySafariCommand == 72) // 'H' - request for encoder resolution, e.g. 10000-10000\n
     {
         char response[20];
         // Resolution on both axis is equal
@@ -6162,7 +6158,7 @@ void attendBTRequests()
 #ifdef SERIAL_DEBUG
         Serial.println(response);
 #endif
-        SerialBT.println(response);
+        SerialBT.print(response);
     }
     else
     {
@@ -6367,110 +6363,77 @@ void loop(void)
             LAST_MEASUREMENT = millis();
         }
     }
+    else if (IS_BT_MODE_ON)
+    {
+        attendBTRequests();
+        yield();
+
+        // Take new Alt/Az measurements from sensor/encoder
+        if ((millis() - LAST_MEASUREMENT) > MEASUREMENT_PERIOD) // only take new measurements if enough time has elapsed.
+        {
+            imu.read();
+            imu.calculatePosition();
+            LAST_MEASUREMENT = millis();
+        }
+
+        //             BT_CHARACTER = SerialBT.read();
+        //             if (BT_STATE == BT_START)
+        //             {
+        //                 if (BT_CHARACTER == START_CHAR)
+        //                 {
+        //                     BT_STATE = BT_END;
+        //                     BT_COMMAND = "";
+        // #ifdef SERIAL_DEBUG
+        //                     Serial.print("BT - GOT START CHAR: ");
+        //                     Serial.println("");
+        // #endif
+        //                 }
+        //             }
+        //             else if (BT_STATE == BT_END)
+        //             {
+        //                 if (BT_CHARACTER == END_CHAR)
+        //                 {
+        //                     processBTCommand();
+        //                     BT_STATE = BT_START;
+        // #ifdef SERIAL_DEBUG
+        //                     Serial.print("BT - GOT END CHAR: ");
+        //                     Serial.println("");
+        // #endif
+        //                 }
+        //                 else
+        //                 {
+        //                     BT_COMMAND += BT_CHARACTER;
+        //                 }
+        //             }
+
+        // char input[4];
+        // SerialBT.readBytes(input, 4);
+        // if (input[0] == START_CHAR && input[3] == END_CHAR)
+        // {
+        //     if (input[1] == (char)'G')
+        //     {
+        //         if (input[2] == (char)'R')
+        //             BT_COMMAND_STR = 1;
+        //         else if (input[2] == (char)'D')
+        //             BT_COMMAND_STR = 2;
+        //         if (input[2] == (char)'A')
+        //             BT_COMMAND_STR = 3;
+        //         else if (input[2] == (char)'Z')
+        //             BT_COMMAND_STR = 4;
+        //     }
+        //     // if (input[1] == (char)'G' && input[2] == (char)'A')
+        //     //     BT_COMMAND_STR = 1;
+        //     // else if (input[1] == (char)'G' && input[2] == (char)'Z')
+        //     //     BT_COMMAND_STR = 2;
+        //     // else if (input[1] == (char)'G' && input[2] == (char)'R')
+        //     //     BT_COMMAND_STR = 3;
+        //     // else if (input[1] == (char)'G' && input[2] == (char)'D')
+        //     //     BT_COMMAND_STR = 4;
+
+        //     considerBTCommands();
+    }
     else
     {
-        if (IS_BT_MODE_ON)
-        {
-            attendBTRequests();
-            yield();
-
-            //             BT_CHARACTER = SerialBT.read();
-            //             if (BT_STATE == BT_START)
-            //             {
-            //                 if (BT_CHARACTER == START_CHAR)
-            //                 {
-            //                     BT_STATE = BT_END;
-            //                     BT_COMMAND = "";
-            // #ifdef SERIAL_DEBUG
-            //                     Serial.print("BT - GOT START CHAR: ");
-            //                     Serial.println("");
-            // #endif
-            //                 }
-            //             }
-            //             else if (BT_STATE == BT_END)
-            //             {
-            //                 if (BT_CHARACTER == END_CHAR)
-            //                 {
-            //                     processBTCommand();
-            //                     BT_STATE = BT_START;
-            // #ifdef SERIAL_DEBUG
-            //                     Serial.print("BT - GOT END CHAR: ");
-            //                     Serial.println("");
-            // #endif
-            //                 }
-            //                 else
-            //                 {
-            //                     BT_COMMAND += BT_CHARACTER;
-            //                 }
-            //             }
-
-            // char input[4];
-            // SerialBT.readBytes(input, 4);
-            // if (input[0] == START_CHAR && input[3] == END_CHAR)
-            // {
-            //     if (input[1] == (char)'G')
-            //     {
-            //         if (input[2] == (char)'R')
-            //             BT_COMMAND_STR = 1;
-            //         else if (input[2] == (char)'D')
-            //             BT_COMMAND_STR = 2;
-            //         if (input[2] == (char)'A')
-            //             BT_COMMAND_STR = 3;
-            //         else if (input[2] == (char)'Z')
-            //             BT_COMMAND_STR = 4;
-            //     }
-            //     // if (input[1] == (char)'G' && input[2] == (char)'A')
-            //     //     BT_COMMAND_STR = 1;
-            //     // else if (input[1] == (char)'G' && input[2] == (char)'Z')
-            //     //     BT_COMMAND_STR = 2;
-            //     // else if (input[1] == (char)'G' && input[2] == (char)'R')
-            //     //     BT_COMMAND_STR = 3;
-            //     // else if (input[1] == (char)'G' && input[2] == (char)'D')
-            //     //     BT_COMMAND_STR = 4;
-
-            //     considerBTCommands();
-        }
-        else
-        {
-            // Update current telescope position on main screen every 500ms
-            if (CURRENT_SCREEN == 3 && (millis() - LAST_POS_UPDATE) > SCOPE_POS_UPDATE)
-            {
-                tft.fillRect(70, 70, 170, 60, BLACK);
-                tft.setTextColor(L_TEXT);
-
-                tft.setTextSize(2);
-                tft.setTextColor(L_TEXT);
-                tft.setCursor(70, 70);
-                //tft.print("ALT: ");
-                tft.print(CURR_ALT);
-                tft.setCursor(70, 90);
-                //tft.print("AZ: ");
-                tft.print(CURR_AZ);
-
-                tft.setTextSize(1);
-                tft.setCursor(70, 110);
-                //tft.print("RA: ");
-                tft.print(CURR_RA);
-                tft.setCursor(70, 120);
-                //tft.print("DEC: ");
-                tft.print(CURR_DEC);
-                LAST_POS_UPDATE = millis();
-            }
-            // Do regular time updates every 5000ms
-            if ((millis() - UPDATE_LAST) > 5000)
-            {
-                calculateLST();
-                considerTimeUpdates();
-                UPDATE_LAST = millis();
-                // #ifdef SERIAL_DEBUG
-                //                 Serial.print("CURRENT_AZ_RADS: ");
-                //                 Serial.print(CURR_AZ_RADS);
-                //                 Serial.print(" DEGREES: ");
-                //                 Serial.print(rad2dms(CURR_AZ_RADS, true, true));
-                //                 Serial.println("");
-                // #endif
-            }
-        }
         // Take new Alt/Az measurements from sensor/encoder
         if ((millis() - LAST_MEASUREMENT) > MEASUREMENT_PERIOD) // only take new measurements if enough time has elapsed.
         {
@@ -6478,6 +6441,44 @@ void loop(void)
             imu.calculatePosition();
             considerTelescopeMove();
             LAST_MEASUREMENT = millis();
+        }
+        // Update current telescope position on main screen every 500ms
+        if (CURRENT_SCREEN == 3 && (millis() - LAST_POS_UPDATE) > SCOPE_POS_UPDATE)
+        {
+            tft.fillRect(70, 70, 170, 60, BLACK);
+            tft.setTextColor(L_TEXT);
+
+            tft.setTextSize(2);
+            tft.setTextColor(L_TEXT);
+            tft.setCursor(70, 70);
+            //tft.print("ALT: ");
+            tft.print(CURR_ALT);
+            tft.setCursor(70, 90);
+            //tft.print("AZ: ");
+            tft.print(CURR_AZ);
+
+            tft.setTextSize(1);
+            tft.setCursor(70, 110);
+            //tft.print("RA: ");
+            tft.print(CURR_RA);
+            tft.setCursor(70, 120);
+            //tft.print("DEC: ");
+            tft.print(CURR_DEC);
+            LAST_POS_UPDATE = millis();
+        }
+        // Do regular time updates every 5000ms
+        if ((millis() - UPDATE_LAST) > 5000)
+        {
+            calculateLST();
+            considerTimeUpdates();
+            UPDATE_LAST = millis();
+            // #ifdef SERIAL_DEBUG
+            //                 Serial.print("CURRENT_AZ_RADS: ");
+            //                 Serial.print(CURR_AZ_RADS);
+            //                 Serial.print(" DEGREES: ");
+            //                 Serial.print(rad2dms(CURR_AZ_RADS, true, true));
+            //                 Serial.println("");
+            // #endif
         }
     }
     uint16_t t_x = 0, t_y = 0; // To store the touch coordinates
