@@ -6467,7 +6467,6 @@ void loop(void)
             {
                 calculateLST();
                 considerTimeUpdates();
-                considerTelescopeMove();
                 UPDATE_LAST = millis();
                 // #ifdef SERIAL_DEBUG
                 //                 Serial.print("CURRENT_AZ_RADS: ");
@@ -6483,6 +6482,7 @@ void loop(void)
         {
             imu.read();
             imu.calculatePosition();
+            considerTelescopeMove();
             LAST_MEASUREMENT = millis();
         }
     }
