@@ -2828,15 +2828,17 @@ boolean basic_isReady()
 
 void basic_ScopeToEquatorial(double az, double alt, double sidT, double *ra, double *dec)
 {
-    double ra_tmp, dec_tmp;
+    double ra_tmp, ha_tmp, dec_tmp;
     if (CORRECT_REFRACTION && alt > -0.0349066 || alt < 1.55334) // If alt is > -2 deg or < 89 deg
     {
         double deltaAlt;
         calcRefractionFromApparentBennett(alt, deltaAlt);
         alt -= deltaAlt;
     }
-    // basic_Subroutine1(az, alt + Z3_ERR);
-    basic_Subroutine1(reverseRev(az), alt + Z3_ERR);
+
+    double pri = reverseRev(az);
+    double sec = alt + Z3_ERR;
+    basic_Subroutine1(pri, sec);
     X[1][1] = Y[1][0];
     X[2][1] = Y[2][0];
     X[3][1] = Y[3][0];
@@ -2848,15 +2850,14 @@ void basic_ScopeToEquatorial(double az, double alt, double sidT, double *ra, dou
     {
         for (int j = 1; j <= 3; j++)
         {
-            Y[i][1] = Y[i][1] + Q[i][j] * X[j][1];
+            Y[i][1] += (Q[i][j] * X[j][1]);
         }
     }
-    basic_AngleSubroutine(&ra_tmp, &dec_tmp);
-    //ra_tmp = ra_tmp + (SIDEREAL_FRACTION * (sidT - INITIAL_TIME));
-    double ha_tmp = ra_tmp;
-    ra_tmp = ra_tmp + sidT;
-    //(*ra) = validRev(ra_tmp);
-    (*ra) = ra_tmp - round(ra_tmp / ONE_REV) * ONE_REV;
+
+    basic_AngleSubroutine(&ha_tmp, &dec_tmp);
+    ra_tmp = ha_tmp + sidT;
+    //(*ra) = ra_tmp - round(ra_tmp / ONE_REV) * ONE_REV;
+    (*ra) = validRev(ra_tmp);
     (*dec) = dec_tmp;
 #ifdef SERIAL_DEBUG
     if ((millis() - UPDATE_LAST) > 5000)
@@ -2879,9 +2880,7 @@ void basic_ScopeToEquatorial(double az, double alt, double sidT, double *ra, dou
 void basic_EquatorialToScope(double ra, double dec, double sidT, double *az, double *alt)
 {
     double az_tmp, alt_tmp;
-    // double ha_tmp = sidT - ra;
     double ha_tmp = ra - sidT;
-    //double ra_tmp = ra - (SIDEREAL_FRACTION * (sidT - INITIAL_TIME));
     X[1][1] = cos(dec) * cos(ha_tmp);
     X[2][1] = cos(dec) * sin(ha_tmp);
     X[3][1] = sin(dec);
@@ -2893,11 +2892,11 @@ void basic_EquatorialToScope(double ra, double dec, double sidT, double *az, dou
     {
         for (int j = 1; j <= 3; j++)
         {
-            Y[i][1] = Y[i][1] + R[i][j] * X[j][1];
+            Y[i][1] += R[i][j] * X[j][1];
         }
     }
     basic_AngleSubroutine(&az_tmp, &alt_tmp);
-    basic_Subroutine2(az_tmp, alt_tmp);
+    basic_Subroutine2(az_tmp, alt_tmp, 1);
     basic_AngleSubroutine(&az_tmp, &alt_tmp);
 
     if (CORRECT_REFRACTION && alt_tmp > -0.0349066 || alt_tmp < 1.55334) // If alt is > -2 deg or < 89 deg
@@ -2934,8 +2933,8 @@ void basic_AddStar(int starNum, int totalAlignStars, double ra, double dec, doub
     // double ha = sidT - ra;
     double cosDec = cos(dec);
     double sinDec = sin(dec);
-    double cosB = cos(ha);
-    double sinB = sin(ha);
+    double cosHA = cos(ha);
+    double sinHA = sin(ha);
 
 #ifdef SERIAL_DEBUG
     Serial.print("basic_AddStar() - RA: ");
@@ -2951,13 +2950,13 @@ void basic_AddStar(int starNum, int totalAlignStars, double ra, double dec, doub
     Serial.println("");
 #endif
 
-    X[1][starNum] = cosDec * cosB;
-    X[2][starNum] = cosDec * sinB;
+    X[1][starNum] = cosDec * cosHA;
+    X[2][starNum] = cosDec * sinHA;
     X[3][starNum] = sinDec;
 
-    double elev = alt + Z3_ERR;
-    // basic_Subroutine1(az, elev);
-    basic_Subroutine1(reverseRev(az), elev);
+    double pri = reverseRev(az);
+    double sec = alt + Z3_ERR;
+    basic_Subroutine1(pri, sec);
     Y[1][starNum] = Y[1][0];
     Y[2][starNum] = Y[2][0];
     Y[3][starNum] = Y[3][0];
@@ -3070,30 +3069,6 @@ void basic_DeterminateSubroutine()
     W = W - V[1][2] * V[2][1] * V[3][3];
 }
 
-// void basic_AngleSubroutine(double *pri, double *sec)
-// {
-//     double c = sqrt(sq(Y[1][1]) + sq(Y[2][1]));
-//     if (c == 0 && Y[3][1] > 0)
-//         (*sec) = QRT_REV;
-//     else if (c == 0 && Y[3][1] < 0)
-//         (*sec) = -QRT_REV;
-//     else if (c != 0)
-//         (*sec) = atan(Y[3][1] / c);
-
-//     if (c == 0)
-//         (*pri) = 1000.0 * DEG_TO_RAD;
-//     else if (c != 0 && Y[1][1] == 0 && Y[2][1] > 0)
-//         (*pri) = QRT_REV;
-//     else if (c != 0 && Y[1][1] == 0 && Y[2][1] < 0)
-//         (*pri) = THREE_QRT_REV;
-//     else if (Y[1][1] > 0)
-//         (*pri) = atan(Y[2][1] / Y[1][1]);
-//     else if (Y[1][1] < 0)
-//         (*pri) = atan(Y[2][1] / Y[1][1]) + HALF_REV;
-
-//     (*pri) = *pri - fabs(*pri / ONE_REV) * ONE_REV;
-// }
-
 void basic_AngleSubroutine(double *pri, double *sec)
 {
     double c = sqrt(sq(Y[1][1]) + sq(Y[2][1]));
@@ -3103,9 +3078,11 @@ void basic_AngleSubroutine(double *pri, double *sec)
         (*sec) = -QRT_REV;
     else if (c != 0)
         (*sec) = atan(Y[3][1] / c);
+    else 
+        (*sec) = 0;
 
     if (c == 0)
-        (*pri) = 1000.0 * DEG_TO_RAD;
+        (*pri) = 0;
     else if (c != 0 && Y[1][1] == 0 && Y[2][1] > 0)
         (*pri) = QRT_REV;
     else if (c != 0 && Y[1][1] == 0 && Y[2][1] < 0)
@@ -3115,7 +3092,6 @@ void basic_AngleSubroutine(double *pri, double *sec)
     else if (Y[1][1] < 0)
         (*pri) = atan(Y[2][1] / Y[1][1]) + HALF_REV;
 
-    // (*pri) = *pri - round(*pri / ONE_REV) * ONE_REV;
     (*pri) = validRev(*pri);
 }
 
@@ -3131,17 +3107,28 @@ void basic_Subroutine1(double pri, double sec)
         Y[2][0] = sinPri * cosSec;
         Y[3][0] = sinSec;
     }
-    else
+    else 
     {
-        Y[1][0] = cosPri * cosSec - sinPri * Z2_ERR;
-        Y[1][0] = Y[1][0] + sinPri * sinSec * Z1_ERR;
-        Y[2][0] = sinPri * cosSec + cosPri * Z2_ERR;
-        Y[2][0] = Y[2][0] - cosPri * sinSec * Z1_ERR;
-        Y[3][0] = sinSec;
+        double cosZ1 = cos(Z1_ERR);
+        double cosZ2 = cos(Z2_ERR);
+        double sinZ1 = sin(Z1_ERR);
+        double sinZ2 = sin(Z2_ERR);
+
+        Y[1][0] = cosPri * cosSec * cosZ2 - sinPri * cosZ1 * sinZ2 + sinPri * sinSec * sinZ1 * cosZ2;
+        Y[2][0] = sinPri * cosSec * cosZ2 + cosPri * sinZ2 * cosZ1 - cosPri * sinSec * sinZ1 * cosZ2;
+        Y[3][0] = sinSec * cosZ1 * cosZ2 + sinZ1 * sinZ2;
     }
+    // else
+    // {
+    //     Y[1][0] = cosPri * cosSec - sinPri * Z2_ERR;
+    //     Y[1][0] = Y[1][0] + sinPri * sinSec * Z1_ERR;
+    //     Y[2][0] = sinPri * cosSec + cosPri * Z2_ERR;
+    //     Y[2][0] = Y[2][0] - cosPri * sinSec * Z1_ERR;
+    //     Y[3][0] = sinSec;
+    // }
 }
 
-void basic_Subroutine2(double pri, double sec)
+void basic_Subroutine2(double pri, double sec, int type)
 {
     double cosPri = cos(pri);
     double sinPri = sin(pri);
@@ -3155,12 +3142,151 @@ void basic_Subroutine2(double pri, double sec)
     }
     else
     {
-        Y[1][1] = cosPri * cosSec + sinPri * Z2_ERR;
-        Y[1][1] = Y[1][1] - sinPri * sinSec * Z1_ERR;
-        Y[2][1] = sinPri * cosSec - cosPri * Z2_ERR;
-        Y[2][1] = Y[2][1] + cosPri * sinSec * Z1_ERR;
-        Y[3][1] = sinSec;
+        double cosZ1 = cos(Z1_ERR);
+        double cosZ2 = cos(Z2_ERR);
+        double sinZ1 = sin(Z1_ERR);
+        double sinZ2 = sin(Z2_ERR);
+        if (type == 1)
+            basic_TakiSimple(cosPri, cosSec, sinPri, sinSec);
+        else if (type == 2)
+            basic_TakiSmallAngle(cosPri, cosSec, sinPri, sinSec, cosZ1, cosZ2, sinZ1, sinZ2);
+        else if (type == 3)
+            basic_BellIterative(pri, sec, cosPri, cosSec, sinPri, sinSec, cosZ1, cosZ2, sinZ1, sinZ2);
+        else if (type == 4)
+            basic_TakiIterative(pri, sec, cosPri, cosSec, sinPri, sinSec, cosZ1, cosZ2, sinZ1, sinZ2);
+        else if (type == 5)
+            basic_BellTakiIterative(pri, sec, cosPri, cosSec, sinPri, sinSec, cosZ1, cosZ2, sinZ1, sinZ2);
+        // Y[1][1] = cosPri * cosSec + sinPri * Z2_ERR;
+        // Y[1][1] = Y[1][1] - sinPri * sinSec * Z1_ERR;
+        // Y[2][1] = sinPri * cosSec - cosPri * Z2_ERR;
+        // Y[2][1] = Y[2][1] + cosPri * sinSec * Z1_ERR;
+        // Y[3][1] = sinSec;
     }
+}
+
+void basic_TakiSimple(double cosPri, double cosSec, double sinPri, double sinSec)
+{
+    Y[1][1] = cosSec * cosPri + Z2_ERR * sinPri - Z1_ERR * sinSec * sinPri;
+    Y[2][1] = cosSec * sinPri - Z2_ERR * cosPri - Z1_ERR * sinSec * cosPri;
+    Y[3][1] = sinSec;
+}
+
+void basic_TakiSmallAngle(double cosPri, double cosSec, double sinPri, double sinSec, double cosZ1, double cosZ2, double sinZ1, double sinZ2)
+{
+    Y[1][1] = (cosSec * cosPri + sinPri * cosZ1 * sinZ2 - sinSec * sinPri * sinZ1 * cosZ2) / cosZ2;
+    Y[2][1] = (cosSec * sinPri - cosPri * cosZ1 * sinZ2 + sinSec * cosPri * sinZ1 * cosZ2) / cosZ2;
+    Y[3][1] = (sinSec - sinZ1 * sinZ2) / (cosZ1 * cosZ2);
+}
+
+void basic_BellIterative(double pri, double sec, double cosPri, double cosSec, double sinPri, double sinSec, double cosZ1, double cosZ2, double sinZ1, double sinZ2)
+{
+    double trueAz = pri;
+    double tanTrueAz = tan(trueAz);
+    double apparentAlt = basic_ApparentAlt(sinSec, cosZ1, cosZ2, sinZ1, sinZ2);
+    double cosApparentSec = cos(apparentAlt);
+    double sinApparentSec = sin(apparentAlt);
+    double g = cosZ2 * sinZ1 * sinApparentSec * tanTrueAz - tanTrueAz * sinZ2 * cosZ1 - cosZ2 * cosApparentSec;
+    double h = sinZ2 * cosZ1 - cosZ2 * sinZ1 * sinApparentSec - tanTrueAz * cosZ2 * cosApparentSec;
+
+    basic_TakiSmallAngle(cosPri, cosSec, sinPri, sinSec, cosZ1, cosZ2, sinZ1, sinZ2);
+    basic_AngleSubroutine(&pri, &sec);
+    double apparentAz = pri;
+
+    double bestApparentAz = apparentAz;
+    double holdGoalSeek = LONG_MAX;
+    double incr = ARCMIN_TO_RAD;
+    double minIncr = ARCSEC_TO_RAD;
+    boolean dir = true;
+    int subrLCount = 0;
+
+    double goalSeek;
+    do
+    {
+        if (dir)
+            apparentAz += incr;
+        else
+            apparentAz -= incr;
+
+        goalSeek = g * sin(apparentAz) - h * cos(apparentAz);
+
+        if (fabs(goalSeek) <= fabs(holdGoalSeek))
+            bestApparentAz = apparentAz;
+        else 
+        {
+            incr /= 2;
+            dir = !dir;
+        }
+        holdGoalSeek = goalSeek;
+        subrLCount++;
+    } while (incr >= minIncr);
+
+    cosPri = cos(bestApparentAz);
+    sinPri = sin(bestApparentAz);
+    cosSec = cos(apparentAlt);
+    sinSec = sin(apparentAlt);
+
+    Y[1][1] = cosPri * cosSec;
+    Y[2][1] = sinPri * cosSec;
+    Y[2][1] = sinSec;
+}
+
+void basic_TakiIterative(double pri, double sec, double cosPri, double cosSec, double sinPri, double sinSec, double cosZ1, double cosZ2, double sinZ1, double sinZ2)
+{
+    int maxLoopCount = 25;
+    int subrTCount = 0;
+    double holdPri = pri;
+    double holdSec = sec;
+    double lastPri, lastSec, errPri, errSec;
+
+    lastPri = LONG_MAX / 2;
+    lastSec = LONG_MAX / 2;
+    
+    basic_TakiSmallAngle(cosPri, cosSec, sinPri, sinSec, cosZ1, cosZ2, sinZ1, sinZ2);
+    do 
+    {
+        basic_AngleSubroutine(&pri, &sec);
+        errPri = fabs(lastPri - pri);
+        errSec = fabs(lastSec - sec);
+        lastPri = pri;
+        lastSec = sec;
+
+        double cosF1 = cos(pri);
+        double sinF1 = sin(pri);
+
+        Y[1][1] = (cosSec * cosPri + sinF1 * cosZ1 * sinZ2 - (sinSec - sinZ1 * sinZ2) * sinF1 * sinZ1 / cosZ1) / cosZ2;
+        Y[2][1] = (cosSec * sinPri - cosF1 * cosZ1 * sinZ2 + (sinSec - sinZ1 * sinZ2) * cosF1 * sinZ1 / cosZ1) / cosZ2;
+        Y[3][1] = (sinSec - sinZ1 * sinZ2) / (cosZ1 * cosZ2);
+
+        subrTCount++;
+        if (subrTCount > maxLoopCount)
+        {
+            pri = holdPri;
+            sec = holdSec;
+            basic_BellIterative(pri, sec, cosPri, cosSec, sinPri, sinSec, cosZ1, cosZ2, sinZ1, sinZ2);
+        } 
+    } while (errSec > TENTH_ARCSEC_TO_RAD || errPri > TENTH_ARCSEC_TO_RAD);
+}
+
+void basic_BellTakiIterative(double pri, double sec, double cosPri, double cosSec, double sinPri, double sinSec, double cosZ1, double cosZ2, double sinZ1, double sinZ2)
+{
+    double apparentAlt = basic_ApparentAlt(sinSec, cosZ1, cosZ2, sinZ1, sinZ2);
+    basic_TakiIterative(pri, sec, cosPri, cosSec, sinPri, sinSec, cosZ1, cosZ2, sinZ1, sinZ2);
+    basic_AngleSubroutine(&pri, &sec);
+
+    cosPri = cos(pri);
+    sinPri = sin(pri);
+    cosSec = cos(apparentAlt);
+    sinSec = sin(apparentAlt);
+
+    Y[1][1] = cosPri * cosSec;
+    Y[2][1] = sinPri * cosSec;
+    Y[3][1] = sinSec;
+}
+
+double basic_ApparentAlt(double sinSec, double cosZ1, double cosZ2, double sinZ1, double sinZ2)
+{
+    double v1 = (sinSec - sinZ1 * sinZ2) * cosZ1 * (cosZ2 / ((sinZ1 * sinZ1 - 1) * sinZ2 * sinZ2 - 1));
+    return asin(v1);
 }
 
 // BEST Z1/Z2
