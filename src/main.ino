@@ -78,7 +78,7 @@
 #define EMA_WEIGHT 0.05f
 
 // To give sufficient CPU time to the TCP Server, a time delta between measurements is enforced:
-#define MEASUREMENT_PERIOD 50     // how many milliseconds must have elapsed since last measurement in order to take a new one
+#define MEASUREMENT_PERIOD 50 // how many milliseconds must have elapsed since last measurement in order to take a new one
 
 // Assign human-readable names to some common 16-bit color values:
 #define BLACK 0x0000  /*   0,   0,   0 */
@@ -295,8 +295,8 @@ boolean CORRECT_PRECESSION_ETC = false;
 boolean CORRECT_MOUNT_ERRS = false;
 boolean BASIC_ALIGN_READY = false;
 
-const char* WIFI_AP_NAME = "Skywatcher-WiFi"; // Name of the WiFi access point this device will create for your tablet/phone to connect to.
-const char* WIFI_PASS = "3mzbZSMNNx9d";
+const char *WIFI_AP_NAME = "Skywatcher-WiFi"; // Name of the WiFi access point this device will create for your tablet/phone to connect to.
+const char *WIFI_PASS = "3mzbZSMNNx9d";
 
 //
 const String FirmwareDate = "16 07 18";
@@ -2929,11 +2929,6 @@ void basic_EquatorialToScope(double ra, double dec, double sidT, double *az, dou
 
 void basic_AddStar(int starNum, int totalAlignStars, double ra, double dec, double sidT, double alt, double az)
 {
-    // FOR >2 STARS LOG THEM AND USE TO CALCULATE Z1/Z2/Z3 TERMS
-    if (starNum == totalAlignStars)
-    {
-        BASIC_ALIGN_READY = true;
-    }
     //double b = ra - SIDEREAL_FRACTION * (sidT - INITIAL_TIME);
     double ha = ra - sidT;
     // double ha = sidT - ra;
@@ -3063,6 +3058,8 @@ void basic_TransformMatrix()
             Q[m][n] = W / e;
         }
     }
+
+    BASIC_ALIGN_READY = true;
 }
 
 void basic_DeterminateSubroutine()
@@ -3166,7 +3163,10 @@ void basic_Subroutine2(double pri, double sec)
     }
 }
 
-void basic_BestZ12(int n, double nRange, double range, double resolution)
+// BEST Z1/Z2
+// nRange to range is search area in degrees
+// incr is increment +/- degrees
+void basic_BestZ12(int n, double startRange, double endRange, double resolution)
 {
     double ra1, dec1;
     double ra2, dec2;
@@ -3175,34 +3175,36 @@ void basic_BestZ12(int n, double nRange, double range, double resolution)
     double bestPointingErrorRMS = HALF_REV;
     double alt1, alt2, az1, az2, pointingErrorRMS, pointingErrorRMSTotal, altError, azError;
     pointingErrorRMSTotal = 0;
-    for (Z1_ERR = nRange; Z1_ERR < range; Z1_ERR += resolution)
+
+    // Covnert search ranges and resolution to Radians
+    startRange *= DEG_TO_RAD;
+    endRange *= DEG_TO_RAD;
+    resolution *= DEG_TO_RAD;
+
+    for (Z1_ERR = startRange; Z1_ERR < endRange; Z1_ERR += resolution)
     {
-        for (Z2_ERR = nRange; Z2_ERR < range; Z2_ERR += resolution)
+        for (Z2_ERR = startRange; Z2_ERR < endRange; Z2_ERR += resolution)
         {
-            for (int j = 0; j < n; j++)
+            for (int i = 0; i < n; n++)
             {
-                basic_EquatorialToScope(ALIGNMENT_STARS[j].ra, ALIGNMENT_STARS[j].dec, ALIGNMENT_STARS[j].time, &az1, &alt1);
-                for (int k = 0; k < n; k++)
-                {
-                    if (j != k)
-                    {
-                        basic_EquatorialToScope(ALIGNMENT_STARS[k].ra, ALIGNMENT_STARS[k].dec, ALIGNMENT_STARS[k].time, &az2, &alt2);
-                        altError = alt2 - alt1;
-                        azError = (az2 - az1) * cos(alt2);
-                        pointingErrorRMS = sqrt(sq(altError) + sq(azError));
-                        pointingErrorRMSTotal += pointingErrorRMS;
-                    }
-                }
-                pointingErrorRMSTotal /= 3;
-                if (pointingErrorRMSTotal < bestPointingErrorRMS)
-                {
-                    bestPointingErrorRMS = pointingErrorRMSTotal;
-                    bestZ1 = Z1_ERR;
-                    bestZ2 = Z2_ERR;
-                }
+                alt1 = ALIGNMENT_STARS[i].alt;
+                az1 = ALIGNMENT_STARS[i].az;
+                basic_EquatorialToScope(ALIGNMENT_STARS[i].ra, ALIGNMENT_STARS[i].dec, ALIGNMENT_STARS[i].time, &az2, &alt2);
+                altError = alt1 - alt2;
+                azError = (az1 - az2) * cos(alt1);
+                pointingErrorRMS = sqrt(sq(altError) + sq(azError));
+                pointingErrorRMSTotal += pointingErrorRMS;
+            }
+            pointingErrorRMSTotal /= n;
+            if (pointingErrorRMSTotal < bestPointingErrorRMS - ARCSEC_TO_RAD)
+            {
+                bestPointingErrorRMS = pointingErrorRMSTotal;
+                bestZ1 = Z1_ERR;
+                bestZ2 = Z2_ERR;
             }
         }
     }
+
     Z1_ERR = bestZ1;
     Z2_ERR = bestZ2;
 }
@@ -3210,14 +3212,19 @@ void basic_BestZ12(int n, double nRange, double range, double resolution)
 // BEST Z3
 // nRange to range is search area in degrees
 // incr is increment +/- degrees
-void basic_BestZ3(int n, double nRange, double range, double resolution)
+void basic_BestZ3(int n, double startRange, double endRange, double resolution)
 {
     double ra1, dec1;
     double ra2, dec2;
     double bestZ3 = HALF_REV;
     double bestDist = HALF_REV;
 
-    for (Z3_ERR = nRange; Z3_ERR < range; Z3_ERR += resolution)
+    // Covnert search ranges and resolution to Radians
+    startRange *= DEG_TO_RAD;
+    endRange *= DEG_TO_RAD;
+    resolution *= DEG_TO_RAD;
+
+    for (Z3_ERR = startRange; Z3_ERR < endRange; Z3_ERR += resolution)
     {
         for (int j = 0; j < n; j++)
         {
@@ -3252,7 +3259,7 @@ void basic_CalcBestZ12()
 {
     if (BASIC_ALIGN_READY > 2 && CORRECT_MOUNT_ERRS)
     {
-        // handles searching for Z3 up to +/- 10 degrees
+        // handles searching for Z1/2 up to +/- 10 degrees
         basic_BestZ12(3, -10.0, 10.0, 2.0);                  // 10 iterations
         basic_BestZ12(3, Z1_ERR - 2.0, Z1_ERR + 2.0, 0.5);   // 8 iterations
         basic_BestZ12(3, Z1_ERR - 0.5, Z1_ERR + 0.5, 0.062); // 16 iterations
@@ -4437,11 +4444,13 @@ void drawClockScreen()
 void drawAlignModeScreen()
 {
     CURRENT_SCREEN = 10;
+
     tft.fillScreen(BLACK);
     tft.setCursor(10, 10);
     tft.setTextColor(TITLE_TEXT, TITLE_TEXT_BG);
     tft.setTextSize(3);
     tft.print(" Align Mode");
+
     tft.setTextColor(L_TEXT);
     tft.setCursor(10, 40);
     tft.setTextSize(2);
@@ -4455,11 +4464,15 @@ void drawAlignModeScreen()
 void drawAlignCorrectionsScreen()
 {
     CURRENT_SCREEN = 11;
+
     tft.fillScreen(BLACK);
     tft.setCursor(10, 10);
     tft.setTextColor(TITLE_TEXT, TITLE_TEXT_BG);
     tft.setTextSize(3);
     tft.print(" Corrections");
+
+    drawButton(165, 10, 65, 30, "BACK", BTN_L_BORDER, 0, BTN_BLK_TEXT, 3);
+
     if (CORRECT_REFRACTION)
         drawButton(20, 50, 200, 40, "Refraction", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
     else
@@ -4472,7 +4485,21 @@ void drawAlignCorrectionsScreen()
         drawButton(20, 170, 200, 40, "Mount Errors", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
     else
         drawButton(20, 170, 200, 40, "Mount Errors", 0, BTN_L_BORDER, L_TEXT, 2);
-    drawButton(20, 270, 200, 40, "Begin Align", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
+    
+    tft.setTextColor(L_TEXT);
+    tft.setCursor(10, 230);
+    tft.setTextSize(1);
+    tft.print("Z1 Error: ");
+    tft.print(rad2dms(Z1_ERR, true, false));
+    tft.setCursor(10, 240);
+    tft.print("Z2 Error: ");
+    tft.print(rad2dms(Z2_ERR, true, false));
+    tft.setCursor(10, 250);
+    tft.print("Z3 Error: ");
+    tft.print(rad2dms(Z3_ERR, true, false));
+
+    if (!BASIC_ALIGN_READY)
+        drawButton(20, 270, 200, 40, "Begin Align", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
 }
 
 void drawSelectAlignment()
@@ -4491,6 +4518,8 @@ void drawSelectAlignment()
     tft.setTextColor(TITLE_TEXT, TITLE_TEXT_BG);
     tft.setTextSize(3);
     tft.print(" Alignment");
+
+    drawButton(165, 10, 65, 30, "BACK", BTN_L_BORDER, 0, BTN_BLK_TEXT, 3);
 
     drawButton(20, 50, 200, 40, "2-Star Auto", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
     drawButton(20, 110, 200, 40, "3-Star Auto", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
@@ -4772,6 +4801,13 @@ void drawOptionsScreen()
     drawButton(10, 150, 65, 40, "Align", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
     drawButton(85, 150, 65, 40, "GPS", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
     drawButton(165, 150, 65, 40, "Clock", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
+
+    tft.setCursor(10, 210);
+    tft.setTextSize(2);
+    tft.setTextColor(L_TEXT);
+    tft.print("Corrections");
+
+    drawButton(10, 230, 65, 40, "Corr.", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
 }
 
 void drawStarSelectScreen()
@@ -5231,6 +5267,16 @@ void considerTouchInput(int lx, int ly)
         else if (CURRENT_SCREEN == 11)
         {
             // On drawAlignCorrectionsScreen() Screen
+            if (lx > 165 && lx < 230 && ly > 10 && ly < 40)
+            {
+                // BTN <Back pressed// BTN <Back pressed
+                drawButton(165, 10, 65, 30, "BACK", 0, BTN_L_BORDER, L_TEXT, 3);
+                delay(150);
+                if (BASIC_ALIGN_READY)
+                    drawMainScreen();
+                else
+                    drawAlignModeScreen();
+            }
             if (lx > 20 && lx < 220 && ly > 50 && ly < 90)
             {
                 // BTN "Refraction" pressed
@@ -5262,16 +5308,26 @@ void considerTouchInput(int lx, int ly)
                 delay(150);
             }
             else if (lx > 20 && lx < 220 && ly > 270 && ly < 310)
-            {
+            {   
                 // BTN "Begin Align" pressed
-                drawButton(20, 270, 200, 40, "Begin Align", 0, BTN_L_BORDER, L_TEXT, 2);
-                delay(150);
-                drawSelectAlignment();
+                if (!BASIC_ALIGN_READY) // Don't let us align if we're just checking errors
+                {
+                    drawButton(20, 270, 200, 40, "Begin Align", 0, BTN_L_BORDER, L_TEXT, 2);
+                    delay(150);
+                    drawSelectAlignment();
+                }     
             }
         }
         else if (CURRENT_SCREEN == 2)
         {
             // On drawSelectAlignment() Screen
+            if (lx > 165 && lx < 230 && ly > 10 && ly < 40)
+            {
+                // BTN <Back pressed
+                drawButton(165, 10, 65, 30, "BACK", 0, BTN_L_BORDER, L_TEXT, 3);
+                delay(150);
+                drawAlignCorrectionsScreen();
+            }
             if (lx > 20 && lx < 220 && ly > 50 && ly < 90)
             {
                 // BTN "2-Star Auto" pressed
@@ -5529,6 +5585,12 @@ void considerTouchInput(int lx, int ly)
                 drawButton(165, 130, 65, 40, "Clock", 0, BTN_L_BORDER, L_TEXT, 2);
                 delay(150);
                 drawClockScreen();
+            }
+            if (lx > 10 && lx < 75 && ly > 230 && ly < 270)
+            {
+                drawButton(10, 230, 65, 40, "Corr.", 0, BTN_L_BORDER, L_TEXT, 2);
+                delay(150);
+                drawAlignCorrectionsScreen();
             }
         }
         else if (CURRENT_SCREEN == 6) // captures touches on drawStarSelectScreen()
@@ -6075,6 +6137,48 @@ void attendTcpRequests()
     }
 }
 
+void attendBTRequests()
+{
+    // when we have a new incoming connection from Skysafari:
+    while (SerialBT.available())
+    {
+#ifdef SERIAL_DEBUG
+        Serial.println("Has Client");
+#endif
+        char skySafariCommand[1];
+        SerialBT.readBytes(skySafariCommand, 1);
+
+        if (skySafariCommand[1] == 81) // 81 is ascii for Q, which is the only command skysafari sends to "basic encoders"
+        {
+            char encoderResponse[20];
+            int iAzimuthReading = azEnc.read();
+            int iAltitudeReading = imu.smoothAltitudeReading;
+            sprintf(encoderResponse, "%i\t%i\t\n", iAzimuthReading, iAltitudeReading);
+#ifdef SERIAL_DEBUG
+            Serial.println(encoderResponse);
+#endif
+            remoteClient.println(encoderResponse);
+        }
+        else if (skySafariCommand[1] == 72) // 'H' - request for encoder resolution, e.g. 10000-10000\n
+        {
+            char response[20];
+            // Resolution on both axis is equal
+            snprintf(response, 20, "%u-%u", STEPS_IN_FULL_CIRCLE, STEPS_IN_FULL_CIRCLE);
+#ifdef SERIAL_DEBUG
+            Serial.println(response);
+#endif
+            remoteClient.println(response);
+        }
+        else
+        {
+#ifdef SERIAL_DEBUG
+            Serial.println("*****");
+            Serial.println(skySafariCommand);
+#endif
+        }
+    }
+}
+
 void considerBTCommands()
 {
 #ifdef SERIAL_DEBUG
@@ -6249,7 +6353,7 @@ void setup(void)
 
     // Init Bluetooth
     // SerialBT.begin("Skywatcher-BLE");
-    
+
     server.begin();
     server.setNoDelay(true);
 }
@@ -6271,64 +6375,66 @@ void loop(void)
     }
     else
     {
-        if (IS_BT_MODE_ON && SerialBT.available())
+        if (IS_BT_MODE_ON)
         {
-//             BT_CHARACTER = SerialBT.read();
-//             if (BT_STATE == BT_START)
-//             {
-//                 if (BT_CHARACTER == START_CHAR)
-//                 {
-//                     BT_STATE = BT_END;
-//                     BT_COMMAND = "";
-// #ifdef SERIAL_DEBUG
-//                     Serial.print("BT - GOT START CHAR: ");
-//                     Serial.println("");
-// #endif
-//                 }
-//             }
-//             else if (BT_STATE == BT_END)
-//             {
-//                 if (BT_CHARACTER == END_CHAR)
-//                 {
-//                     processBTCommand();
-//                     BT_STATE = BT_START;
-// #ifdef SERIAL_DEBUG
-//                     Serial.print("BT - GOT END CHAR: ");
-//                     Serial.println("");
-// #endif
-//                 }
-//                 else
-//                 {
-//                     BT_COMMAND += BT_CHARACTER;
-//                 }
-//             }
+            attendBTRequests();
+            yield();
 
-            char input[4];
-            SerialBT.readBytes(input, 4);
-            if (input[0] == START_CHAR && input[3] == END_CHAR)
-            {
-                if (input[1] == (char)'G')
-                {
-                    if (input[2] == (char)'R')
-                        BT_COMMAND_STR = 1;
-                    else if (input[2] == (char)'D')
-                        BT_COMMAND_STR = 2;
-                    if (input[2] == (char)'A')
-                        BT_COMMAND_STR = 3;
-                    else if (input[2] == (char)'Z')
-                        BT_COMMAND_STR = 4;
-                }
-                // if (input[1] == (char)'G' && input[2] == (char)'A')
-                //     BT_COMMAND_STR = 1;
-                // else if (input[1] == (char)'G' && input[2] == (char)'Z')
-                //     BT_COMMAND_STR = 2;
-                // else if (input[1] == (char)'G' && input[2] == (char)'R')
-                //     BT_COMMAND_STR = 3;
-                // else if (input[1] == (char)'G' && input[2] == (char)'D')
-                //     BT_COMMAND_STR = 4;
+            //             BT_CHARACTER = SerialBT.read();
+            //             if (BT_STATE == BT_START)
+            //             {
+            //                 if (BT_CHARACTER == START_CHAR)
+            //                 {
+            //                     BT_STATE = BT_END;
+            //                     BT_COMMAND = "";
+            // #ifdef SERIAL_DEBUG
+            //                     Serial.print("BT - GOT START CHAR: ");
+            //                     Serial.println("");
+            // #endif
+            //                 }
+            //             }
+            //             else if (BT_STATE == BT_END)
+            //             {
+            //                 if (BT_CHARACTER == END_CHAR)
+            //                 {
+            //                     processBTCommand();
+            //                     BT_STATE = BT_START;
+            // #ifdef SERIAL_DEBUG
+            //                     Serial.print("BT - GOT END CHAR: ");
+            //                     Serial.println("");
+            // #endif
+            //                 }
+            //                 else
+            //                 {
+            //                     BT_COMMAND += BT_CHARACTER;
+            //                 }
+            //             }
 
-                considerBTCommands();
-            }
+            // char input[4];
+            // SerialBT.readBytes(input, 4);
+            // if (input[0] == START_CHAR && input[3] == END_CHAR)
+            // {
+            //     if (input[1] == (char)'G')
+            //     {
+            //         if (input[2] == (char)'R')
+            //             BT_COMMAND_STR = 1;
+            //         else if (input[2] == (char)'D')
+            //             BT_COMMAND_STR = 2;
+            //         if (input[2] == (char)'A')
+            //             BT_COMMAND_STR = 3;
+            //         else if (input[2] == (char)'Z')
+            //             BT_COMMAND_STR = 4;
+            //     }
+            //     // if (input[1] == (char)'G' && input[2] == (char)'A')
+            //     //     BT_COMMAND_STR = 1;
+            //     // else if (input[1] == (char)'G' && input[2] == (char)'Z')
+            //     //     BT_COMMAND_STR = 2;
+            //     // else if (input[1] == (char)'G' && input[2] == (char)'R')
+            //     //     BT_COMMAND_STR = 3;
+            //     // else if (input[1] == (char)'G' && input[2] == (char)'D')
+            //     //     BT_COMMAND_STR = 4;
+
+            //     considerBTCommands();
         }
         else
         {
@@ -6361,6 +6467,7 @@ void loop(void)
             {
                 calculateLST();
                 considerTimeUpdates();
+                considerTelescopeMove();
                 UPDATE_LAST = millis();
                 // #ifdef SERIAL_DEBUG
                 //                 Serial.print("CURRENT_AZ_RADS: ");
@@ -6376,10 +6483,9 @@ void loop(void)
         {
             imu.read();
             imu.calculatePosition();
-            considerTelescopeMove();
             LAST_MEASUREMENT = millis();
         }
-    } 
+    }
     uint16_t t_x = 0, t_y = 0; // To store the touch coordinates
     tft.getTouch(&t_x, &t_y);
     considerTouchInput(t_x, t_y);
