@@ -1782,8 +1782,8 @@ void getEquatorialMatrix(ConvertMatrixWorkingStorage &cmws)
 
     angleSubroutine(cmws);
     cmws.pri += cmws.current.sidT;
-    //cmws.current.ra = validRev(cmws.pri);
-    cmws.current.ra = cmws.pri - round(cmws.pri / ONE_REV) * ONE_REV;
+    cmws.current.ra = validRev(cmws.pri);
+    // cmws.current.ra = cmws.pri - round(cmws.pri / ONE_REV) * ONE_REV;
     cmws.current.dec = cmws.sec;
 #ifdef SERIAL_DEBUG
     Serial.print("getEquatMatrix() - AZ: ");
@@ -3072,25 +3072,35 @@ void basic_DeterminateSubroutine()
 void basic_AngleSubroutine(double *pri, double *sec)
 {
     double c = sqrt(sq(Y[1][1]) + sq(Y[2][1]));
-    if (c == 0 && Y[3][1] > 0)
-        (*sec) = QRT_REV;
-    else if (c == 0 && Y[3][1] < 0)
-        (*sec) = -QRT_REV;
-    else if (c != 0)
-        (*sec) = atan(Y[3][1] / c);
-    else 
+    // if (c == 0 && Y[3][1] > 0)
+    //     (*sec) = QRT_REV;
+    // else if (c == 0 && Y[3][1] < 0)
+    //     (*sec) = -QRT_REV;
+    // else if (c != 0)
+    //     (*sec) = atan(Y[3][1] / c);
+    // else 
+    //     (*sec) = 0;
+
+    // if (c == 0)
+    //     (*pri) = 0;
+    // else if (c != 0 && Y[1][1] == 0 && Y[2][1] > 0)
+    //     (*pri) = QRT_REV;
+    // else if (c != 0 && Y[1][1] == 0 && Y[2][1] < 0)
+    //     (*pri) = reverseRev(QRT_REV);
+    // else if (Y[1][1] > 0)
+    //     (*pri) = atan(Y[2][1] / Y[1][1]);
+    // else if (Y[1][1] < 0)
+    //     (*pri) = atan(Y[2][1] / Y[1][1]) + HALF_REV;
+    
+    if (c == 0 && Y[3][1] == 0)
         (*sec) = 0;
+    else
+        (*sec) = atan2(Y[3][1], c);
 
     if (c == 0)
         (*pri) = 0;
-    else if (c != 0 && Y[1][1] == 0 && Y[2][1] > 0)
-        (*pri) = QRT_REV;
-    else if (c != 0 && Y[1][1] == 0 && Y[2][1] < 0)
-        (*pri) = reverseRev(QRT_REV);
-    else if (Y[1][1] > 0)
-        (*pri) = atan(Y[2][1] / Y[1][1]);
-    else if (Y[1][1] < 0)
-        (*pri) = atan(Y[2][1] / Y[1][1]) + HALF_REV;
+    else
+        (*pri) = atan2(Y[2][1], Y[1][1]);
 
     (*pri) = validRev(*pri);
 }
@@ -3302,9 +3312,9 @@ void basic_BestZ12(int n, double range, double resolution)
     double alt1, alt2, az1, az2, pointingErrorRMS, pointingErrorRMSTotal, altError, azError;
     pointingErrorRMSTotal = 0;
 
-    for (Z1_ERR = 0; Z1_ERR < range; Z1_ERR += resolution)
+    for (Z1_ERR = -range ; Z1_ERR < range; Z1_ERR += resolution)
     {
-        for (Z2_ERR = 0; Z2_ERR < range; Z2_ERR += resolution)
+        for (Z2_ERR = -range; Z2_ERR < range; Z2_ERR += resolution)
         {
             for (int i = 0; i < n; n++)
             {
