@@ -4485,7 +4485,7 @@ void drawAlignCorrectionsScreen()
         drawButton(20, 170, 200, 40, "Mount Errors", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
     else
         drawButton(20, 170, 200, 40, "Mount Errors", 0, BTN_L_BORDER, L_TEXT, 2);
-    
+
     tft.setTextColor(L_TEXT);
     tft.setCursor(10, 230);
     tft.setTextSize(1);
@@ -5308,14 +5308,14 @@ void considerTouchInput(int lx, int ly)
                 delay(150);
             }
             else if (lx > 20 && lx < 220 && ly > 270 && ly < 310)
-            {   
+            {
                 // BTN "Begin Align" pressed
                 if (!BASIC_ALIGN_READY) // Don't let us align if we're just checking errors
                 {
                     drawButton(20, 270, 200, 40, "Begin Align", 0, BTN_L_BORDER, L_TEXT, 2);
                     delay(150);
                     drawSelectAlignment();
-                }     
+                }
             }
         }
         else if (CURRENT_SCREEN == 2)
@@ -6139,43 +6139,37 @@ void attendTcpRequests()
 
 void attendBTRequests()
 {
-    // when we have a new incoming connection from Skysafari:
-    while (SerialBT.available())
+
+    char skySafariCommand[1];
+    SerialBT.readBytes(skySafariCommand, 1);
+
+    if (skySafariCommand[1] == 81) // 81 is ascii for Q, which is the only command skysafari sends to "basic encoders"
+    {
+        char encoderResponse[20];
+        int iAzimuthReading = azEnc.read();
+        int iAltitudeReading = imu.smoothAltitudeReading;
+        sprintf(encoderResponse, "%i\t%i\t\n", iAzimuthReading, iAltitudeReading);
+#ifdef SERIAL_DEBUG
+        Serial.println(encoderResponse);
+#endif
+        SerialBT.println(encoderResponse);
+    }
+    else if (skySafariCommand[1] == 72) // 'H' - request for encoder resolution, e.g. 10000-10000\n
+    {
+        char response[20];
+        // Resolution on both axis is equal
+        snprintf(response, 20, "%u-%u", STEPS_IN_FULL_CIRCLE, STEPS_IN_FULL_CIRCLE);
+#ifdef SERIAL_DEBUG
+        Serial.println(response);
+#endif
+        SerialBT.println(response);
+    }
+    else
     {
 #ifdef SERIAL_DEBUG
-        Serial.println("Has Client");
+        Serial.println("*****");
+        Serial.println(skySafariCommand);
 #endif
-        char skySafariCommand[1];
-        SerialBT.readBytes(skySafariCommand, 1);
-
-        if (skySafariCommand[1] == 81) // 81 is ascii for Q, which is the only command skysafari sends to "basic encoders"
-        {
-            char encoderResponse[20];
-            int iAzimuthReading = azEnc.read();
-            int iAltitudeReading = imu.smoothAltitudeReading;
-            sprintf(encoderResponse, "%i\t%i\t\n", iAzimuthReading, iAltitudeReading);
-#ifdef SERIAL_DEBUG
-            Serial.println(encoderResponse);
-#endif
-            remoteClient.println(encoderResponse);
-        }
-        else if (skySafariCommand[1] == 72) // 'H' - request for encoder resolution, e.g. 10000-10000\n
-        {
-            char response[20];
-            // Resolution on both axis is equal
-            snprintf(response, 20, "%u-%u", STEPS_IN_FULL_CIRCLE, STEPS_IN_FULL_CIRCLE);
-#ifdef SERIAL_DEBUG
-            Serial.println(response);
-#endif
-            remoteClient.println(response);
-        }
-        else
-        {
-#ifdef SERIAL_DEBUG
-            Serial.println("*****");
-            Serial.println(skySafariCommand);
-#endif
-        }
     }
 }
 
