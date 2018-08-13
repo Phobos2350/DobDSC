@@ -324,12 +324,19 @@ const double ARCSEC_TO_REV = 1.0 / 1296000;
 const double ARCSEC_TO_RAD = PI / 648000;
 const double TENTH_ARCSEC_TO_RAD = ARCSEC_TO_RAD / 10.0;
 
+const float JD2000 = 2451545.0;
+const float JDMOD = 2400000.5;
+const float JDYEAR = 365.25;
+const float JDCENTURY = 36525.0;
 const float SIDEREAL_FRACTION = 1.0027379093;
+
+const int NUM_ALIGN_STARS = 100;
+
 const float GEAR_RATIO = GEAR_LARGE / GEAR_SMALL;
 const int STEPS_IN_FULL_CIRCLE = ENCODER_RES * GEAR_RATIO;
 const double STEPS_TO_RAD = STEPS_IN_FULL_CIRCLE / ONE_REV;
-const float JD2000 = 2451545.0;
-const uint8_t NUM_ALIGN_STARS = 100;
+
+
 
 const float OBJECT_DATA[9][14] = {
     // a, aΔ, e, eΔ, i, iΔ,  L, LΔ, ω, ωΔ, N, NΔ  >>> L2000 , diameter
@@ -918,118 +925,9 @@ void equatorialToCelestial(float alt, float az, float lat,
         *dec = dec_tmp;
 }
 
-boolean isLeapYear(int year)
-{
-    return year % 4 == 0 && (year % 100 != 0 || year % 400 == 0);
-}
-
-int getDayOfTheYear(int year, int month, int day, int hours, int minutes, int seconds)
-{
-    int k = isLeapYear(year) ? 1 : 2;
-    return (int)(275 * month / 9) - k * (int)((month + 9) / 12) + day - 30 + hours / 24 + minutes / 1440 + seconds / 86400;
-}
-
 int getJulianYear(int jd)
 {
-    return (jd - JD2000) / 365.25 + 2000;
-}
-
-int getJDFromJulianYear(int jYear)
-{
-    return (jYear - 2000) * 365.25 + JD2000;
-}
-
-double calcJD(int year, int month, int day, int hours, int minutes, int seconds, int tzOffsetHrs)
-{
-    if (month < 3)
-    {
-        year--;
-        month += 12;
-    }
-    int a = (int)(year / 100);
-    int b = 2 - a + (int)(a / 4);
-    float jd = (int)(365.25 * (year + 4716)) + (int)(30.6001 * (month + 1)) + day + b - 1524.5;
-    double fracJD = (hours + minutes / 60.0 + seconds / 3600.0 - tzOffsetHrs) / 24.0;
-    return jd + fracJD;
-}
-
-void getDateFromJD(double jd, int timeZoneOffsetHrs, int *year, int *month, int *day, int *hour, int *minute, int *second)
-{
-    float tzJD = jd + timeZoneOffsetHrs / 24.0;
-    int z = (int)(tzJD + 0.5);
-    float f = tzJD + 0.5 - z;
-    int a;
-    if (z < 2299161)
-        a = z;
-    else
-    {
-        int i = (int)((z - 1867216.25) / 36524.25);
-        a = z + 1 + i - (int)(i / 4);
-    }
-    int b = a + 1524;
-    int c = (int)((b - 122.1) / 365.25);
-    int d = (int)(365.25 * c);
-    int e = (int)((b - d) / 30.6001);
-    int day_tmp = (int)(b - d - (int)(30.6001 * e) + f);
-    int month_tmp, year_tmp;
-    if (e < 14)
-        month_tmp = e - 1;
-    else
-        month_tmp = e - 13;
-    if (month_tmp > 2)
-        year_tmp = c - 4716;
-    else
-        year_tmp = c - 4715;
-
-    int hours_tmp, mins_tmp, seconds_tmp;
-    hours_tmp = (int)(f * 24);
-    f -= hours_tmp / 24.0;
-    mins_tmp = (int)(f * 1440);
-    f -= mins_tmp / 1440.0;
-    seconds_tmp = (int)(f * 86400);
-
-    (*year) = year_tmp;
-    (*month) = month_tmp;
-    (*day) = day_tmp;
-    (*hour) = hours_tmp;
-    (*minute) = mins_tmp;
-    (*second) = seconds_tmp;
-}
-
-double calcLSTFromJD(double jd, double lng)
-{
-    int daysSinceJD2000 = jd - JD2000;
-    double GMST = fmod((18.697374558 + 24.06570982441908 * daysSinceJD2000), 24);
-    return validRev(GMST * HOUR_TO_RAD + lng * DEG_TO_RAD);
-}
-
-double calcLSTFromDate(int year, int month, int day, int hour, int minute, int second, int tzOffsetHrs, double lng)
-{
-    double jd = calcJD(year, month, day, hour, minute, second, tzOffsetHrs);
-    JDN = jd;
-#ifdef SERIAL_DEBUG
-    Serial.print("calcLSTFromDate() - JDN: ");
-    Serial.print(JDN);
-    Serial.println("");
-#endif
-    return calcLSTFromJD(jd, lng);
-}
-
-void processDateTime()
-{
-    NOW = rtc.GetDateTime();
-    int tzOffset = floor(floor(OBSERVATION_LONGITUDE) / 15.0);
-    tzOffset += SUMMER_TIME;
-    LST = calcLSTFromDate(NOW.Year(), NOW.Month(), NOW.Day(), NOW.Hour(), NOW.Minute(), NOW.Second(), tzOffset, OBSERVATION_LONGITUDE);
-    LST_RADS = LST * HOUR_TO_RAD;
-
-#ifdef SERIAL_DEBUG
-    Serial.print("processDateTime() - LST: ");
-    Serial.print(LST);
-    Serial.print(" LST_RADS: ");
-    Serial.print(LST_RADS);
-    Serial.println("");
-#endif
+    return (jd - JD2000) / JDYEAR + 2000;
 }
 
 void calcProperMotion(double motionRa, double motionDec, double deltaJulianYear, double *deltaRa, double *deltaDec)
@@ -2304,15 +2202,15 @@ void calculateLST()
     }
 
     float HH = H + ((float)MN / 60.00) + ((float)S / 3600.00);
-    float AA = (int)(365.25 * (Y + 4716));
+    float AA = (int)(JDYEAR * (Y + 4716));
     float BB = (int)(30.6001 * (M + 1));
     JDN = AA + BB + D - 1537.5 + (HH - TIME_ZONE) / 24;
 
     //calculate terms required for LST calcuation and calculate GMST using an approximation
-    double MJD = JDN - 2400000.5;
+    double MJD = JDN - JDMOD;
     int MJD0 = (int)MJD;
     float ut = (MJD - MJD0) * 24.0;
-    double t_eph = (MJD0 - 51544.5) / 36525.0;
+    double t_eph = (MJD0 - 51544.5) / JDCENTURY;
     double GMST = 6.697374558 + SIDEREAL_FRACTION * ut + (8640184.812866 + (0.093104 - 0.0000062 * t_eph) * t_eph) * t_eph / 3600.0;
 
     LST = GMST + OBSERVATION_LONGITUDE / 15.0;
@@ -2748,7 +2646,7 @@ void processObject(int index, Object &object)
     Serial.print(object.dec);
     Serial.println("");
 #endif
-    // Correct for astronomical movements and refraction if needed
+    // Correct for astronomical movements
     double delta_ra, delta_dec;
     if (CORRECT_PRECESSION_ETC)
     {
@@ -2756,12 +2654,6 @@ void processObject(int index, Object &object)
         object.ra += delta_ra;
         object.dec += delta_dec;
     }
-    // if (CORRECT_REFRACTION)
-    // {
-    //     calcRefractionFromTrueEquatorialCorrection(object.ra, object.dec, LST_RADS, OBSERVATION_LATTITUDE_RADS, &delta_ra, &delta_dec);
-    //     object.ra += delta_ra;
-    //     object.dec += delta_dec;
-    // }
 #ifdef SERIAL_DEBUG
     Serial.print("Added Corrections - RA: ");
     Serial.print(object.ra);
@@ -3622,12 +3514,9 @@ void getECoords(float az, float alt, float t, double *ra, double *dec)
 //////////////////////////////////////////////////////////////////////////////////////////////
 // Calculate Planet Positions
 
-void get_object_position(int object_number, Object &object)
+void getPlanetPosition(int object_number, Object &object)
 {
-    float T = JDN - 2451543.5;
-    // T += JD_FRAC;
-    T /= 36525;
-    // float T = JDN;
+    float T = (JDN - JD2000) / JDCENTURY;
 
     float semiMajorAxis = OBJECT_DATA[object_number][0] + (T * OBJECT_DATA[object_number][1]); // offset + T * delta
     float eccentricity = OBJECT_DATA[object_number][2] + (T * OBJECT_DATA[object_number][3]);
@@ -3717,6 +3606,15 @@ void get_object_position(int object_number, Object &object)
     object.type = "";
     object.mag = PLANET_MAG;
     object.size = PLANET_SIZE + String("'");
+
+    double delta_ra, delta_dec;
+    if (CORRECT_PRECESSION_ETC)
+    {
+        calcProperMotionPrecessionNutationAberration(object.ra, object.dec, PROPER_MOTION_RA, PROPER_MOTION_DEC, &delta_ra, &delta_dec);
+        object.ra += delta_ra;
+        object.dec += delta_dec;
+    }
+
     objectAltAz();
 }
 
@@ -3997,10 +3895,6 @@ void calc_magnitude(int object_number, float R)
 #endif
     PLANET_SIZE = apparent_diameter;
     PLANET_MAG = magnitude;
-}
-
-void calc_rise_set_times(double ra, double dec)
-{
 }
 
 void drawButton(int X, int Y, int Width, int Height, String Caption, int16_t BodyColor, int16_t BorderColor, int16_t TextColor, int tSize)
@@ -5113,7 +5007,7 @@ void drawPlanetScreen()
     drawButton(130, 230, 100, 40, "Pluto", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
 
     if (dist_earth_to_sun == 0)
-        get_object_position(2, CURRENT_OBJECT);
+        getPlanetPosition(2, CURRENT_OBJECT);
 }
 
 void OnScreenMsg(int Msg)
@@ -6008,7 +5902,7 @@ void considerTouchInput(int lx, int ly)
             {
                 // BTN Mercury pressed
                 drawButton(10, 50, 100, 40, "Mercury", 0, BTN_L_BORDER, L_TEXT, 2);
-                get_object_position(0, CURRENT_OBJECT);
+                getPlanetPosition(0, CURRENT_OBJECT);
                 delay(150);
                 drawMainScreen();
             }
@@ -6016,7 +5910,7 @@ void considerTouchInput(int lx, int ly)
             {
                 // BTN Mercury pressed
                 drawButton(130, 50, 100, 40, "Venus", 0, BTN_L_BORDER, L_TEXT, 2);
-                get_object_position(1, CURRENT_OBJECT);
+                getPlanetPosition(1, CURRENT_OBJECT);
                 delay(150);
                 drawMainScreen();
             }
@@ -6024,7 +5918,7 @@ void considerTouchInput(int lx, int ly)
             {
                 // BTN Mercury pressed
                 drawButton(10, 110, 100, 40, "Mars", 0, BTN_L_BORDER, L_TEXT, 2);
-                get_object_position(3, CURRENT_OBJECT);
+                getPlanetPosition(3, CURRENT_OBJECT);
                 delay(150);
                 drawMainScreen();
             }
@@ -6032,7 +5926,7 @@ void considerTouchInput(int lx, int ly)
             {
                 // BTN Mercury pressed
                 drawButton(130, 110, 100, 40, "Jupiter", 0, BTN_L_BORDER, L_TEXT, 2);
-                get_object_position(4, CURRENT_OBJECT);
+                getPlanetPosition(4, CURRENT_OBJECT);
                 delay(150);
                 drawMainScreen();
             }
@@ -6040,7 +5934,7 @@ void considerTouchInput(int lx, int ly)
             {
                 // BTN Mercury pressed
                 drawButton(10, 170, 100, 40, "Saturn", 0, BTN_L_BORDER, L_TEXT, 2);
-                get_object_position(5, CURRENT_OBJECT);
+                getPlanetPosition(5, CURRENT_OBJECT);
                 delay(150);
                 drawMainScreen();
             }
@@ -6048,7 +5942,7 @@ void considerTouchInput(int lx, int ly)
             {
                 // BTN Mercury pressed
                 drawButton(130, 170, 100, 40, "Uranus", 0, BTN_L_BORDER, L_TEXT, 2);
-                get_object_position(6, CURRENT_OBJECT);
+                getPlanetPosition(6, CURRENT_OBJECT);
                 delay(150);
                 drawMainScreen();
             }
@@ -6056,7 +5950,7 @@ void considerTouchInput(int lx, int ly)
             {
                 // BTN Mercury pressed
                 drawButton(10, 230, 100, 40, "Neptune", 0, BTN_L_BORDER, L_TEXT, 2);
-                get_object_position(7, CURRENT_OBJECT);
+                getPlanetPosition(7, CURRENT_OBJECT);
                 delay(150);
                 drawMainScreen();
             }
@@ -6064,7 +5958,7 @@ void considerTouchInput(int lx, int ly)
             {
                 // BTN Mercury pressed
                 drawButton(130, 230, 100, 40, "Pluto", 0, BTN_L_BORDER, L_TEXT, 2);
-                get_object_position(8, CURRENT_OBJECT);
+                getPlanetPosition(8, CURRENT_OBJECT);
                 delay(150);
                 drawMainScreen();
             }
