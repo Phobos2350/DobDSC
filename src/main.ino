@@ -2540,10 +2540,10 @@ void autoSelectAlignmentStars()
 void processAlignmentStar(int index, AlignmentStar &star)
 {
 
-    int i1 = OBJECTS[index].indexOf(';');
-    int i2 = OBJECTS[index].indexOf(';', i1 + 1);
-    int i3 = OBJECTS[index].indexOf(';', i2 + 1);
-    int i4 = OBJECTS[index].indexOf(';', i3 + 1);
+    int i1 = OBJECTS[index].indexOf(',');
+    int i2 = OBJECTS[index].indexOf(',', i1 + 1);
+    int i3 = OBJECTS[index].indexOf(',', i2 + 1);
+    int i4 = OBJECTS[index].indexOf(',', i3 + 1);
 
     star.constellation = OBJECTS[index].substring(0, i1);
     star.name = OBJECTS[index].substring(i1 + 1, i2);
@@ -2605,13 +2605,13 @@ void processAlignmentStar(int index, AlignmentStar &star)
 void processObject(int index, Object &object)
 {
 
-    int i1 = OBJECTS[index].indexOf(';');
-    int i2 = OBJECTS[index].indexOf(';', i1 + 1);
-    int i3 = OBJECTS[index].indexOf(';', i2 + 1);
-    int i4 = OBJECTS[index].indexOf(';', i3 + 1);
-    int i5 = OBJECTS[index].indexOf(';', i4 + 1);
-    int i6 = OBJECTS[index].indexOf(';', i5 + 1);
-    int i7 = OBJECTS[index].indexOf(';', i6 + 1);
+    int i1 = OBJECTS[index].indexOf(',');
+    int i2 = OBJECTS[index].indexOf(',', i1 + 1);
+    int i3 = OBJECTS[index].indexOf(',', i2 + 1);
+    int i4 = OBJECTS[index].indexOf(',', i3 + 1);
+    int i5 = OBJECTS[index].indexOf(',', i4 + 1);
+    int i6 = OBJECTS[index].indexOf(',', i5 + 1);
+    int i7 = OBJECTS[index].indexOf(',', i6 + 1);
 
     object.name = OBJECTS[index].substring(0, i1);
     object.description = OBJECTS[index].substring(i7 + 1, OBJECTS[index].length() - 1);
@@ -4753,8 +4753,8 @@ void drawLoadObjects()
         {
             for (int j = 0; j < 3; j++)
             {
-                // String M_NAME = Messier_Array[kk].substring(0, Messier_Array[kk].indexOf(';'));
-                String M_NAME = OBJECTS[kk].substring(0, OBJECTS[kk].indexOf(';'));
+                // String M_NAME = Messier_Array[kk].substring(0, Messier_Array[kk].indexOf(','));
+                String M_NAME = OBJECTS[kk].substring(0, OBJECTS[kk].indexOf(','));
                 if (M_NAME == "")
                 {
                     break;
@@ -4779,8 +4779,8 @@ void drawLoadObjects()
         {
             for (int j = 0; j < 3; j++)
             {
-                //String M_NAME = Treasure_Array[ll].substring(0, Treasure_Array[ll].indexOf(';'));
-                String M_NAME = OBJECTS[ll].substring(0, OBJECTS[ll].indexOf(';'));
+                //String M_NAME = Treasure_Array[ll].substring(0, Treasure_Array[ll].indexOf(','));
+                String M_NAME = OBJECTS[ll].substring(0, OBJECTS[ll].indexOf(','));
                 if (M_NAME == "")
                 {
                     break;
@@ -4855,8 +4855,8 @@ void drawStarSelectScreen()
     {
         for (int j = 0; j < 3; j++)
         {
-            int i1 = OBJECTS[kk].indexOf(';');
-            int i2 = OBJECTS[kk].indexOf(';', i1 + 1);
+            int i1 = OBJECTS[kk].indexOf(',');
+            int i2 = OBJECTS[kk].indexOf(',', i1 + 1);
             String S_NAME = OBJECTS[kk].substring(i1 + 1, i2);
             String C_NAME = OBJECTS[kk].substring(0, i1);
             if (S_NAME == "")
@@ -5084,8 +5084,8 @@ void drawAlignObjects_ali()
     {
         for (int j = 0; j < 3; j++)
         {
-            int i1 = OBJECTS[kk].indexOf(';');
-            int i2 = OBJECTS[kk].indexOf(';', i1 + 1);
+            int i1 = OBJECTS[kk].indexOf(',');
+            int i2 = OBJECTS[kk].indexOf(',', i1 + 1);
             String S_NAME = OBJECTS[kk].substring(i1 + 1, i2);
             String C_NAME = OBJECTS[kk].substring(0, i1);
             if (S_NAME == "")
@@ -5510,7 +5510,7 @@ void considerTouchInput(int lx, int ly)
                             // found button pressed.... now I need to get his ID and link to the ARRAY;
                             LAST_BUTTON = 10;
                             int zz = ((MESS_PAGER * 12) + (i * 3) + j);
-                            String M_NAME = OBJECTS[zz].substring(0, OBJECTS[zz].indexOf(';'));
+                            String M_NAME = OBJECTS[zz].substring(0, OBJECTS[zz].indexOf(','));
                             drawButton(((j * 75) + 10), ((i * 40) + 90), 71, 35, M_NAME, 0, BTN_L_BORDER, L_TEXT, 2);
                             if (OBJECTS[zz] != "")
                             //if (Messier_Array[zz] != "")
@@ -5542,7 +5542,7 @@ void considerTouchInput(int lx, int ly)
                             LAST_BUTTON = 10;
                             // found button pressed.... now I need to get his ID and link to the ARRAY;
                             int zz = ((TREAS_PAGER * 12) + (i * 3) + j);
-                            String M_NAME = OBJECTS[zz].substring(0, OBJECTS[zz].indexOf(';'));
+                            String M_NAME = OBJECTS[zz].substring(0, OBJECTS[zz].indexOf(','));
                             drawButton(((j * 75) + 10), ((i * 40) + 90), 71, 35, M_NAME, 0, BTN_L_BORDER, L_TEXT, 1);
                             if (OBJECTS[zz] != "")
                             //if (Treasure_Array[zz] != "")
