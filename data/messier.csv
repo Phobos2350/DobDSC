@@ -1,110 +1,110 @@
-M1,05h34m32,+22°00'52,TAURUS,Supernova Remnant,8.4,8′x4′,Crab Nebula
-M2,21h33m27,-00°49'24,AQUARIUS,Globular Cluster,6.6,16′,NGC 7089
-M3,13h42m12,+28°22'38,CANES VENATICI,Globular Cluster,6.3,18′,NGC 5272
-M4,16h23m35,-26°31'33,SCORPIUS,Globular Cluster,5.4,36′,NGC 6121
-M5,15h18m32,+02°04'52,SERPENS,Globular Cluster,5.7,23′,NGC 5904
-M6,17h40m06,-32°13'00,SCORPIUS,Open Cluster,4.2,33′,Butterfly Cluster
-M7,17h53m51,-34°47'34,SCORPIUS,Open Cluster,3.3,78′,Ptolemy Cluster
-M8,18h03m37,-24°23'12,SAGITTARIUS,Diffuse Nebula,5.0,45′x30′,Lagoon Nebula
-M9,17h19m12,-18°30'59,OPHIUCHUS,Globular Cluster,7.8,12′,NGC 6333
-M10,16h57m09,-04°05'58,OPHIUCHUS,Globular Cluster,6.6,20′,NGC 6254
-M11,18h51m06,-06°16'00,SCUTUM,Open Cluster,5.8,11′,Wild Duck Cluster
-M12,16h47m14,-01°56'55,OPHIUCHUS,Globular Cluster,6.1,16′,Gumball Globular
-M13,16h41m41,+36°27'36,HERCULES,Globular Cluster,5.8,20′,Great Hercules Cluster
-M14,17h37m36,-03°14'45,OPHIUCHUS,Globular Cluster,7.6,11′,NGC 6402
-M15,21h29m58,+12°10'01,PEGASUS,Globular Cluster,6.3,18′,Great Pegasus Cluster
-M16,18h18m48,-13°49'00,SERPENS,Emission Nebula,6.0,7′,Eagle Nebula
-M17,18h20m26,-16°10'36,SAGITTARIUS,Emission Nebula,6.0,11′,Omega/Swan Nebula
-M18,18h19m54,-17°08'00,SAGITTARIUS,Open Cluster,6.9,7′,Black Swan Cluster
-M19,17h02m38,-26°16'05,OPHIUCHUS,Globular Cluster,6.8,17′,NGC 6273
-M20,18h02m23,-23°01'48,SAGITTARIUS,Nebula/Open Cluster,6.3,28′,Trifid Nebula
-M21,18h04m36,-22°30'00,SAGITTARIUS,Open Cluster,5.9,16′,Webb's Cross
-M22,18h36m24,-23°54'17,SAGITTARIUS,Globular Cluster,5.2,32′,Great Sagittarius Cluster
-M23,17h56m48,-19°01'00,SAGITTARIUS,Open Cluster,5.5,25′,NGC 6494
-M24,18h17m00,-18°29'00,SAGITTARIUS,Star Cloud,4.6,90′x60′,Sagittarius Star Cloud
-M25,18h31m36,-19°15'00,SAGITTARIUS,Open Cluster,4.6,26′,IC 4725
-M26,18h45m12,-09°24'00,SCUTUM,Open Cluster,8.0,8′,NGC 6694
-M27,19h59m36,+22°43'16,VULPECULA,Planetary Nebula,7.4,7′,Dumbbell Nebula
-M28,18h24m33,-24°52'11,SAGITTARIUS,Globular Cluster,6.9,14′,NGC 6626
-M29,20h23m56,+38°31'24,CYGNUS,Open Cluster,6.6,10′,NGC 6913
-M30,21h40m22,-23°10'48,CAPRICORNUS,Globular Cluster,6.9,12′,NGC 7099
-M31,00h42m44,+41°16'09,ANDROMEDA,Spiral Galaxy,3.4,192′x60′,Andromeda Galaxy
-M32,00h42m42,+40°51'55,ANDROMEDA,Elliptical Galaxy,8.1,9′x7′,NGC 221
-M33,01h33m50,+30°39'37,TRIANGULUM,Spiral Galaxy,5.7,66′x42′,Triangulum Galaxy
-M34,02h42m06,+42°46'00,PERSEUS,Open Cluster,5.2,25′,NGC 1039
-M35,06h09m06,+24°21'00,GEMINI,Open Cluster,5.1,25′,NGC 2168
-M36,05h36m12,+34°08'04,AURIGA,Open Cluster,6.0,10′,Pinwheel Cluster
-M37,05h52m18,+32°33'02,AURIGA,Open Cluster,5.6,15′,NGC 2099
-M38,05h28m42,+35°51'18,AURIGA,Open Cluster,6.4,15′,Starfish Cluster
-M39,21h31m42,+48°25'00,CYGNUS,Open Cluster,4.6,31′,NGC 7092
-M40,12h22m13,+58°04'59,URSA MAJOR,Double Star,9.0,1′,Winnecke 4
-M41,06h46m00,-20°46'00,CANIS MAJOR,Open Cluster,4.5,39′,Little Beehive
-M42,05h35m17,-05°23'28,ORION,Diffuse Nebula,4.0,90′x60′,Orion Nebula
-M43,05h35m36,-05°16'00,ORION,Emission Nebula,7.0,20′x15′,De Mairan’s Nebula
-M44,08h40m24,+19°59'00,CANCER,Open Cluster,3.1,72′,Beehive Cluster
-M45,03h47m24,+24°07'00,TAURUS,Open Cluster,1.2,102′,Pleiades
-M46,07h41m48,-14°49'00,PUPPIS,Open Cluster,6.1,20′,NGC 2437
-M47,07h36m36,-14°30'00,PUPPIS,Open Cluster,4.4,30′,NGC 2422
-M48,08h13m42,-05°45'00,HYDRA,Open Cluster,5.8,30′,NGC 2548
-M49,12h29m47,+08°00'02,VIRGO,Elliptical Galaxy,8.4,10′x8′,NGC 4472
-M50,07h02m47,-08°22'33,MONOCEROS,Open Cluster,5.9,15′,Heart-Shaped Cluster
-M51,13h29m53,+47°11'43,CANES VENATICI,Spiral Galaxy,8.4,11′x7′,Whirlpool Galaxy
-M52,23h24m12,+61°35'00,CASSIOPEIA,Open Cluster,6.9,16′,The Scorpion
-M53,13h12m55,+18°10'05,COMA BERENICES,Globular Cluster,7.7,13′,NGC 5024
-M54,18h55m03,-30°28'48,SAGITTARIUS,Globular Cluster,7.7,12′,NGC 6715
-M55,19h39m59,-30°57'53,SAGITTARIUS,Globular Cluster,6.3,19′,Summer Rose Star
-M56,19h16m36,+30°11'01,LYRA,Globular Cluster,8.4,9′,NGC 6779
-M57,18h53m35,+33°01'45,LYRA,Planetary Nebula,8.8,3′x2′,Ring Nebula
-M58,12h37m44,+11°49'05,VIRGO,Spiral Galaxy,9.7,6′x5′,Barred-Spiral Galaxy
-M59,12h42m02,+11°39'49,VIRGO,Elliptical Galaxy,9.6,5′x4′,NGC 4621
-M60,12h43m40,+11°33'09,VIRGO,Elliptical Galaxy,8.8,8′x6′,NGC 4649
-M61,12h21m55,+04°28'25,VIRGO,Spiral Galaxy,9.7,7′x6′,Swelling Spiral Galaxy
-M62,17h01m13,-30°06'45,OPHIUCHUS,Globular Cluster,6.4,15′,Flickering Globular
-M63,13h15m49,+42°01'45,CANES VENATICI,Spiral Galaxy,8.6,13′x7′,Sunflower Galaxy
-M64,12h56m44,+21°40'58,COMA BERENICES,Spiral Galaxy,8.5,10′x5′,Black Eye Galaxy
-M65,11h18m56,+13°05'32,LEO,Spiral Galaxy,9.3,10′x3′,Leo Triplet #1
-M66,11h20m15,+12°59'30,LEO,Spiral Galaxy,8.9,9′x4′,Leo Triplet #2
-M67,08h51m18,+11°49'00,CANCER,Open Cluster,6.9,25′,King Cobra
-M68,12h39m28,-26°44'39,HYDRA,Globular Cluster,7.3,11′,NGC 4590
-M69,18h31m23,-32°20'53,SAGITTARIUS,Globular Cluster,8.3,7′,NGC 6637
-M70,18h43m13,-32°17'32,SAGITTARIUS,Globular Cluster,7.8,8′,NGC 6681
-M71,19h53m46,+18°46'45,SAGITTA,Globular Cluster,8.4,7′,NGC 6838
-M72,20h53m28,-12°32'14,AQUARIUS,Globular Cluster,9.2,7′,NGC 6981
-M73,20h58m54,-12°38'00,AQUARIUS,4-Star Asterism,9.7,3′,NGC 6994
-M74,01h36m42,+15°47'01,PISCES,Spiral Galaxy,9.4,11′x10′,Phantom Galaxy
-M75,20h06m05,-21°55'16,SAGITTARIUS,Globular Cluster,8.6,7′,NGC 6864
-M76,01h42m24,+51°34'31,PERSEUS,Planetary Nebula,10.1,3′,Little Dumbbell Nebula
-M77,02h42m41,-00°00'48,CETUS,Spiral Galaxy,8.9,7′x6′,Cetus A
-M78,05h46m47,+00°04'59,ORION,Reflection Nebula,8.0,8′x6′,NGC 2068
-M79,05h24m11,-24°31'27,LEPUS,Globular Cluster,7.7,10′,NGC 1904
-M80,16h17m02,-22°58'34,SCORPIUS,Globular Cluster,7.3,10′,NGC 6093
-M81,09h55m33,+69°03'55,URSA MAJOR,Spiral Galaxy,6.9,25′x12′,Bode's Galaxy
-M82,09h55m52,+69°40'47,URSA MAJOR,Irregular Galaxy,8.4,11′x4′,Cigar Galaxy
-M83,13h37m01,-29°51'57,HYDRA,Spiral Galaxy,7.5,13′x12′,Southern Pinwheel Galaxy
-M84,12h25m04,+12°53'13,VIRGO,Elliptical Galaxy,9.1,7′x6′,NGC 4374
-M85,12h25m24,+18°11'28,COMA BERENICES,Elliptical Galaxy,9.1,7′x6′,NGC 4382
-M86,12h26m12,+12°56'46,VIRGO,Elliptical Galaxy,8.9,9′x6′,Markarian Chain
-M87,12h30m49,+12°23'28,VIRGO,Elliptical Galaxy,8.6,8′x7,Virgo A
-M88,12h31m59,+14°25'14,COMA BERENICES,Spiral Galaxy,9.6,7′x4′,NGC 4501
-M89,12h35m40,+12°33'23,VIRGO,Elliptical Galaxy,9.8,4′x6′,NGC 4552
-M90,12h36m50,+13°09'46,VIRGO,Spiral Galaxy,9.5,10′x4′,NGC 4569
-M91,12h35m26,+14°29'47,COMA BERENICES,Spiral Galaxy,10.2,5′x4′,NGC 4548
-M92,17h17m07,+43°08'09,HERCULES,Globular Cluster,6.5,14′,NGC 6341
-M93,07h44m36,-23°52'00,PUPPIS,Open Cluster,6.2,10′,NGC 2447
-M94,12h50m53,+41°07'14,CANES VENATICI,Spiral Galaxy,8.2,14′x12′,Cat’s Eye Galaxy
-M95,10h43m58,+11°42'14,LEO,Spiral Galaxy,9.7,7′x5′,NGC 3351
-M96,10h46m46,+11°49'12,LEO,Spiral Galaxy,9.3,8′x5′,NGC 3368
-M97,11h14m48,+55°01'09,URSA MAJOR,Planetary Nebula,9.9,3′,Owl Nebula
-M98,12h13m48,+14°54'02,COMA BERENICES,Spiral Galaxy,10.1,10′x3′,NGC 4192
-M99,12h18m50,+14°24'59,COMA BERENICES,Spiral Galaxy,9.9,5′x5′,Coma Pinwheel
-M100,12h22m55,+15°49'21,COMA BERENICES,Spiral Galaxy,9.4,7′x6′,NGC 4321
-M101,14h03m13,+54°20'57,URSA MAJOR,Spiral Galaxy,7.9,29′x27′,Pinwheel Galaxy
-M102,15h06m30,+55°45'48,DRACO,Spiral Galaxy,9.9,7′x3′,Spindle Galaxy
-M103,01h33m12,+60°42'00,CASSIOPEIA,Open Cluster,7.4,6′,NGC 581
-M104,12h39m59,-11°37'23,VIRGO,Spiral Galaxy,8.0,9′x4′,Sombrero Galaxy
-M105,10h47m50,+12°34'54,LEO,Elliptical Galaxy,9.3,5′x5′,NGC 3379
-M106,12h18m58,+47°18'14,CANES VENATICI,Spiral Galaxy,8.4,19′x7′,NGC 4258
-M107,16h32m32,-13°03'14,OPHIUCHUS,Globular Cluster,7.8,13′,NGC 6171
-M108,11h11m31,+55°40'27,URSA MAJOR,Spiral Galaxy,10.0,9′x2′,Surfboard Galaxy
-M109,11h57m36,+53°22'28,URSA MAJOR,Spiral Galaxy,9.8,8′x4′,NGC 3992
-M110,00h40m22,+41°41'07,ANDROMEDA,Elliptical Galaxy,8.1,20′x12′,Edward Young Star
+M1,05h34m32,+22°00'52,TAURUS,Supernova Remnant,8.4,8'x4',Crab Nebula
+M2,21h33m27,-00°49'24,AQUARIUS,Globular Cluster,6.6,16',NGC 7089
+M3,13h42m12,+28°22'38,CANES VENATICI,Globular Cluster,6.3,18',NGC 5272
+M4,16h23m35,-26°31'33,SCORPIUS,Globular Cluster,5.4,36',NGC 6121
+M5,15h18m32,+02°04'52,SERPENS,Globular Cluster,5.7,23',NGC 5904
+M6,17h40m06,-32°13'00,SCORPIUS,Open Cluster,4.2,33',Butterfly Cluster
+M7,17h53m51,-34°47'34,SCORPIUS,Open Cluster,3.3,78',Ptolemy Cluster
+M8,18h03m37,-24°23'12,SAGITTARIUS,Diffuse Nebula,5.0,45'x30',Lagoon Nebula
+M9,17h19m12,-18°30'59,OPHIUCHUS,Globular Cluster,7.8,12',NGC 6333
+M10,16h57m09,-04°05'58,OPHIUCHUS,Globular Cluster,6.6,20',NGC 6254
+M11,18h51m06,-06°16'00,SCUTUM,Open Cluster,5.8,11',Wild Duck Cluster
+M12,16h47m14,-01°56'55,OPHIUCHUS,Globular Cluster,6.1,16',Gumball Globular
+M13,16h41m41,+36°27'36,HERCULES,Globular Cluster,5.8,20',Great Hercules Cluster
+M14,17h37m36,-03°14'45,OPHIUCHUS,Globular Cluster,7.6,11',NGC 6402
+M15,21h29m58,+12°10'01,PEGASUS,Globular Cluster,6.3,18',Great Pegasus Cluster
+M16,18h18m48,-13°49'00,SERPENS,Emission Nebula,6.0,7',Eagle Nebula
+M17,18h20m26,-16°10'36,SAGITTARIUS,Emission Nebula,6.0,11',Omega/Swan Nebula
+M18,18h19m54,-17°08'00,SAGITTARIUS,Open Cluster,6.9,7',Black Swan Cluster
+M19,17h02m38,-26°16'05,OPHIUCHUS,Globular Cluster,6.8,17',NGC 6273
+M20,18h02m23,-23°01'48,SAGITTARIUS,Nebula/Open Cluster,6.3,28',Trifid Nebula
+M21,18h04m36,-22°30'00,SAGITTARIUS,Open Cluster,5.9,16',Webb's Cross
+M22,18h36m24,-23°54'17,SAGITTARIUS,Globular Cluster,5.2,32',Great Sagittarius Cluster
+M23,17h56m48,-19°01'00,SAGITTARIUS,Open Cluster,5.5,25',NGC 6494
+M24,18h17m00,-18°29'00,SAGITTARIUS,Star Cloud,4.6,90'x60',Sagittarius Star Cloud
+M25,18h31m36,-19°15'00,SAGITTARIUS,Open Cluster,4.6,26',IC 4725
+M26,18h45m12,-09°24'00,SCUTUM,Open Cluster,8.0,8',NGC 6694
+M27,19h59m36,+22°43'16,VULPECULA,Planetary Nebula,7.4,7',Dumbbell Nebula
+M28,18h24m33,-24°52'11,SAGITTARIUS,Globular Cluster,6.9,14',NGC 6626
+M29,20h23m56,+38°31'24,CYGNUS,Open Cluster,6.6,10',NGC 6913
+M30,21h40m22,-23°10'48,CAPRICORNUS,Globular Cluster,6.9,12',NGC 7099
+M31,00h42m44,+41°16'09,ANDROMEDA,Spiral Galaxy,3.4,192'x60',Andromeda Galaxy
+M32,00h42m42,+40°51'55,ANDROMEDA,Elliptical Galaxy,8.1,9'x7',NGC 221
+M33,01h33m50,+30°39'37,TRIANGULUM,Spiral Galaxy,5.7,66'x42',Triangulum Galaxy
+M34,02h42m06,+42°46'00,PERSEUS,Open Cluster,5.2,25',NGC 1039
+M35,06h09m06,+24°21'00,GEMINI,Open Cluster,5.1,25',NGC 2168
+M36,05h36m12,+34°08'04,AURIGA,Open Cluster,6.0,10',Pinwheel Cluster
+M37,05h52m18,+32°33'02,AURIGA,Open Cluster,5.6,15',NGC 2099
+M38,05h28m42,+35°51'18,AURIGA,Open Cluster,6.4,15',Starfish Cluster
+M39,21h31m42,+48°25'00,CYGNUS,Open Cluster,4.6,31',NGC 7092
+M40,12h22m13,+58°04'59,URSA MAJOR,Double Star,9.0,1',Winnecke 4
+M41,06h46m00,-20°46'00,CANIS MAJOR,Open Cluster,4.5,39',Little Beehive
+M42,05h35m17,-05°23'28,ORION,Diffuse Nebula,4.0,90'x60',Orion Nebula
+M43,05h35m36,-05°16'00,ORION,Emission Nebula,7.0,20'x15',De Mairan's Nebula
+M44,08h40m24,+19°59'00,CANCER,Open Cluster,3.1,72',Beehive Cluster
+M45,03h47m24,+24°07'00,TAURUS,Open Cluster,1.2,102',Pleiades
+M46,07h41m48,-14°49'00,PUPPIS,Open Cluster,6.1,20',NGC 2437
+M47,07h36m36,-14°30'00,PUPPIS,Open Cluster,4.4,30',NGC 2422
+M48,08h13m42,-05°45'00,HYDRA,Open Cluster,5.8,30',NGC 2548
+M49,12h29m47,+08°00'02,VIRGO,Elliptical Galaxy,8.4,10'x8',NGC 4472
+M50,07h02m47,-08°22'33,MONOCEROS,Open Cluster,5.9,15',Heart-Shaped Cluster
+M51,13h29m53,+47°11'43,CANES VENATICI,Spiral Galaxy,8.4,11'x7',Whirlpool Galaxy
+M52,23h24m12,+61°35'00,CASSIOPEIA,Open Cluster,6.9,16',The Scorpion
+M53,13h12m55,+18°10'05,COMA BERENICES,Globular Cluster,7.7,13',NGC 5024
+M54,18h55m03,-30°28'48,SAGITTARIUS,Globular Cluster,7.7,12',NGC 6715
+M55,19h39m59,-30°57'53,SAGITTARIUS,Globular Cluster,6.3,19',Summer Rose Star
+M56,19h16m36,+30°11'01,LYRA,Globular Cluster,8.4,9',NGC 6779
+M57,18h53m35,+33°01'45,LYRA,Planetary Nebula,8.8,3'x2',Ring Nebula
+M58,12h37m44,+11°49'05,VIRGO,Spiral Galaxy,9.7,6'x5',Barred-Spiral Galaxy
+M59,12h42m02,+11°39'49,VIRGO,Elliptical Galaxy,9.6,5'x4',NGC 4621
+M60,12h43m40,+11°33'09,VIRGO,Elliptical Galaxy,8.8,8'x6',NGC 4649
+M61,12h21m55,+04°28'25,VIRGO,Spiral Galaxy,9.7,7'x6',Swelling Spiral Galaxy
+M62,17h01m13,-30°06'45,OPHIUCHUS,Globular Cluster,6.4,15',Flickering Globular
+M63,13h15m49,+42°01'45,CANES VENATICI,Spiral Galaxy,8.6,13'x7',Sunflower Galaxy
+M64,12h56m44,+21°40'58,COMA BERENICES,Spiral Galaxy,8.5,10'x5',Black Eye Galaxy
+M65,11h18m56,+13°05'32,LEO,Spiral Galaxy,9.3,10'x3',Leo Triplet #1
+M66,11h20m15,+12°59'30,LEO,Spiral Galaxy,8.9,9'x4',Leo Triplet #2
+M67,08h51m18,+11°49'00,CANCER,Open Cluster,6.9,25',King Cobra
+M68,12h39m28,-26°44'39,HYDRA,Globular Cluster,7.3,11',NGC 4590
+M69,18h31m23,-32°20'53,SAGITTARIUS,Globular Cluster,8.3,7',NGC 6637
+M70,18h43m13,-32°17'32,SAGITTARIUS,Globular Cluster,7.8,8',NGC 6681
+M71,19h53m46,+18°46'45,SAGITTA,Globular Cluster,8.4,7',NGC 6838
+M72,20h53m28,-12°32'14,AQUARIUS,Globular Cluster,9.2,7',NGC 6981
+M73,20h58m54,-12°38'00,AQUARIUS,4-Star Asterism,9.7,3',NGC 6994
+M74,01h36m42,+15°47'01,PISCES,Spiral Galaxy,9.4,11'x10',Phantom Galaxy
+M75,20h06m05,-21°55'16,SAGITTARIUS,Globular Cluster,8.6,7',NGC 6864
+M76,01h42m24,+51°34'31,PERSEUS,Planetary Nebula,10.1,3',Little Dumbbell Nebula
+M77,02h42m41,-00°00'48,CETUS,Spiral Galaxy,8.9,7'x6',Cetus A
+M78,05h46m47,+00°04'59,ORION,Reflection Nebula,8.0,8'x6',NGC 2068
+M79,05h24m11,-24°31'27,LEPUS,Globular Cluster,7.7,10',NGC 1904
+M80,16h17m02,-22°58'34,SCORPIUS,Globular Cluster,7.3,10',NGC 6093
+M81,09h55m33,+69°03'55,URSA MAJOR,Spiral Galaxy,6.9,25'x12',Bode's Galaxy
+M82,09h55m52,+69°40'47,URSA MAJOR,Irregular Galaxy,8.4,11'x4',Cigar Galaxy
+M83,13h37m01,-29°51'57,HYDRA,Spiral Galaxy,7.5,13'x12',Southern Pinwheel Galaxy
+M84,12h25m04,+12°53'13,VIRGO,Elliptical Galaxy,9.1,7'x6',NGC 4374
+M85,12h25m24,+18°11'28,COMA BERENICES,Elliptical Galaxy,9.1,7'x6',NGC 4382
+M86,12h26m12,+12°56'46,VIRGO,Elliptical Galaxy,8.9,9'x6',Markarian Chain
+M87,12h30m49,+12°23'28,VIRGO,Elliptical Galaxy,8.6,8'x7,Virgo A
+M88,12h31m59,+14°25'14,COMA BERENICES,Spiral Galaxy,9.6,7'x4',NGC 4501
+M89,12h35m40,+12°33'23,VIRGO,Elliptical Galaxy,9.8,4'x6',NGC 4552
+M90,12h36m50,+13°09'46,VIRGO,Spiral Galaxy,9.5,10'x4',NGC 4569
+M91,12h35m26,+14°29'47,COMA BERENICES,Spiral Galaxy,10.2,5'x4',NGC 4548
+M92,17h17m07,+43°08'09,HERCULES,Globular Cluster,6.5,14',NGC 6341
+M93,07h44m36,-23°52'00,PUPPIS,Open Cluster,6.2,10',NGC 2447
+M94,12h50m53,+41°07'14,CANES VENATICI,Spiral Galaxy,8.2,14'x12',Cat's Eye Galaxy
+M95,10h43m58,+11°42'14,LEO,Spiral Galaxy,9.7,7'x5',NGC 3351
+M96,10h46m46,+11°49'12,LEO,Spiral Galaxy,9.3,8'x5',NGC 3368
+M97,11h14m48,+55°01'09,URSA MAJOR,Planetary Nebula,9.9,3',Owl Nebula
+M98,12h13m48,+14°54'02,COMA BERENICES,Spiral Galaxy,10.1,10'x3',NGC 4192
+M99,12h18m50,+14°24'59,COMA BERENICES,Spiral Galaxy,9.9,5'x5',Coma Pinwheel
+M100,12h22m55,+15°49'21,COMA BERENICES,Spiral Galaxy,9.4,7'x6',NGC 4321
+M101,14h03m13,+54°20'57,URSA MAJOR,Spiral Galaxy,7.9,29'x27',Pinwheel Galaxy
+M102,15h06m30,+55°45'48,DRACO,Spiral Galaxy,9.9,7'x3',Spindle Galaxy
+M103,01h33m12,+60°42'00,CASSIOPEIA,Open Cluster,7.4,6',NGC 581
+M104,12h39m59,-11°37'23,VIRGO,Spiral Galaxy,8.0,9'x4',Sombrero Galaxy
+M105,10h47m50,+12°34'54,LEO,Elliptical Galaxy,9.3,5'x5',NGC 3379
+M106,12h18m58,+47°18'14,CANES VENATICI,Spiral Galaxy,8.4,19'x7',NGC 4258
+M107,16h32m32,-13°03'14,OPHIUCHUS,Globular Cluster,7.8,13',NGC 6171
+M108,11h11m31,+55°40'27,URSA MAJOR,Spiral Galaxy,10.0,9'x2',Surfboard Galaxy
+M109,11h57m36,+53°22'28,URSA MAJOR,Spiral Galaxy,9.8,8'x4',NGC 3992
+M110,00h40m22,+41°41'07,ANDROMEDA,Elliptical Galaxy,8.1,20'x12',Edward Young Star

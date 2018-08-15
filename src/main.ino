@@ -69,8 +69,8 @@
 #include <RtcDS3231.h>
 #include <LSM303.h> // Install this on Arudino IDE: "LSM303 Library by Pololu" (I used version 3.0.1), https://github.com/pololu/lsm303-arduino
 
-// #define SERIAL_DEBUG // comment out to deactivate the serial debug mode
-// #define PERFECT_ALIGN
+#define SERIAL_DEBUG // comment out to deactivate the serial debug mode
+#define PERFECT_ALIGN
 
 #define GEAR_LARGE 60.0f
 #define GEAR_SMALL 18.0f
@@ -434,7 +434,7 @@ int DATE_ENTRY_POS = 0;
 int SUMMER_TIME = 0;
 int16_t L_TEXT, D_TEXT, BTN_L_BORDER, BTN_BLK_TEXT, TITLE_TEXT_BG, TITLE_TEXT, MSG_BOX_BG, MSG_BOX_TEXT; // defines string constants for the clor - Depending on the DAY/NIGHT modes
 
-// Toshimi Taki’s Alignment variables
+// Toshimi Taki's Alignment variables
 bool IS_SET_R1, IS_SET_R2, IS_SET_R3;
 // Calculation vectors.
 float HVC1[3], EVC1[3], HVC2[3], EVC2[3], HVC3[3], EVC3[3];
@@ -925,9 +925,12 @@ void equatorialToCelestial(float alt, float az, float lat,
         *dec = dec_tmp;
 }
 
-int getJulianYear(int jd)
+double getJulianYear(double jd)
 {
-    return (jd - JD2000) / JDYEAR + 2000;
+    if (jd == JD2000)
+        return 2000.0;
+    else
+        return (jd - JD2000) / JDYEAR + 2000.0;
 }
 
 void calcProperMotion(double motionRa, double motionDec, double deltaJulianYear, double *deltaRa, double *deltaDec)
@@ -1089,14 +1092,23 @@ void calcProperMotionPrecessionNutationAberration(double ra, double dec, double 
     double currJDYear = getJulianYear(JDN);
     double deltaJulianYear = currJDYear - coordJDYear;
     //double julianYearSinceJD2000 = currJDYear - 2000;
+#ifdef SERIAL_DEBUG
+    Serial.print("CO-ORD JDYEAR: ");
+    Serial.print(coordJDYear);
+    Serial.print(" CURR JDYEAR: ");
+    Serial.print(currJDYear);
+    Serial.print(" DELTA JDYEAR: ");
+    Serial.print(deltaJulianYear);
+    Serial.println("");
+#endif
 
     totalDeltaDec = 0;
     totalDeltaRa = 0;
     calcProperMotion(motionRa, motionDec, deltaJulianYear, &properMotionRa, &properMotionDec);
     totalDeltaRa += properMotionRa;
     totalDeltaDec += properMotionDec;
-    //calcPrecession(properMotionRa, properMotionDec, deltaJulianYear, &tmpRa, &tmpDec);
-    calcPrecessionRigorous(properMotionRa, properMotionDec, coordJDYear, deltaJulianYear, &precessedRa, &precessedDec);
+    calcPrecession(properMotionRa, properMotionDec, deltaJulianYear, &precessedRa, &precessedDec);
+    // calcPrecessionRigorous(properMotionRa, properMotionDec, coordJDYear, deltaJulianYear, &precessedRa, &precessedDec);
     totalDeltaRa += precessedRa;
     totalDeltaDec += precessedDec;
     //celestialParameters(julianYearSinceJD2000);
@@ -1119,22 +1131,22 @@ void calcProperMotionPrecessionNutationAberration(double ra, double dec, double 
     Serial.print(deltaJulianYear);
     Serial.println("");
     Serial.print(" ---> P_MOTION RA: ");
-    Serial.print(rad2hms(properMotionRa, true, false));
+    Serial.print((properMotionRa * RAD_TO_DEG) / 15);
     Serial.print(" P_MOTION DEC: ");
-    Serial.print(rad2dms(properMotionDec, true, false));
+    Serial.print(properMotionDec * RAD_TO_DEG);
     Serial.print(" PRECESSED RA: ");
-    Serial.print(rad2hms(precessedRa, true, true));
+    Serial.print((precessedRa * RAD_TO_DEG) / 15);
     Serial.print(" PRECESSED DEC: ");
-    Serial.print(rad2dms(precessedDec, true, true));
+    Serial.print(precessedDec * RAD_TO_DEG);
     Serial.println("");
     Serial.print(" NUTATION RA: ");
-    Serial.print(rad2hms(nutationRa, true, true));
+    Serial.print((nutationRa * RAD_TO_DEG) / 15);
     Serial.print(" NUTATION DEC: ");
-    Serial.print(rad2dms(nutationDec, true, true));
+    Serial.print(nutationDec * RAD_TO_DEG);
     Serial.print(" ABERRATION RA: ");
-    Serial.print(rad2hms(aberrationRa, true, true));
+    Serial.print((aberrationRa * RAD_TO_DEG) / 15);
     Serial.print(" ABERRATION DEC: ");
-    Serial.print(rad2dms(aberrationDec, true, true));
+    Serial.print(aberrationDec * RAD_TO_DEG);
     Serial.println("");
     Serial.print(" DELTA_RA: ");
     Serial.print(rad2hms(totalDeltaRa, true, true));
@@ -2545,21 +2557,24 @@ void processAlignmentStar(int index, AlignmentStar &star)
     int i3 = OBJECTS[index].indexOf(',', i2 + 1);
     int i4 = OBJECTS[index].indexOf(',', i3 + 1);
 
-    star.name = OBJECTS[index].substring(0, i1);
+    String starName = OBJECTS[index].substring(0, i1);
     String ra = OBJECTS[index].substring(i1, i2);
     String dec = OBJECTS[index].substring(i2, i3);
-    star.constellation = OBJECTS[index].substring(i3, i4);
-    star.mag = OBJECTS[index].substring(i4 + 1, OBJECTS[index].length()).toFloat();
+    String starConst = OBJECTS[index].substring(i3 + 1, i4);
+    String starMag = OBJECTS[index].substring(i4 + 1, OBJECTS[index].length() - 1);
 
     float ra_h = ra.substring(1, ra.indexOf('h')).toFloat();
     float ra_m = ra.substring(ra.indexOf('h') + 1, ra.indexOf('m')).toFloat();
-    float ra_s = ra.substring(ra.indexOf('m') + 1, ra.length() - 1).toFloat();
+    float ra_s = ra.substring(ra.indexOf('m') + 1, ra.length()).toFloat();
 
-    char sign = dec[2];
+    char sign = dec[1];
     float dec_d = dec.substring(2, dec.indexOf('°')).toFloat();
-    float dec_m = dec.substring(dec.indexOf('°') + 1, ra.indexOf('\'')).toFloat();
-    float dec_s = dec.substring(dec.indexOf('\'') + 1, ra.length() - 1).toFloat();
+    float dec_m = dec.substring(dec.indexOf('°') + 1, dec.indexOf('\'')).toFloat();
+    float dec_s = dec.substring(dec.indexOf('\'') + 1, dec.length()).toFloat();
 
+    star.name = starName;
+    star.constellation = starConst;
+    star.mag = starMag.toFloat();
     star.ra = hms2rads(ra_h, ra_m, ra_s);
     star.dec = dms2rads(sign, dec_d, dec_m, dec_s);
     star.time = LST_RADS;
@@ -2568,9 +2583,28 @@ void processAlignmentStar(int index, AlignmentStar &star)
 #ifdef SERIAL_DEBUG
     Serial.print("processAlignmentStar() ");
     Serial.print(star.name);
-    Serial.print(" - RA: ");
+    Serial.print(" - MAG: ");
+    Serial.print(starMag);
+    Serial.print(" MAG(processed): ");
+    Serial.print(star.mag);
+    Serial.print(" RA_H: ");
+    Serial.print(ra_h);
+    Serial.print(" RA_M: ");
+    Serial.print(ra_m);
+    Serial.print(" RA_S: ");
+    Serial.print(ra_s);
+    Serial.print(" DEC_SIGN: ");
+    Serial.print(sign);
+    Serial.print(" DEC_D: ");
+    Serial.print(dec_d);
+    Serial.print(" DEC_M: ");
+    Serial.print(dec_m);
+    Serial.print(" DEC_S: ");
+    Serial.print(dec_s);
+    Serial.println("");
+    Serial.print(" RA(rads): ");
     Serial.print(star.ra);
-    Serial.print(" DEC: ");
+    Serial.print(" DEC(rads): ");
     Serial.print(star.dec);
     Serial.println("");
 #endif
@@ -2597,65 +2631,6 @@ void processAlignmentStar(int index, AlignmentStar &star)
 #endif
 }
 
-// void processAlignmentStar(int index, AlignmentStar &star)
-// {
-
-//     int i1 = OBJECTS[index].indexOf(',');
-//     int i2 = OBJECTS[index].indexOf(',', i1 + 1);
-//     int i3 = OBJECTS[index].indexOf(',', i2 + 1);
-//     int i4 = OBJECTS[index].indexOf(',', i3 + 1);
-
-//     star.constellation = OBJECTS[index].substring(0, i1);
-//     star.name = OBJECTS[index].substring(i1 + 1, i2);
-//     String ra = OBJECTS[index].substring(i2 + 1, i3);
-//     String dec = OBJECTS[index].substring(i3 + 1, i4);
-//     star.mag = OBJECTS[index].substring(i4 + 1, OBJECTS[index].length()).toFloat();
-
-//     float ra_h = ra.substring(0, ra.indexOf('h')).toFloat();
-//     float ra_m = ra.substring(ra.indexOf('h') + 1, ra.indexOf('m')).toFloat();
-//     float ra_s = ra.substring(ra.indexOf('m') + 1, ra.length() - 1).toFloat();
-
-//     float dec_d = dec.substring(0, dec.indexOf('°')).toFloat();
-//     float dec_m = dec.substring(dec.indexOf('°') + 1, ra.indexOf('\'')).toFloat();
-//     float dec_s = dec.substring(dec.indexOf('\'') + 1, ra.length() - 1).toFloat();
-
-//     star.ra = hms2rads(ra_h, ra_m, ra_s);
-//     star.dec = dms2rads(dec_d, dec_m, dec_s);
-//     star.time = LST_RADS;
-//     star.lat = OBSERVATION_LATTITUDE_RADS;
-
-// #ifdef SERIAL_DEBUG
-//     Serial.print("processAlignmentStar() ");
-//     Serial.print(star.name);
-//     Serial.print(" - RA: ");
-//     Serial.print(star.ra);
-//     Serial.print(" DEC: ");
-//     Serial.print(star.dec);
-//     Serial.println("");
-// #endif
-//     // Correct for astronomical movements and refraction if needed
-//     double delta_ra, delta_dec;
-//     if (CORRECT_PRECESSION_ETC)
-//     {
-//         calcProperMotionPrecessionNutationAberration(star.ra, star.dec, PROPER_MOTION_RA, PROPER_MOTION_DEC, &delta_ra, &delta_dec);
-//         star.ra += delta_ra;
-//         star.dec += delta_dec;
-//     }
-//     // if (CORRECT_REFRACTION)
-//     // {
-//     //     calcRefractionFromTrueEquatorialCorrection(star.ra, star.dec, star.time, star.lat, &delta_ra, &delta_dec);
-//     //     star.ra += delta_ra;
-//     //     star.dec += delta_dec;
-//     // }
-// #ifdef SERIAL_DEBUG
-//     Serial.print("Added Corrections - RA: ");
-//     Serial.print(star.ra);
-//     Serial.print(" DEC: ");
-//     Serial.print(star.dec);
-//     Serial.println("");
-// #endif
-// }
-
 void processObject(int index, Object &object)
 {
 
@@ -2667,22 +2642,23 @@ void processObject(int index, Object &object)
     int i6 = OBJECTS[index].indexOf(',', i5 + 1);
     int i7 = OBJECTS[index].indexOf(',', i6 + 1);
 
-    object.name = OBJECTS[index].substring(0, i1);
+    String objName = OBJECTS[index].substring(0, i1);
     String ra = OBJECTS[index].substring(i1, i2);
     String dec = OBJECTS[index].substring(i2, i3);
 
     float ra_h = ra.substring(1, ra.indexOf('h')).toFloat();
     float ra_m = ra.substring(ra.indexOf('h') + 1, ra.indexOf('m')).toFloat();
-    float ra_s = ra.substring(ra.indexOf('m') + 1, ra.length() - 1).toFloat();
+    float ra_s = ra.substring(ra.indexOf('m') + 1, ra.length()).toFloat();
 
-    char sign = dec[2];
+    char sign = dec[1];
     float dec_d = dec.substring(2, dec.indexOf('°')).toFloat();
-    float dec_m = dec.substring(dec.indexOf('°') + 1, ra.indexOf('\'')).toFloat();
-    float dec_s = dec.substring(dec.indexOf('\'') + 1, ra.length() - 1).toFloat();
+    float dec_m = dec.substring(dec.indexOf('°') + 1, dec.indexOf('\'')).toFloat();
+    float dec_s = dec.substring(dec.indexOf('\'') + 1, dec.length()).toFloat();
 
     object.ra = hms2rads(ra_h, ra_m, ra_s);
     object.dec = dms2rads(sign, dec_d, dec_m, dec_s);
 
+    object.name = objName;
     object.constellation = OBJECTS[index].substring(i3 + 1, i4);
     object.type = OBJECTS[index].substring(i4 + 1, i5);
     object.mag = OBJECTS[index].substring(i5 + 1, i6).toFloat();
@@ -2714,61 +2690,6 @@ void processObject(int index, Object &object)
     Serial.println("");
 #endif
 }
-
-// void processObject(int index, Object &object)
-// {
-
-//     int i1 = OBJECTS[index].indexOf(',');
-//     int i2 = OBJECTS[index].indexOf(',', i1 + 1);
-//     int i3 = OBJECTS[index].indexOf(',', i2 + 1);
-//     int i4 = OBJECTS[index].indexOf(',', i3 + 1);
-//     int i5 = OBJECTS[index].indexOf(',', i4 + 1);
-//     int i6 = OBJECTS[index].indexOf(',', i5 + 1);
-//     int i7 = OBJECTS[index].indexOf(',', i6 + 1);
-
-//     object.name = OBJECTS[index].substring(0, i1);
-//     object.description = OBJECTS[index].substring(i7 + 1, OBJECTS[index].length() - 1);
-//     String ra = OBJECTS[index].substring(i1, i2);
-//     String dec = OBJECTS[index].substring(i2, i3);
-
-//     float ra_h = ra.substring(1, ra.indexOf('h')).toFloat();
-//     float ra_m = ra.substring(ra.indexOf('h') + 1, ra.length() - 1).toFloat();
-
-//     float dec_d = dec.substring(1, dec.indexOf('°')).toFloat();
-//     float dec_m = dec.substring(dec.indexOf('°') + 1, dec.length() - 1).toFloat();
-
-//     object.ra = hms2rads(ra_h, ra_m, 0);
-//     object.dec = dms2rads(dec_d, dec_m, 0);
-
-//     object.constellation = OBJECTS[index].substring(i3 + 1, i4);
-//     object.type = OBJECTS[index].substring(i4 + 1, i5);
-//     object.mag = OBJECTS[index].substring(i5 + 1, i6).toFloat();
-//     object.size = OBJECTS[index].substring(i6 + 1, i7);
-// #ifdef SERIAL_DEBUG
-//     Serial.print("processObject() ");
-//     Serial.print(object.name);
-//     Serial.print(" - RA: ");
-//     Serial.print(object.ra);
-//     Serial.print(" DEC: ");
-//     Serial.print(object.dec);
-//     Serial.println("");
-// #endif
-//     // Correct for astronomical movements
-//     double delta_ra, delta_dec;
-//     if (CORRECT_PRECESSION_ETC)
-//     {
-//         calcProperMotionPrecessionNutationAberration(object.ra, object.dec, PROPER_MOTION_RA, PROPER_MOTION_DEC, &delta_ra, &delta_dec);
-//         object.ra += delta_ra;
-//         object.dec += delta_dec;
-//     }
-// #ifdef SERIAL_DEBUG
-//     Serial.print("Added Corrections - RA: ");
-//     Serial.print(object.ra);
-//     Serial.print(" DEC: ");
-//     Serial.print(object.dec);
-//     Serial.println("");
-// #endif
-// }
 
 void printMatrix(float *A, int m, int n, String label)
 {
@@ -4220,7 +4141,7 @@ void considerTimeUpdates()
     else if (CURRENT_SCREEN == 0 && (millis() - UPDATE_TIME) > 5000)
     {
         // GPS Screen
-        tft.fillRect(0, 95, 240, 100, BLACK);
+        tft.fillRect(0, 95, 240, 170, BLACK);
         tft.setTextColor(L_TEXT);
         tft.setTextSize(2);
         tft.setCursor(10, 100);
@@ -4261,10 +4182,10 @@ void considerTimeUpdates()
         else
         {
             tft.setCursor(10, 200);
-            tft.print("Verifying Coordinates");
+            tft.print("Verifying Co-ords");
             tft.setCursor(10, 220);
             tft.print("Iteration #");
-            tft.print(GPS_ITERATIONS);
+            tft.print((GPS_ITERATIONS + 1));
             GPS_ITERATIONS += 1;
             smartDelay(1000);
         }
@@ -4737,27 +4658,36 @@ void drawMainScreen()
     tft.setTextSize(2);
     tft.setTextColor(TITLE_TEXT, TITLE_TEXT_BG);
     tft.setCursor(10, 135);
-    tft.println("TARGET");
+    tft.print("TARGET");
 
     if (CURRENT_OBJECT.name != "")
     {
-        tft.setTextSize(2);
         tft.setTextColor(L_TEXT);
+        tft.print(" - " + CURRENT_OBJECT.name);
         tft.setCursor(10, 155);
-        tft.print(CURRENT_OBJECT.name);
-        tft.setTextSize(1);
-        tft.print(" - " + CURRENT_OBJECT.description);
-
         tft.setTextSize(2);
-        tft.setCursor(10, 175);
+        if (CURRENT_OBJECT.description.length() > 19)
+        {
+            tft.print(CURRENT_OBJECT.description.substring(0, 19));
+            int spacing = 230 - ((CURRENT_OBJECT.description.length() - 19) * 11);
+            tft.setCursor(spacing, 170);
+            tft.print("-" + CURRENT_OBJECT.description.substring(19, CURRENT_OBJECT.description.length() - 1));
+        } else
+        {
+            tft.print(CURRENT_OBJECT.description);
+        }
+        
         if (CURRENT_OBJECT.alt < 0)
         {
+            tft.setTextSize(2);
+            tft.setCursor(10, 185);
             tft.setTextColor(TITLE_TEXT, TITLE_TEXT_BG);
             tft.println("OBJECT NOT VISIBLE!");
         }
         else
         {
             tft.setTextSize(1);
+            tft.setCursor(10, 175);
             tft.setTextColor(L_TEXT);
             tft.print(CURRENT_OBJECT.constellation);
             tft.setCursor(10, 185);
