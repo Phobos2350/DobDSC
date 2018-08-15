@@ -2545,25 +2545,19 @@ void processAlignmentStar(int index, AlignmentStar &star)
     int i3 = OBJECTS[index].indexOf(',', i2 + 1);
     int i4 = OBJECTS[index].indexOf(',', i3 + 1);
 
-    star.constellation = OBJECTS[index].substring(0, i1);
-    star.name = OBJECTS[index].substring(i1 + 1, i2);
-    String ra = OBJECTS[index].substring(i2 + 1, i3);
-    String dec = OBJECTS[index].substring(i3 + 1, i4);
+    star.name = OBJECTS[index].substring(0, i1);
+    String ra = OBJECTS[index].substring(i1, i2);
+    String dec = OBJECTS[index].substring(i2, i3);
+    star.constellation = OBJECTS[index].substring(i3, i4);
     star.mag = OBJECTS[index].substring(i4 + 1, OBJECTS[index].length()).toFloat();
 
-    float ra_h = ra.substring(0, ra.indexOf('h')).toFloat();
+    float ra_h = ra.substring(1, ra.indexOf('h')).toFloat();
     float ra_m = ra.substring(ra.indexOf('h') + 1, ra.indexOf('m')).toFloat();
     float ra_s = ra.substring(ra.indexOf('m') + 1, ra.length() - 1).toFloat();
 
-    float dec_d = dec.substring(0, dec.indexOf('°')).toFloat();
+    float dec_d = dec.substring(1, dec.indexOf('°')).toFloat();
     float dec_m = dec.substring(dec.indexOf('°') + 1, ra.indexOf('\'')).toFloat();
     float dec_s = dec.substring(dec.indexOf('\'') + 1, ra.length() - 1).toFloat();
-
-    // double decimal_ra = ((ra_h + (ra_m / 60)) / 24) * 360;
-    // double decimal_rads_ra = decimal_ra * DEG_TO_RAD;
-    // double decimal_rads_dec = dec_d * DEG_TO_RAD;
-    // star.ra = decimal_rads_ra;
-    // star.dec = decimal_rads_dec;
 
     star.ra = hms2rads(ra_h, ra_m, ra_s);
     star.dec = dms2rads(dec_d, dec_m, dec_s);
@@ -2602,6 +2596,65 @@ void processAlignmentStar(int index, AlignmentStar &star)
 #endif
 }
 
+// void processAlignmentStar(int index, AlignmentStar &star)
+// {
+
+//     int i1 = OBJECTS[index].indexOf(',');
+//     int i2 = OBJECTS[index].indexOf(',', i1 + 1);
+//     int i3 = OBJECTS[index].indexOf(',', i2 + 1);
+//     int i4 = OBJECTS[index].indexOf(',', i3 + 1);
+
+//     star.constellation = OBJECTS[index].substring(0, i1);
+//     star.name = OBJECTS[index].substring(i1 + 1, i2);
+//     String ra = OBJECTS[index].substring(i2 + 1, i3);
+//     String dec = OBJECTS[index].substring(i3 + 1, i4);
+//     star.mag = OBJECTS[index].substring(i4 + 1, OBJECTS[index].length()).toFloat();
+
+//     float ra_h = ra.substring(0, ra.indexOf('h')).toFloat();
+//     float ra_m = ra.substring(ra.indexOf('h') + 1, ra.indexOf('m')).toFloat();
+//     float ra_s = ra.substring(ra.indexOf('m') + 1, ra.length() - 1).toFloat();
+
+//     float dec_d = dec.substring(0, dec.indexOf('°')).toFloat();
+//     float dec_m = dec.substring(dec.indexOf('°') + 1, ra.indexOf('\'')).toFloat();
+//     float dec_s = dec.substring(dec.indexOf('\'') + 1, ra.length() - 1).toFloat();
+
+//     star.ra = hms2rads(ra_h, ra_m, ra_s);
+//     star.dec = dms2rads(dec_d, dec_m, dec_s);
+//     star.time = LST_RADS;
+//     star.lat = OBSERVATION_LATTITUDE_RADS;
+
+// #ifdef SERIAL_DEBUG
+//     Serial.print("processAlignmentStar() ");
+//     Serial.print(star.name);
+//     Serial.print(" - RA: ");
+//     Serial.print(star.ra);
+//     Serial.print(" DEC: ");
+//     Serial.print(star.dec);
+//     Serial.println("");
+// #endif
+//     // Correct for astronomical movements and refraction if needed
+//     double delta_ra, delta_dec;
+//     if (CORRECT_PRECESSION_ETC)
+//     {
+//         calcProperMotionPrecessionNutationAberration(star.ra, star.dec, PROPER_MOTION_RA, PROPER_MOTION_DEC, &delta_ra, &delta_dec);
+//         star.ra += delta_ra;
+//         star.dec += delta_dec;
+//     }
+//     // if (CORRECT_REFRACTION)
+//     // {
+//     //     calcRefractionFromTrueEquatorialCorrection(star.ra, star.dec, star.time, star.lat, &delta_ra, &delta_dec);
+//     //     star.ra += delta_ra;
+//     //     star.dec += delta_dec;
+//     // }
+// #ifdef SERIAL_DEBUG
+//     Serial.print("Added Corrections - RA: ");
+//     Serial.print(star.ra);
+//     Serial.print(" DEC: ");
+//     Serial.print(star.dec);
+//     Serial.println("");
+// #endif
+// }
+
 void processObject(int index, Object &object)
 {
 
@@ -2614,29 +2667,26 @@ void processObject(int index, Object &object)
     int i7 = OBJECTS[index].indexOf(',', i6 + 1);
 
     object.name = OBJECTS[index].substring(0, i1);
-    object.description = OBJECTS[index].substring(i7 + 1, OBJECTS[index].length() - 1);
     String ra = OBJECTS[index].substring(i1, i2);
     String dec = OBJECTS[index].substring(i2, i3);
 
     float ra_h = ra.substring(1, ra.indexOf('h')).toFloat();
-    float ra_m = ra.substring(ra.indexOf('h') + 1, ra.length() - 1).toFloat();
+    float ra_m = ra.substring(ra.indexOf('h') + 1, ra.indexOf('m')).toFloat();
+    float ra_s = ra.substring(ra.indexOf('m') + 1, ra.length() - 1).toFloat();
 
     float dec_d = dec.substring(1, dec.indexOf('°')).toFloat();
-    float dec_m = dec.substring(dec.indexOf('°') + 1, dec.length() - 1).toFloat();
+    float dec_m = dec.substring(dec.indexOf('°') + 1, ra.indexOf('\'')).toFloat();
+    float dec_s = dec.substring(dec.indexOf('\'') + 1, ra.length() - 1).toFloat();
 
-    // double decimal_ra = ((ra_h + (ra_m / 60)) / 24) * 360;
-    // double decimal_rads_ra = decimal_ra * DEG_TO_RAD;
-    // double decimal_rads_dec = (dec_d + (dec_m / 60)) * DEG_TO_RAD;
-    // object.ra = decimal_rads_ra;
-    // object.dec = decimal_rads_dec;
-
-    object.ra = hms2rads(ra_h, ra_m, 0);
-    object.dec = dms2rads(dec_d, dec_m, 0);
+    object.ra = hms2rads(ra_h, ra_m, ra_s);
+    object.dec = dms2rads(dec_d, dec_m, dec_s);
 
     object.constellation = OBJECTS[index].substring(i3 + 1, i4);
     object.type = OBJECTS[index].substring(i4 + 1, i5);
     object.mag = OBJECTS[index].substring(i5 + 1, i6).toFloat();
     object.size = OBJECTS[index].substring(i6 + 1, i7);
+    object.description = OBJECTS[index].substring(i7 + 1, OBJECTS[index].length() - 1);
+
 #ifdef SERIAL_DEBUG
     Serial.print("processObject() ");
     Serial.print(object.name);
@@ -2662,6 +2712,61 @@ void processObject(int index, Object &object)
     Serial.println("");
 #endif
 }
+
+// void processObject(int index, Object &object)
+// {
+
+//     int i1 = OBJECTS[index].indexOf(',');
+//     int i2 = OBJECTS[index].indexOf(',', i1 + 1);
+//     int i3 = OBJECTS[index].indexOf(',', i2 + 1);
+//     int i4 = OBJECTS[index].indexOf(',', i3 + 1);
+//     int i5 = OBJECTS[index].indexOf(',', i4 + 1);
+//     int i6 = OBJECTS[index].indexOf(',', i5 + 1);
+//     int i7 = OBJECTS[index].indexOf(',', i6 + 1);
+
+//     object.name = OBJECTS[index].substring(0, i1);
+//     object.description = OBJECTS[index].substring(i7 + 1, OBJECTS[index].length() - 1);
+//     String ra = OBJECTS[index].substring(i1, i2);
+//     String dec = OBJECTS[index].substring(i2, i3);
+
+//     float ra_h = ra.substring(1, ra.indexOf('h')).toFloat();
+//     float ra_m = ra.substring(ra.indexOf('h') + 1, ra.length() - 1).toFloat();
+
+//     float dec_d = dec.substring(1, dec.indexOf('°')).toFloat();
+//     float dec_m = dec.substring(dec.indexOf('°') + 1, dec.length() - 1).toFloat();
+
+//     object.ra = hms2rads(ra_h, ra_m, 0);
+//     object.dec = dms2rads(dec_d, dec_m, 0);
+
+//     object.constellation = OBJECTS[index].substring(i3 + 1, i4);
+//     object.type = OBJECTS[index].substring(i4 + 1, i5);
+//     object.mag = OBJECTS[index].substring(i5 + 1, i6).toFloat();
+//     object.size = OBJECTS[index].substring(i6 + 1, i7);
+// #ifdef SERIAL_DEBUG
+//     Serial.print("processObject() ");
+//     Serial.print(object.name);
+//     Serial.print(" - RA: ");
+//     Serial.print(object.ra);
+//     Serial.print(" DEC: ");
+//     Serial.print(object.dec);
+//     Serial.println("");
+// #endif
+//     // Correct for astronomical movements
+//     double delta_ra, delta_dec;
+//     if (CORRECT_PRECESSION_ETC)
+//     {
+//         calcProperMotionPrecessionNutationAberration(object.ra, object.dec, PROPER_MOTION_RA, PROPER_MOTION_DEC, &delta_ra, &delta_dec);
+//         object.ra += delta_ra;
+//         object.dec += delta_dec;
+//     }
+// #ifdef SERIAL_DEBUG
+//     Serial.print("Added Corrections - RA: ");
+//     Serial.print(object.ra);
+//     Serial.print(" DEC: ");
+//     Serial.print(object.dec);
+//     Serial.println("");
+// #endif
+// }
 
 void printMatrix(float *A, int m, int n, String label)
 {
