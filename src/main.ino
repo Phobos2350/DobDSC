@@ -742,9 +742,9 @@ double hms2rads(float h, float m, float s)
     return (h + (m / 60.0) + (s / 3600.0)) * HOUR_TO_RAD;
 }
 
-double dms2rads(float d, float m, float s)
+double dms2rads(char sign, float d, float m, float s)
 {
-    if (d < 0 || m < 0 || s < 0)
+    if (sign == '-' || d < 0 || m < 0 || s < 0)
     {
         d = -fabs(d);
         m = -fabs(m);
@@ -2555,12 +2555,13 @@ void processAlignmentStar(int index, AlignmentStar &star)
     float ra_m = ra.substring(ra.indexOf('h') + 1, ra.indexOf('m')).toFloat();
     float ra_s = ra.substring(ra.indexOf('m') + 1, ra.length() - 1).toFloat();
 
-    float dec_d = dec.substring(1, dec.indexOf('°')).toFloat();
+    char sign = dec[2];
+    float dec_d = dec.substring(2, dec.indexOf('°')).toFloat();
     float dec_m = dec.substring(dec.indexOf('°') + 1, ra.indexOf('\'')).toFloat();
     float dec_s = dec.substring(dec.indexOf('\'') + 1, ra.length() - 1).toFloat();
 
     star.ra = hms2rads(ra_h, ra_m, ra_s);
-    star.dec = dms2rads(dec_d, dec_m, dec_s);
+    star.dec = dms2rads(sign, dec_d, dec_m, dec_s);
     star.time = LST_RADS;
     star.lat = OBSERVATION_LATTITUDE_RADS;
 
@@ -2674,12 +2675,13 @@ void processObject(int index, Object &object)
     float ra_m = ra.substring(ra.indexOf('h') + 1, ra.indexOf('m')).toFloat();
     float ra_s = ra.substring(ra.indexOf('m') + 1, ra.length() - 1).toFloat();
 
-    float dec_d = dec.substring(1, dec.indexOf('°')).toFloat();
+    char sign = dec[2];
+    float dec_d = dec.substring(2, dec.indexOf('°')).toFloat();
     float dec_m = dec.substring(dec.indexOf('°') + 1, ra.indexOf('\'')).toFloat();
     float dec_s = dec.substring(dec.indexOf('\'') + 1, ra.length() - 1).toFloat();
 
     object.ra = hms2rads(ra_h, ra_m, ra_s);
-    object.dec = dms2rads(dec_d, dec_m, dec_s);
+    object.dec = dms2rads(sign, dec_d, dec_m, dec_s);
 
     object.constellation = OBJECTS[index].substring(i3 + 1, i4);
     object.type = OBJECTS[index].substring(i4 + 1, i5);
