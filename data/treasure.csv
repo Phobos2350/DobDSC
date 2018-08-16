@@ -18,7 +18,7 @@ NGC1365,03h33m36,-36°08'25,FORNAX,Spiral Galaxy,10.3,11'x6',Great Barred Spiral
 NGC1399,03h38m30,-35°27'00,FORNAX,Elliptical Galaxy,9.9,3'x3',65 Mly Dist.
 NGC1398,03h38m52,-26°20'16,FORNAX,Spiral Galaxy,10.6,7'x5',65 Mly Dist.
 NGC1404,03h38m54,-35°35'00,FORNAX,Elliptical Galaxy,10.3,3'x2',65 Mly Dist.
-Kemble1,03h57m24,+63°04'00,CAMELOPARDALIS,Asterism,6.9,180',Kemble's Cascade
+KEM1,03h57m24,+63°04'00,CAMELOPARDALIS,Asterism,6.9,180',Kemble's Cascade
 NGC1501,04h06m59,+60°55'14,CAMELOPARDALIS,Planetary Nebula,13.0,1',Oyster Nebula
 NGC1502,04h07m30,+62°19'54,CAMELOPARDALIS,Open Cluster,6.9,20',The Jolly Roger
 NGC1535,04h14m16,-12°44'22,ERIDANUS,Planetary Nebula,10.5,1',Cleopatra's Eye
@@ -26,9 +26,9 @@ NGC1528,04h15m23,+51°12'54,PERSEUS,Open Cluster,6.4,23',2530 ly Dist.
 NGC1545,04h20m50,+50°15'12,PERSEUS,Open Cluster,6.4,23',2320 ly Dist.
 NGC1647,04h45m55,+19°06'54,TAURUS,Open Cluster,6.4,45',Pirate Moon Cluster
 IC418,05h27m28,-12°41'50,LEPUS,Planetary Nebula,9.6,4'x6',Spirograph Nebula
-COL69,05h35m06,+09-56'00,ORION,Open Cluster,3.4,60',Orion's Head
+CR69,05h35m06,+09-56'00,ORION,Open Cluster,3.4,60',Orion's Head
 NGC1981,05h35m10,-04°25'30,ORION,Open Cluster,4.2,28',Coal Car Cluster
-NGC1980,05h25m26,-05°54'36,ORION,Open Cluster,2.5,14'x14',Lost Jewel of Orion
+CR72,05h25m26,-05°54'36,ORION,Open Cluster,2.5,14'x14',Lost Jewel of Orion
 NGC1977,05h35m16,-04°47'07,ORION,Reflection Nebula,7.0,40'x25',Running Man Nebula
 NGC1999,05h36m27,-06°43'18,ORION,Reflection Nebula,10.0,2'x2',13th Pearl Nebula
 NGC2024,05h41m54,-01°51'00,ORION,Emission Nebula,10.0,30'x30',Flame Nebula

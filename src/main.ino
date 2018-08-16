@@ -69,10 +69,11 @@
 #include <RtcDS3231.h>
 #include <LSM303.h> // Install this on Arudino IDE: "LSM303 Library by Pololu" (I used version 3.0.1), https://github.com/pololu/lsm303-arduino
 
-#define SERIAL_DEBUG // comment out to deactivate the serial debug mode
-#define PERFECT_ALIGN
+// #define SERIAL_DEBUG // comment out to deactivate the serial debug mode
+// #define PERFECT_ALIGN
 // #define DEBUG_REFRACTION
 // #define DEBUG_ORBITAL_VARS
+// #define DEBUG_MOUNT_ERRS
 
 #define GEAR_LARGE 60.0f
 #define GEAR_SMALL 18.0f
@@ -427,7 +428,7 @@ String CURR_ALT, CURR_AZ, CURR_RA, CURR_DEC;
 String OBJECTS[130];
 int BT_COMMAND_STR;
 
-int LAST_BUTTON, MESS_PAGER, TREAS_PAGER, STARS_PAGER, LOAD_SELECTOR; // selector to show which LOADING mechanism is used: 1 - Messier, 2 - File, 3 - NGCs
+int LAST_BUTTON, MESS_PAGER, CALD_PAGER, TREAS_PAGER, STARS_PAGER, LOAD_SELECTOR; // selector to show which LOADING mechanism is used: 1 - Messier, 2 - File, 3 - NGCs
 
 int W_DATE_TIME[12] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // array to store date - as updated from updater screen - Wishing_Date
 int DATE_ENTRY_POS = 0;
@@ -2270,11 +2271,21 @@ void selectObject(int index_, int objects)
     }
     else if (objects == 1)
     {
-        // I've selected a Treasure Object
         if (LOADED_STARS != 3)
         {
-            loadStarsFromSPIFFS("/treasure.csv");
+            loadStarsFromSPIFFS("/caldwell.csv");
             LOADED_STARS = 3;
+        }
+        processObject(index_, CURRENT_OBJECT);
+        objectAltAz();
+    }
+    else if (objects == 2)
+    {
+        // I've selected a Treasure Object
+        if (LOADED_STARS != 4)
+        {
+            loadStarsFromSPIFFS("/treasure.csv");
+            LOADED_STARS = 4;
         }
         processObject(index_, CURRENT_OBJECT);
         objectAltAz();
@@ -2861,6 +2872,7 @@ void basic_EquatorialToScope(double ra, double dec, double sidT, double *az, dou
     (*az) = reverseRev(validRev(az_tmp));
     // (*az) = az_tmp;
 #ifdef SERIAL_DEBUG
+#ifdef DEBUG_MOUNT_ERRS
     Serial.print("basic_EquatorialToScope() - RA: ");
     Serial.print(rad2hms(ra, true, true));
     Serial.print(" DEC: ");
@@ -2874,6 +2886,7 @@ void basic_EquatorialToScope(double ra, double dec, double sidT, double *az, dou
     Serial.print(" ALT: ");
     Serial.print(rad2dms(*alt, true, true));
     Serial.println("");
+#endif
 #endif
 }
 
@@ -4466,6 +4479,7 @@ void considerTimeUpdates()
 //    * CURRENT_SCREEN == 9   - drawPlanetScreen() -
 //    * CURRENT_SCREEN == 10  - drawAlignModeScreen() - Select Master ALIGNMENT_METHOD
 //    * CURRENT_SCREEN == 11  - drawAlignCorrectionsScreen() - Enable Corrections
+//    * CURRENT_SCREEN == 12  - drawCatalogueScreen() - Select Catalogue to load objects from
 
 void removeTime_addXX()
 {
@@ -4499,7 +4513,6 @@ void drawInitScreen()
     tft.print("DobDSC by A Flight");
 
     tft.setTextSize(1);
-    tft.setTextColor(D_TEXT);
     tft.setCursor(10, 80);
     tft.print("GNU General Public License");
     tft.setCursor(10, 90);
@@ -4513,6 +4526,7 @@ void drawInitScreen()
 
     volatile bool check = true;
     MESS_PAGER = 0;
+    CALD_PAGER = 0;
     TREAS_PAGER = 0;
     STARS_PAGER = 0;
 
@@ -4541,21 +4555,21 @@ void drawInitScreen()
     }
     delay(500);
 
-    // tft.setCursor(10, 160);
-    // tft.print("Initialising BlueTooth -> ");
-    // if (SerialBT.available() > 0)
-    // {
-    //     tft.setTextColor(L_TEXT);
-    //     tft.print("OK");
-    //     tft.setTextColor(D_TEXT);
-    // }
-    // else
-    // {
-    //     tft.setTextColor(L_TEXT);
-    //     tft.print("FAIL");
-    //     tft.setTextColor(D_TEXT);
-    // }
-    // delay(500);
+    tft.setCursor(10, 160);
+    tft.print("Initialising BlueTooth -> ");
+    if (SerialBT.available() > 0)
+    {
+        tft.setTextColor(L_TEXT);
+        tft.print("OK");
+        tft.setTextColor(D_TEXT);
+    }
+    else
+    {
+        tft.setTextColor(L_TEXT);
+        tft.print("FAIL");
+        tft.setTextColor(D_TEXT);
+    }
+    delay(500);
 
     tft.setCursor(10, 180);
     tft.print("Initialising GPS -> ");
@@ -4704,7 +4718,7 @@ void drawAlignCorrectionsScreen()
     tft.fillScreen(BLACK);
     tft.setCursor(10, 10);
     tft.setTextColor(TITLE_TEXT, TITLE_TEXT_BG);
-    tft.setTextSize(3);
+    tft.setTextSize(2);
     tft.print(" Corrections");
 
     drawButton(165, 10, 65, 30, "BACK", BTN_L_BORDER, 0, BTN_BLK_TEXT, 3);
@@ -4752,7 +4766,7 @@ void drawSelectAlignment()
     tft.fillScreen(BLACK);
     tft.setCursor(10, 10);
     tft.setTextColor(TITLE_TEXT, TITLE_TEXT_BG);
-    tft.setTextSize(3);
+    tft.setTextSize(2);
     tft.print(" Alignment");
 
     drawButton(165, 10, 65, 30, "BACK", BTN_L_BORDER, 0, BTN_BLK_TEXT, 3);
@@ -4923,6 +4937,193 @@ void drawMainScreen()
     drawButton(165, 270, 65, 40, "MENU", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
 }
 
+void drawCatalogueScreen()
+{
+    CURRENT_SCREEN = 12;
+    tft.fillScreen(BLACK);
+    tft.setCursor(10, 10);
+    tft.setTextColor(TITLE_TEXT, TITLE_TEXT_BG);
+    tft.setTextSize(3);
+    tft.print(" FIND");
+
+    drawButton(165, 10, 65, 30, "BACK", BTN_L_BORDER, 0, BTN_BLK_TEXT, 3);
+
+    drawButton(20, 50, 200, 40, "Messier", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
+    drawButton(20, 110, 200, 40, "Caldwell", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
+    drawButton(20, 170, 200, 40, "Treasures", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
+}
+
+void drawCatalogueSummaryScreen()
+{
+    CURRENT_SCREEN = 13;
+    tft.fillScreen(BLACK);
+    tft.setCursor(10, 10);
+    tft.setTextColor(TITLE_TEXT, TITLE_TEXT_BG);
+    tft.setTextSize(2);
+    tft.print(" CATALOGUE");
+
+    drawButton(165, 10, 65, 30, "BACK", BTN_L_BORDER, 0, BTN_BLK_TEXT, 3);
+
+    if (LOAD_SELECTOR == 1)
+    {
+        tft.setTextColor(L_TEXT);
+        tft.setCursor(10, 40);
+        tft.setTextSize(2);
+        tft.print("Messier");
+
+        tft.setCursor(10, 60);
+        tft.setTextSize(1);
+        tft.print("110 Objects catalogued by Charles");
+        tft.setCursor(10, 70);
+        tft.print("Messier in 1771-81");
+
+        tft.setTextSize(2);
+        tft.setCursor(10, 90);
+        tft.print("Asterisms:");
+        tft.setCursor(210, 90);
+        tft.print("1");
+        
+        tft.setCursor(10, 110);
+        tft.print("Glob. Clst.");
+        tft.setCursor(210, 110);
+        tft.print("29");
+
+        tft.setCursor(10, 130);
+        tft.print("Open Clst.");
+        tft.setCursor(210, 130);
+        tft.print("26");
+        
+        tft.setCursor(10, 150);
+        tft.print("Galaxies");
+        tft.setCursor(210, 150);
+        tft.print("40");
+        
+        tft.setCursor(10, 170);
+        tft.print("Diffuse Neb.");
+        tft.setCursor(210, 170);
+        tft.print("7");
+
+        tft.setCursor(10, 190);
+        tft.print("Planetary Neb.");
+        tft.setCursor(210, 190);
+        tft.print("4");
+
+        tft.setCursor(10, 210);
+        tft.print("Supernova Rmnt.");
+        tft.setCursor(210, 210);
+        tft.print("1");
+        
+        tft.setCursor(10, 230);
+        tft.print("Star Cloud");
+        tft.setCursor(210, 230);
+        tft.print("1"); 
+
+        tft.setCursor(10, 250);
+        tft.print("Double Star");
+        tft.setCursor(210, 250);
+        tft.print("1");
+    } 
+    else if (LOAD_SELECTOR == 2)
+    {
+        tft.setTextColor(L_TEXT);
+        tft.setCursor(10, 40);
+        tft.setTextSize(2);
+        tft.print("Caldwell");
+
+        tft.setCursor(10, 60);
+        tft.setTextSize(1);
+        tft.print("109 Objects catalogued by Sir");
+        tft.setCursor(10, 70);
+        tft.print("Patrick Moore in 1995");
+
+        tft.setTextSize(2);
+        tft.setCursor(10, 90);
+        tft.print("Glob. Clst.");
+        tft.setCursor(210, 90);
+        tft.print("18");
+
+        tft.setCursor(10, 110);
+        tft.print("Open Clst.");
+        tft.setCursor(210, 110);
+        tft.print("25");
+
+        tft.setCursor(10, 130);
+        tft.print("Galaxies");
+        tft.setCursor(210, 130);
+        tft.print("35");
+
+        tft.setCursor(10, 150);
+        tft.print("Dark Neb.");
+        tft.setCursor(210, 150);
+        tft.print("1");
+        
+        tft.setCursor(10, 170);
+        tft.print("Diffuse Neb.");
+        tft.setCursor(210, 170);
+        tft.print("15");
+
+        tft.setCursor(10, 190);
+        tft.print("Planetary Neb.");
+        tft.setCursor(210, 190);
+        tft.print("13");
+
+        tft.setCursor(10, 210);
+        tft.print("Supernova Rmnt.");
+        tft.setCursor(210, 210);
+        tft.print("2");
+    }
+    else if (LOAD_SELECTOR == 3)
+    {
+        tft.setTextColor(L_TEXT);
+        tft.setCursor(10, 40);
+        tft.setTextSize(2);
+        tft.print("Treasures");
+
+        tft.setCursor(10, 60);
+        tft.setTextSize(1);
+        tft.print("128 Objects catalogued by");
+        tft.setCursor(10, 70);
+        tft.print("Stephen O'Meara in 2007");
+
+        tft.setTextSize(2);
+        tft.setCursor(10, 90);
+        tft.print("Asterisms");
+        tft.setCursor(210, 90);
+        tft.print("4");
+
+        tft.setCursor(10, 110);
+        tft.print("Glob. Clst.");
+        tft.setCursor(210, 110);
+        tft.print("11");
+
+        tft.setCursor(10, 130);
+        tft.print("Open Clst.");
+        tft.setCursor(210, 130);
+        tft.print("43");
+
+        tft.setCursor(10, 150);
+        tft.print("Galaxies - 39");
+        tft.setCursor(210, 150);
+        tft.print("39");
+
+        tft.setCursor(10, 170);
+        tft.print("Dark Neb.");
+        tft.setCursor(210, 170);
+        tft.print("1");
+
+        tft.setCursor(10, 190);
+        tft.print("Diffuse Neb.");
+        tft.setCursor(210, 190);
+        tft.print("10");
+
+        tft.setCursor(10, 210);
+        tft.print("Planetary Neb.");
+        tft.setCursor(210, 210);
+        tft.print("20");
+    }
+    drawButton(20, 270, 200, 40, "Continue", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
+}
+
 void drawLoadScreen()
 {
     CURRENT_SCREEN = 4;
@@ -4935,24 +5136,22 @@ void drawLoadScreen()
     drawButton(165, 10, 65, 30, "BACK", BTN_L_BORDER, 0, BTN_BLK_TEXT, 3);
 
     // Draw buttons to load CSVs
-    tft.setTextSize(2);
-    tft.setTextColor(L_TEXT);
-    if (LOAD_SELECTOR == 1)
-    {
-        drawButton(10, 50, 105, 30, "Messier", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
-    }
-    else
-    {
-        drawButton(10, 50, 105, 30, "Messier", 0, BTN_L_BORDER, L_TEXT, 2);
-    }
-    if (LOAD_SELECTOR == 2)
-    {
-        drawButton(125, 50, 105, 30, "Treasures", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
-    }
-    else
-    {
-        drawButton(125, 50, 105, 30, "Treasures", 0, BTN_L_BORDER, L_TEXT, 2);
-    }
+    // if (LOAD_SELECTOR == 1)
+    // {
+    //     drawButton(10, 50, 105, 30, "Messier", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
+    // }
+    // else
+    // {
+    //     drawButton(10, 50, 105, 30, "Messier", 0, BTN_L_BORDER, L_TEXT, 2);
+    // }
+    // if (LOAD_SELECTOR == 2)
+    // {
+    //     drawButton(125, 50, 105, 30, "Treasures", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
+    // }
+    // else
+    // {
+    //     drawButton(125, 50, 105, 30, "Treasures", 0, BTN_L_BORDER, L_TEXT, 2);
+    // }
 
     drawButton(10, 270, 100, 40, "< PREV", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
     drawButton(130, 270, 100, 40, "NEXT >", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
@@ -4972,6 +5171,10 @@ void drawLoadObjects()
             loadStarsFromSPIFFS("/messier.csv");
             LOADED_STARS = 2;
         }
+        tft.setTextSize(2);
+        tft.setTextColor(L_TEXT);
+        tft.setCursor(10, 50);
+        tft.print("Messier Catalogue");
 
         tft.setTextSize(1);
         int kk = MESS_PAGER * 12;
@@ -4979,7 +5182,6 @@ void drawLoadObjects()
         {
             for (int j = 0; j < 3; j++)
             {
-                // String M_NAME = Messier_Array[kk].substring(0, Messier_Array[kk].indexOf(','));
                 String M_NAME = OBJECTS[kk].substring(0, OBJECTS[kk].indexOf(','));
                 if (M_NAME == "")
                 {
@@ -4990,22 +5192,25 @@ void drawLoadObjects()
             }
         }
     }
-    ///////     Treasures Screen /////////////
+    ///////     Caldwell Screen  /////////////
     else if (LOAD_SELECTOR == 2)
     {
         if (LOADED_STARS != 3)
         {
-            loadStarsFromSPIFFS("/treasure.csv");
+            loadStarsFromSPIFFS("/caldwell.csv");
             LOADED_STARS = 3;
         }
+        tft.setTextSize(2);
+        tft.setTextColor(L_TEXT);
+        tft.setCursor(10, 50);
+        tft.print("Caldwell Catalogue");
 
         tft.setTextSize(1);
-        int ll = TREAS_PAGER * 12;
+        int ll = CALD_PAGER * 12;
         for (int i = 0; i < 4; i++)
         {
             for (int j = 0; j < 3; j++)
             {
-                //String M_NAME = Treasure_Array[ll].substring(0, Treasure_Array[ll].indexOf(','));
                 String M_NAME = OBJECTS[ll].substring(0, OBJECTS[ll].indexOf(','));
                 if (M_NAME == "")
                 {
@@ -5013,6 +5218,35 @@ void drawLoadObjects()
                 }
                 drawButton(((j * 75) + 10), ((i * 40) + 90), 71, 35, M_NAME, BTN_L_BORDER, 0, BTN_BLK_TEXT, 1);
                 ll += 1;
+            }
+        }
+    }
+    ///////     Treasures Screen /////////////
+    else if (LOAD_SELECTOR == 3)
+    {
+        if (LOADED_STARS != 4)
+        {
+            loadStarsFromSPIFFS("/treasure.csv");
+            LOADED_STARS = 4;
+        }
+        tft.setTextSize(2);
+        tft.setTextColor(L_TEXT);
+        tft.setCursor(10, 50);
+        tft.print("Hidden Treasures");
+
+        tft.setTextSize(1);
+        int mm = TREAS_PAGER * 12;
+        for (int i = 0; i < 4; i++)
+        {
+            for (int j = 0; j < 3; j++)
+            {
+                String M_NAME = OBJECTS[mm].substring(0, OBJECTS[mm].indexOf(','));
+                if (M_NAME == "")
+                {
+                    break;
+                }
+                drawButton(((j * 75) + 10), ((i * 40) + 90), 71, 35, M_NAME, BTN_L_BORDER, 0, BTN_BLK_TEXT, 1);
+                mm += 1;
             }
         }
     }
@@ -5128,7 +5362,7 @@ void drawAlignScreen()
     tft.setCursor(10, 10);
     tft.setTextColor(TITLE_TEXT, TITLE_TEXT_BG);
     tft.setTextSize(3);
-    tft.print(" Alignment");
+    tft.print(" Align");
 
     tft.setTextSize(2);
     tft.setTextColor(L_TEXT);
@@ -5627,7 +5861,8 @@ void considerTouchInput(int lx, int ly)
             {
                 drawButton(10, 270, 65, 40, "FIND", 0, BTN_L_BORDER, L_TEXT, 2);
                 delay(150);
-                drawLoadScreen();
+                //drawLoadScreen();
+                drawCatalogueScreen();
             }
             if (lx > 88 && lx < 153 && ly > 270 && ly < 310)
             {
@@ -5652,28 +5887,28 @@ void considerTouchInput(int lx, int ly)
                 delay(150);
                 drawMainScreen();
             }
-            if (lx > 10 && lx < 115 && ly > 50 && ly < 80)
-            {
-                // BTN Messier pressed
-                LOAD_SELECTOR = 1;
-                drawButton(10, 50, 105, 30, "Messier", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
-                drawButton(125, 50, 105, 30, "Treasures", 0, BTN_L_BORDER, L_TEXT, 2);
-                delay(150);
-                drawLoadObjects();
-            }
-            if (lx > 125 && lx < 230 && ly > 50 && ly < 80)
-            {
-                // BTN Treasures pressed
-                LOAD_SELECTOR = 2;
-                drawButton(10, 50, 105, 30, "Messier", 0, BTN_L_BORDER, L_TEXT, 2);
-                drawButton(125, 50, 105, 30, "Treasures", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
-                delay(150);
-                drawLoadObjects();
-            }
+            // if (lx > 10 && lx < 115 && ly > 50 && ly < 80)
+            // {
+            //     // BTN Messier pressed
+            //     LOAD_SELECTOR = 1;
+            //     drawButton(10, 50, 105, 30, "Messier", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
+            //     drawButton(125, 50, 105, 30, "Treasures", 0, BTN_L_BORDER, L_TEXT, 2);
+            //     delay(150);
+            //     drawLoadObjects();
+            // }
+            // if (lx > 125 && lx < 230 && ly > 50 && ly < 80)
+            // {
+            //     // BTN Treasures pressed
+            //     LOAD_SELECTOR = 2;
+            //     drawButton(10, 50, 105, 30, "Messier", 0, BTN_L_BORDER, L_TEXT, 2);
+            //     drawButton(125, 50, 105, 30, "Treasures", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
+            //     delay(150);
+            //     drawLoadObjects();
+            // }
             //////////////      Messier Screen //////////////
             if (lx > 130 && lx < 230 && ly > 270 && ly < 310)
             {
-                // BTN next> pressed  TREAS_PAGER
+                // BTN next> pressed
                 LAST_BUTTON = 1;
                 drawButton(130, 270, 100, 40, "NEXT >", 0, BTN_L_BORDER, L_TEXT, 2);
                 if (LOAD_SELECTOR == 1)
@@ -5684,7 +5919,15 @@ void considerTouchInput(int lx, int ly)
                         MESS_PAGER = 9;
                     }
                 }
-                else
+                else if (LOAD_SELECTOR == 2)
+                {
+                    CALD_PAGER += 1;
+                    if (CALD_PAGER >= 10)
+                    {
+                        CALD_PAGER = 9;
+                    }
+                }
+                else if (LOAD_SELECTOR == 3)
                 {
                     TREAS_PAGER += 1;
                     if (TREAS_PAGER >= 11)
@@ -5708,7 +5951,15 @@ void considerTouchInput(int lx, int ly)
                         MESS_PAGER = 0;
                     }
                 }
-                else
+                else if (LOAD_SELECTOR == 2)
+                {
+                    CALD_PAGER -= 1;
+                    if (CALD_PAGER < 0)
+                    {
+                        CALD_PAGER = 0;
+                    }
+                }
+                else if (LOAD_SELECTOR == 3)
                 {
                     TREAS_PAGER -= 1;
                     if (TREAS_PAGER < 0)
@@ -5749,15 +6000,46 @@ void considerTouchInput(int lx, int ly)
                         }
                     }
                 }
-                ///////     Treasures Screen /////////////
             }
+            ///////     Caldwell Screen /////////////
             else if (LOAD_SELECTOR == 2)
             {
-                // I'm in TREASURES selector and need to check which Treasure object is pressed
                 if (LOADED_STARS != 3)
                 {
-                    loadStarsFromSPIFFS("/treasure.csv");
+                    loadStarsFromSPIFFS("/caldwell.csv");
                     LOADED_STARS = 3;
+                }
+                for (int i = 0; i < 4; i++)
+                {
+                    for (int j = 0; j < 3; j++)
+                    {
+                        if (lx > ((j * 75) + 10) && lx < ((j * 75) + 81) && ly > ((i * 40) + 90) && ly < ((i * 40) + 130))
+                        {
+                            LAST_BUTTON = 10;
+                            // found button pressed.... now I need to get his ID and link to the ARRAY;
+                            int zz = ((CALD_PAGER * 12) + (i * 3) + j);
+                            String M_NAME = OBJECTS[zz].substring(0, OBJECTS[zz].indexOf(','));
+                            drawButton(((j * 75) + 10), ((i * 40) + 90), 71, 35, M_NAME, 0, BTN_L_BORDER, L_TEXT, 1);
+                            if (OBJECTS[zz] != "")
+                            //if (Treasure_Array[zz] != "")
+                            {
+                                selectObject(zz, 1);
+                                CALD_PAGER == 0;
+                                delay(150);
+                                drawMainScreen();
+                            }
+                        }
+                    }
+                }
+            }
+            ///////     Treasures Screen /////////////
+            else if (LOAD_SELECTOR == 3)
+            {
+                // I'm in TREASURES selector and need to check which Treasure object is pressed
+                if (LOADED_STARS != 4)
+                {
+                    loadStarsFromSPIFFS("/treasure.csv");
+                    LOADED_STARS = 4;
                 }
                 for (int i = 0; i < 4; i++)
                 {
@@ -5773,7 +6055,7 @@ void considerTouchInput(int lx, int ly)
                             if (OBJECTS[zz] != "")
                             //if (Treasure_Array[zz] != "")
                             {
-                                selectObject(zz, 1);
+                                selectObject(zz, 2);
                                 TREAS_PAGER == 0;
                                 delay(150);
                                 drawMainScreen();
@@ -5781,6 +6063,54 @@ void considerTouchInput(int lx, int ly)
                         }
                     }
                 }
+            }
+        }
+        else if (CURRENT_SCREEN == 12)
+        { // captures touches on drawCatalogueScreen()
+            if (lx > 165 && lx < 230 && ly > 10 && ly < 40)
+            {
+                // BTN <Back pressed// BTN <Back pressed
+                drawButton(165, 10, 65, 30, "BACK", 0, BTN_L_BORDER, L_TEXT, 3);
+                delay(150);
+                drawMainScreen();
+            }
+            if (lx > 20 && lx < 220 && ly > 50 && ly < 90)
+            {
+                LOAD_SELECTOR = 1;
+                drawButton(20, 50, 200, 40, "Messier", 0, BTN_L_BORDER, L_TEXT, 2);
+                delay(150);
+                drawCatalogueSummaryScreen();
+            }
+            else if (lx > 20 && lx < 220 && ly > 110 && ly < 150)
+            {
+                LOAD_SELECTOR = 2;
+                drawButton(20, 110, 200, 40, "Caldwell", 0, BTN_L_BORDER, L_TEXT, 2);
+                delay(150);
+                drawCatalogueSummaryScreen();
+            }
+            else if (lx > 20 && lx < 220 && ly > 170 && ly < 210)
+            {
+                LOAD_SELECTOR = 3;
+                drawButton(20, 170, 200, 40, "Treasures", 0, BTN_L_BORDER, L_TEXT, 2);
+                delay(150);
+                drawCatalogueSummaryScreen();
+            }
+        }
+        else if (CURRENT_SCREEN == 13)
+        { // captures touches on drawCatalogueSummaryScreen()
+            if (lx > 165 && lx < 230 && ly > 10 && ly < 40)
+            {
+                // BTN <Back pressed// BTN <Back pressed
+                drawButton(165, 10, 65, 30, "BACK", 0, BTN_L_BORDER, L_TEXT, 3);
+                delay(150);
+                drawCatalogueScreen();
+            }
+            else if (lx > 20 && lx < 220 && ly > 270 && ly < 310)
+            {
+                // BTN "Continue" pressed
+                drawButton(20, 270, 200, 40, "Continue", 0, BTN_L_BORDER, L_TEXT, 2);
+                delay(150);
+                drawLoadScreen();
             }
         }
         else if (CURRENT_SCREEN == 5)
