@@ -2442,6 +2442,58 @@ void touchCalibrate()
     }
 }
 
+void loadGPSFromSPIFFS()
+{
+    char in_char;
+    String items = "";
+    int i = 0;
+    File dataFile = SPIFFS.open("/GPSData", "r");
+    if (dataFile)
+    {
+        while (dataFile.available())
+        {
+            in_char = dataFile.read();
+            items += in_char;
+            if (in_char == '\n')
+            {
+                if (i == 0)
+                    OBSERVATION_LATTITUDE_RADS = items.toFloat();
+                else if (i == 1)
+                    OBSERVATION_LONGITUDE_RADS = items.toFloat();
+                i += 1;
+                items = "";
+            }
+        }
+    }
+#ifdef SERIAL_DEBUG
+    Serial.print("Read GPS data from file...");
+    Serial.println("");
+    Serial.print("Lat: ");
+    Serial.print(OBSERVATION_LATTITUDE_RADS);
+    Serial.print(" Lon: ");
+    Serial.print(OBSERVATION_LONGITUDE_RADS);
+    Serial.println("");
+#endif
+}
+
+void writeGPSToSPIFFS()
+{
+    char in_char;
+    String items = "";
+    int i = 0;
+    File dataFile = SPIFFS.open("/GPSData", "w");
+    if (dataFile)
+    {
+        dataFile.print(OBSERVATION_LATTITUDE_RADS);
+        dataFile.print(OBSERVATION_LONGITUDE_RADS);
+        dataFile.close();
+    }
+#ifdef SERIAL_DEBUG
+    Serial.print("Writing GPS data to file...");
+    Serial.println("");
+#endif
+}
+
 void loadStarsFromSPIFFS(String filename)
 {
     char in_char;
@@ -4398,6 +4450,7 @@ void considerTimeUpdates()
             OBSERVATION_ALTITUDE = gps.altitude.meters();
             OBSERVATION_LONGITUDE_RADS = OBSERVATION_LONGITUDE * DEG_TO_RAD;
             OBSERVATION_LATTITUDE_RADS = OBSERVATION_LATTITUDE * DEG_TO_RAD;
+            writeGPSToSPIFFS();
 #ifdef SERIAL_DEBUG
             Serial.print("OBSERVATION LATTITUDE: ");
             Serial.print(OBSERVATION_LATTITUDE);
@@ -4611,6 +4664,8 @@ void drawGPSScreen()
     tft.print("Searching for");
     tft.setCursor(10, 60);
     tft.print("Satellites...");
+
+    loadGPSFromSPIFFS();
 
     drawButton(40, 270, 160, 40, "SKIP", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
 }
@@ -4904,21 +4959,21 @@ void drawMainScreen()
 
         tft.setTextSize(2);
         tft.setTextColor(L_TEXT);
+
         tft.setCursor(10, 205);
-        tft.print("ALT: ");
-        tft.setCursor(70, 205);
-        tft.print(rad2dms(CURRENT_OBJECT.alt, true, false));
-        tft.setCursor(10, 225);
         tft.print("AZ: ");
-        tft.setCursor(70, 225);
+        tft.setCursor(70, 205);
         tft.print(rad2dms(CURRENT_OBJECT.az, true, true));
+        tft.setCursor(10, 225);
+        tft.print("ALT: ");
+        tft.setCursor(70, 225);
+        tft.print(rad2dms(CURRENT_OBJECT.alt, true, false));
 
         tft.setTextSize(1);
         tft.setCursor(10, 245);
         tft.print("RA: ");
         tft.setCursor(70, 245);
         tft.print(rad2hms(CURRENT_OBJECT.ra, true, true));
-
         tft.setCursor(10, 255);
         tft.print("DEC: ");
         tft.setCursor(70, 255);
@@ -5389,13 +5444,13 @@ void drawAlignScreen()
     tft.print(rad2dms(ALIGNMENT_STARS[starNum].dec, true, false));
 
     tft.setCursor(10, 170);
-    tft.print("ALT: ");
-    tft.setCursor(70, 170);
-    tft.print(rad2dms(ALIGNMENT_STARS[starNum].alt, true, false));
-    tft.setCursor(10, 190);
     tft.print("AZ: ");
-    tft.setCursor(70, 190);
+    tft.setCursor(70, 170);
     tft.print(rad2dms(ALIGNMENT_STARS[starNum].az, true, true));
+    tft.setCursor(10, 190);
+    tft.print("ALT: ");
+    tft.setCursor(70, 190);
+    tft.print(rad2dms(ALIGNMENT_STARS[starNum].alt, true, false));
 
     if (ALIGN_TYPE == 2)
     {
