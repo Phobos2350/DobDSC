@@ -2860,21 +2860,21 @@ void basic_EquatorialToScope(double ra, double dec, double sidT, double *az, dou
     (*alt) = alt_tmp - Z3_ERR;
     (*az) = reverseRev(validRev(az_tmp));
     // (*az) = az_tmp;
-// #ifdef SERIAL_DEBUG
-//     Serial.print("basic_EquatorialToScope() - RA: ");
-//     Serial.print(rad2hms(ra, true, true));
-//     Serial.print(" DEC: ");
-//     Serial.print(rad2dms(dec, true, false));
-//     Serial.print(" HA: ");
-//     Serial.print(rad2hms(ha_tmp, true, true));
-//     Serial.print(" ---> AZ: ");
-//     Serial.print(rad2dms(*az, true, true));
-//     Serial.print(" AZ(RAW): ");
-//     Serial.print(rad2dms(az_tmp, true, true));
-//     Serial.print(" ALT: ");
-//     Serial.print(rad2dms(*alt, true, true));
-//     Serial.println("");
-// #endif
+#ifdef SERIAL_DEBUG
+    Serial.print("basic_EquatorialToScope() - RA: ");
+    Serial.print(rad2hms(ra, true, true));
+    Serial.print(" DEC: ");
+    Serial.print(rad2dms(dec, true, false));
+    Serial.print(" HA: ");
+    Serial.print(rad2hms(ha_tmp, true, true));
+    Serial.print(" ---> AZ: ");
+    Serial.print(rad2dms(*az, true, true));
+    Serial.print(" AZ(RAW): ");
+    Serial.print(rad2dms(az_tmp, true, true));
+    Serial.print(" ALT: ");
+    Serial.print(rad2dms(*alt, true, true));
+    Serial.println("");
+#endif
 }
 
 void basic_AddStar(int starNum, int totalAlignStars, double ra, double dec, double sidT, double alt, double az)
@@ -3269,18 +3269,8 @@ void basic_BestZ12(int n, double range, double resolution)
     #endif
     for (Z1_ERR = 0; Z1_ERR < range; Z1_ERR += resolution)
     {
-        #ifdef SERIAL_DEBUG
-            Serial.print("Test Z1_ERR - ");
-            Serial.print(Z1_ERR);
-            Serial.println("");
-        #endif
         for (Z2_ERR = 0; Z2_ERR < range; Z2_ERR += resolution)
         {
-            #ifdef SERIAL_DEBUG
-                Serial.print("Test Z2_ERR - ");
-                Serial.print(Z2_ERR);
-                Serial.println("");
-            #endif
             pointingErrorRMSTotal = 0;
             for (int i = 0; i < n; i++)
             {
@@ -3293,10 +3283,6 @@ void basic_BestZ12(int n, double range, double resolution)
                 pointingErrorRMSTotal += pointingErrorRMS;
             }
             pointingErrorRMSTotal /= n;
-            #ifdef SERIAL_DEBUG
-                Serial.print("pointingErrorRMSTotal: ");
-                Serial.print(pointingErrorRMSTotal);
-            #endif
             if (pointingErrorRMSTotal < bestPointingErrorRMS - ARCSEC_TO_RAD)
             {
                 bestPointingErrorRMS = pointingErrorRMSTotal;
