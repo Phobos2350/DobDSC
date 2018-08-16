@@ -71,6 +71,8 @@
 
 #define SERIAL_DEBUG // comment out to deactivate the serial debug mode
 #define PERFECT_ALIGN
+// #define DEBUG_REFRACTION
+// #define DEBUG_ORBITAL_VARS
 
 #define GEAR_LARGE 60.0f
 #define GEAR_SMALL 18.0f
@@ -335,8 +337,6 @@ const int NUM_ALIGN_STARS = 100;
 const float GEAR_RATIO = GEAR_LARGE / GEAR_SMALL;
 const int STEPS_IN_FULL_CIRCLE = ENCODER_RES * GEAR_RATIO;
 const double STEPS_TO_RAD = STEPS_IN_FULL_CIRCLE / ONE_REV;
-
-
 
 const float OBJECT_DATA[9][14] = {
     // a, aΔ, e, eΔ, i, iΔ,  L, LΔ, ω, ωΔ, N, NΔ  >>> L2000 , diameter
@@ -941,11 +941,19 @@ void calcProperMotion(double motionRa, double motionDec, double deltaJulianYear,
 
 void calcPrecession(double ra, double dec, double deltaYear, double *deltaRa, double *deltaDec)
 {
-    double m = 46.124 + 0.00279 * deltaYear / 100;
-    double n = 20.043 - 0.0085 * deltaYear / 100;
+    double m = 3.07496 + 0.00186 * (deltaYear / 100);
+    double n = 1.33621 - 0.00057 * (deltaYear / 100);
     (*deltaRa) = deltaYear * (m + n * sin(ra) * tan(dec)) * ARCSEC_TO_RAD;
-    (*deltaDec) = deltaYear * n * cos(ra) * ARCSEC_TO_RAD;
+    (*deltaDec) = deltaYear * (n * 15) * cos(ra) * ARCSEC_TO_RAD;
 }
+
+// void calcPrecession(double ra, double dec, double deltaYear, double *deltaRa, double *deltaDec)
+// {
+//     double m = 46.124 + 0.000279 * deltaYear / 100;
+//     double n = 20.043 - 0.0085 * deltaYear / 100;
+//     (*deltaRa) = deltaYear * (m + n * sin(ra) * tan(dec)) * ARCSEC_TO_RAD;
+//     (*deltaDec) = deltaYear * n * cos(ra) * ARCSEC_TO_RAD;
+// }
 
 void calcPrecessionRigorous(double ra, double dec, double startJulianYear, double deltaJulianYear, double *deltaRa, double *deltaDec)
 {
@@ -1107,15 +1115,17 @@ void calcProperMotionPrecessionNutationAberration(double ra, double dec, double 
     calcProperMotion(motionRa, motionDec, deltaJulianYear, &properMotionRa, &properMotionDec);
     totalDeltaRa += properMotionRa;
     totalDeltaDec += properMotionDec;
-    calcPrecession(properMotionRa, properMotionDec, deltaJulianYear, &precessedRa, &precessedDec);
-    // calcPrecessionRigorous(properMotionRa, properMotionDec, coordJDYear, deltaJulianYear, &precessedRa, &precessedDec);
+    tmpRa = ra + properMotionRa;
+    tmpDec = dec + properMotionDec;
+    calcPrecession(tmpRa, tmpRa, deltaJulianYear, &precessedRa, &precessedDec);
+    // calcPrecessionRigorous(tmpRa, tmpRa, coordJDYear, deltaJulianYear, &precessedRa, &precessedDec);
     totalDeltaRa += precessedRa;
     totalDeltaDec += precessedDec;
     //celestialParameters(julianYearSinceJD2000);
-    calcNutation(properMotionRa, properMotionDec, &nutationRa, &nutationDec);
+    calcNutation(tmpRa, tmpRa, &nutationRa, &nutationDec);
     totalDeltaRa += nutationRa;
     totalDeltaDec += nutationDec;
-    calcAnnualAberration(properMotionRa, properMotionDec, &aberrationRa, &aberrationDec);
+    calcAnnualAberration(tmpRa, tmpRa, &aberrationRa, &aberrationDec);
     totalDeltaRa += aberrationRa;
     totalDeltaDec += aberrationDec;
 
@@ -1123,6 +1133,7 @@ void calcProperMotionPrecessionNutationAberration(double ra, double dec, double 
     (*deltaDec) = totalDeltaDec;
 
 #ifdef SERIAL_DEBUG
+#ifdef DEBUG_ORBITAL_VARS
     Serial.print("calcProperMotionPrecessionNutationAberration() - RA(before): ");
     Serial.print(rad2hms(ra, true, true));
     Serial.print(" DEC(before): ");
@@ -1153,6 +1164,7 @@ void calcProperMotionPrecessionNutationAberration(double ra, double dec, double 
     Serial.print(" DELTA_DEC: ");
     Serial.print(rad2dms(totalDeltaDec, true, true));
     Serial.println("");
+#endif
 #endif
 }
 
@@ -2753,7 +2765,17 @@ void basic_ScopeToEquatorial(double az, double alt, double sidT, double *ra, dou
     {
         double deltaAlt;
         calcRefractionFromApparentBennett(alt, deltaAlt);
+        // deltaAlt = calcRefractionFromApparent(alt);
         alt -= deltaAlt;
+
+#ifdef SERIAL_DEBUG
+#ifdef DEBUG_REFRACTION
+        Serial.print("calRefractionFromApparent - ");
+        Serial.print(" Refract Amount(ARCMIN): ");
+        Serial.print(deltaAlt);
+        Serial.println("");
+#endif
+#endif
     }
 
     double pri = reverseRev(az);
@@ -2823,7 +2845,16 @@ void basic_EquatorialToScope(double ra, double dec, double sidT, double *az, dou
     {
         double deltaAlt;
         calcRefractionFromTrueSamundsson(alt_tmp, deltaAlt);
+        // deltaAlt = calcRefractionFromTrue(alt_tmp);
         alt_tmp += deltaAlt;
+#ifdef SERIAL_DEBUG
+#ifdef DEBUG_REFRACTION
+        Serial.print("calRefractionFromTrue - ");
+        Serial.print(" Refract Amount(ARCMIN): ");
+        Serial.print(deltaAlt);
+        Serial.println("");
+#endif
+#endif
     }
 
     (*alt) = alt_tmp - Z3_ERR;
@@ -2998,7 +3029,7 @@ void basic_AngleSubroutine(double *pri, double *sec)
     //     (*sec) = -QRT_REV;
     // else if (c != 0)
     //     (*sec) = atan(Y[3][1] / c);
-    // else 
+    // else
     //     (*sec) = 0;
 
     // if (c == 0)
@@ -3011,7 +3042,7 @@ void basic_AngleSubroutine(double *pri, double *sec)
     //     (*pri) = atan(Y[2][1] / Y[1][1]);
     // else if (Y[1][1] < 0)
     //     (*pri) = atan(Y[2][1] / Y[1][1]) + HALF_REV;
-    
+
     if (c == 0 && Y[3][1] == 0)
         (*sec) = 0;
     else
@@ -3037,7 +3068,7 @@ void basic_Subroutine1(double pri, double sec)
         Y[2][0] = sinPri * cosSec;
         Y[3][0] = sinSec;
     }
-    else 
+    else
     {
         double cosZ1 = cos(Z1_ERR);
         double cosZ2 = cos(Z2_ERR);
@@ -3141,7 +3172,7 @@ void basic_BellIterative(double pri, double sec, double cosPri, double cosSec, d
 
         if (fabs(goalSeek) <= fabs(holdGoalSeek))
             bestApparentAz = apparentAz;
-        else 
+        else
         {
             incr /= 2;
             dir = !dir;
@@ -3170,9 +3201,9 @@ void basic_TakiIterative(double pri, double sec, double cosPri, double cosSec, d
 
     lastPri = LONG_MAX / 2;
     lastSec = LONG_MAX / 2;
-    
+
     basic_TakiSmallAngle(cosPri, cosSec, sinPri, sinSec, cosZ1, cosZ2, sinZ1, sinZ2);
-    do 
+    do
     {
         basic_AngleSubroutine(&pri, &sec);
         errPri = fabs(lastPri - pri);
@@ -3193,7 +3224,7 @@ void basic_TakiIterative(double pri, double sec, double cosPri, double cosSec, d
             pri = holdPri;
             sec = holdSec;
             basic_BellIterative(pri, sec, cosPri, cosSec, sinPri, sinSec, cosZ1, cosZ2, sinZ1, sinZ2);
-        } 
+        }
     } while (errSec > TENTH_ARCSEC_TO_RAD || errPri > TENTH_ARCSEC_TO_RAD);
 }
 
@@ -3232,7 +3263,7 @@ void basic_BestZ12(int n, double range, double resolution)
     double alt1, alt2, az1, az2, pointingErrorRMS, pointingErrorRMSTotal, altError, azError;
     pointingErrorRMSTotal = 0;
 
-    for (Z1_ERR = -range ; Z1_ERR < range; Z1_ERR += resolution)
+    for (Z1_ERR = -range; Z1_ERR < range; Z1_ERR += resolution)
     {
         for (Z2_ERR = -range; Z2_ERR < range; Z2_ERR += resolution)
         {
@@ -3309,15 +3340,15 @@ void basic_BestZ3(int n, double startRange, double endRange, double resolution)
 void basic_CalcBestZ12()
 {
     // handles searching for Z1/2 up to +/- 1 degree
-    basic_BestZ12(3, DEG_TO_RAD, ARCMIN_TO_RAD);                                                   // 10 iterations
+    basic_BestZ12(3, DEG_TO_RAD, ARCMIN_TO_RAD); // 10 iterations
 }
 
 void basic_CalcBestZ3()
 {
     // handles searching for Z3 up to +/- 10 degrees
-    basic_BestZ3(3, -10.0, 10.0, 2.0);                                                  // 10 iterations
-    basic_BestZ3(3, (Z3_ERR * RAD_TO_DEG) - 2.0, (Z3_ERR * RAD_TO_DEG) + 2.0, 0.5);     // 8 iterations
-    basic_BestZ3(3, (Z3_ERR * RAD_TO_DEG) - 0.5, (Z3_ERR * RAD_TO_DEG) + 0.5, 0.062);   // 16 iterations
+    basic_BestZ3(3, -10.0, 10.0, 2.0);                                                // 10 iterations
+    basic_BestZ3(3, (Z3_ERR * RAD_TO_DEG) - 2.0, (Z3_ERR * RAD_TO_DEG) + 2.0, 0.5);   // 8 iterations
+    basic_BestZ3(3, (Z3_ERR * RAD_TO_DEG) - 0.5, (Z3_ERR * RAD_TO_DEG) + 0.5, 0.062); // 16 iterations
 }
 
 void basic_BestZ123()
@@ -4672,11 +4703,12 @@ void drawMainScreen()
             int spacing = 230 - ((CURRENT_OBJECT.description.length() - 19) * 11);
             tft.setCursor(spacing, 170);
             tft.print("-" + CURRENT_OBJECT.description.substring(19, CURRENT_OBJECT.description.length() - 1));
-        } else
+        }
+        else
         {
             tft.print(CURRENT_OBJECT.description);
         }
-        
+
         if (CURRENT_OBJECT.alt < 0)
         {
             tft.setTextSize(2);
