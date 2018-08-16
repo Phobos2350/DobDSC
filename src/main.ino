@@ -1269,7 +1269,7 @@ void calcRefractionFromApparentBennett(double alt, double &deltaAlt)
 {
     double apparentAltDeg = alt * RAD_TO_DEG;
     double refract = 1 / tan(apparentAltDeg + (7.31 / (apparentAltDeg + 4.4)));
-    refract = -0.06 * sin(14.7 * refract + 13);
+    refract = refract - 0.06 * sin(14.7 * refract + 13);
     deltaAlt = refract * ARCMIN_TO_RAD;
 }
 
