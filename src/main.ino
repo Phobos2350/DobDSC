@@ -2772,7 +2772,7 @@ void basic_ScopeToEquatorial(double az, double alt, double sidT, double *ra, dou
 #ifdef DEBUG_REFRACTION
         Serial.print("calRefractionFromApparent - ");
         Serial.print(" Refract Amount(ARCMIN): ");
-        Serial.print(deltaAlt);
+        Serial.print(deltaAlt * RAD_TO_DEG);
         Serial.println("");
 #endif
 #endif
@@ -2851,7 +2851,7 @@ void basic_EquatorialToScope(double ra, double dec, double sidT, double *az, dou
 #ifdef DEBUG_REFRACTION
         Serial.print("calRefractionFromTrue - ");
         Serial.print(" Refract Amount(ARCMIN): ");
-        Serial.print(deltaAlt);
+        Serial.print(deltaAlt * RAD_TO_DEG);
         Serial.println("");
 #endif
 #endif
@@ -2860,21 +2860,21 @@ void basic_EquatorialToScope(double ra, double dec, double sidT, double *az, dou
     (*alt) = alt_tmp - Z3_ERR;
     (*az) = reverseRev(validRev(az_tmp));
     // (*az) = az_tmp;
-#ifdef SERIAL_DEBUG
-    Serial.print("basic_EquatorialToScope() - RA: ");
-    Serial.print(rad2hms(ra, true, true));
-    Serial.print(" DEC: ");
-    Serial.print(rad2dms(dec, true, false));
-    Serial.print(" HA: ");
-    Serial.print(rad2hms(ha_tmp, true, true));
-    Serial.print(" ---> AZ: ");
-    Serial.print(rad2dms(*az, true, true));
-    Serial.print(" AZ(RAW): ");
-    Serial.print(rad2dms(az_tmp, true, true));
-    Serial.print(" ALT: ");
-    Serial.print(rad2dms(*alt, true, true));
-    Serial.println("");
-#endif
+// #ifdef SERIAL_DEBUG
+//     Serial.print("basic_EquatorialToScope() - RA: ");
+//     Serial.print(rad2hms(ra, true, true));
+//     Serial.print(" DEC: ");
+//     Serial.print(rad2dms(dec, true, false));
+//     Serial.print(" HA: ");
+//     Serial.print(rad2hms(ha_tmp, true, true));
+//     Serial.print(" ---> AZ: ");
+//     Serial.print(rad2dms(*az, true, true));
+//     Serial.print(" AZ(RAW): ");
+//     Serial.print(rad2dms(az_tmp, true, true));
+//     Serial.print(" ALT: ");
+//     Serial.print(rad2dms(*alt, true, true));
+//     Serial.println("");
+// #endif
 }
 
 void basic_AddStar(int starNum, int totalAlignStars, double ra, double dec, double sidT, double alt, double az)
@@ -3263,11 +3263,26 @@ void basic_BestZ12(int n, double range, double resolution)
     double alt1, alt2, az1, az2, pointingErrorRMS, pointingErrorRMSTotal, altError, azError;
     pointingErrorRMSTotal = 0;
 
-    for (Z1_ERR = -range; Z1_ERR < range; Z1_ERR += resolution)
+    #ifdef SERIAL_DEBUG
+        Serial.print("bestZ12 - ");
+        Serial.println("");
+    #endif
+    for (Z1_ERR = 0; Z1_ERR < range; Z1_ERR += resolution)
     {
-        for (Z2_ERR = -range; Z2_ERR < range; Z2_ERR += resolution)
+        #ifdef SERIAL_DEBUG
+            Serial.print("Test Z1_ERR - ");
+            Serial.print(Z1_ERR);
+            Serial.println("");
+        #endif
+        for (Z2_ERR = 0; Z2_ERR < range; Z2_ERR += resolution)
         {
-            for (int i = 0; i < n; n++)
+            #ifdef SERIAL_DEBUG
+                Serial.print("Test Z2_ERR - ");
+                Serial.print(Z2_ERR);
+                Serial.println("");
+            #endif
+            pointingErrorRMSTotal = 0;
+            for (int i = 0; i < n; i++)
             {
                 alt1 = ALIGNMENT_STARS[i].alt;
                 az1 = ALIGNMENT_STARS[i].az;
@@ -3278,63 +3293,218 @@ void basic_BestZ12(int n, double range, double resolution)
                 pointingErrorRMSTotal += pointingErrorRMS;
             }
             pointingErrorRMSTotal /= n;
+            #ifdef SERIAL_DEBUG
+                Serial.print("pointingErrorRMSTotal: ");
+                Serial.print(pointingErrorRMSTotal);
+            #endif
             if (pointingErrorRMSTotal < bestPointingErrorRMS - ARCSEC_TO_RAD)
             {
                 bestPointingErrorRMS = pointingErrorRMSTotal;
                 bestZ1 = Z1_ERR;
                 bestZ2 = Z2_ERR;
+                #ifdef SERIAL_DEBUG
+                    Serial.print("new bestPointingErrorRMS: ");
+                    Serial.print(bestPointingErrorRMS);
+                    Serial.print(" Z1 Error: ");
+                    Serial.print(bestZ1);
+                    Serial.print(" Z2 Error: ");
+                    Serial.print(bestZ2);
+                    Serial.println("");
+                #endif
             }
         }
     }
-
     Z1_ERR = bestZ1;
     Z2_ERR = bestZ2;
+    #ifdef SERIAL_DEBUG
+        Serial.print("Best Z1/2 Found: ");
+        Serial.print(" Z1 Error: ");
+        Serial.print(Z1_ERR);
+        Serial.print(" Z2 Error: ");
+        Serial.print(Z2_ERR);
+        Serial.println("");
+    #endif
 }
 
 // BEST Z3
 // nRange to range is search area in degrees
 // incr is increment +/- degrees
-void basic_BestZ3(int n, double startRange, double endRange, double resolution)
+// void basic_BestZ3(int n, double startRange, double endRange, double resolution)
+// {
+//     double ra1, dec1;
+//     double ra2, dec2;
+//     double bestZ3 = HALF_REV;
+//     double bestDist = HALF_REV;
+
+//     // Covnert search ranges and resolution to Radians
+//     startRange *= DEG_TO_RAD;
+//     endRange *= DEG_TO_RAD;
+//     resolution *= DEG_TO_RAD;
+
+//     for (Z3_ERR = startRange; Z3_ERR < endRange; Z3_ERR += resolution)
+//     {
+//         for (int j = 0; j < n; j++)
+//         {
+//             basic_ScopeToEquatorial(ALIGNMENT_STARS[j].az, ALIGNMENT_STARS[j].alt, ALIGNMENT_STARS[j].time, &ra1, &dec1);
+//             double dist = 0;
+//             for (int k = 0; k < n; k++)
+//             {
+//                 if (j != k)
+//                 {
+//                     // Star j to k catalogue vs aligned
+//                     // Catalogue RA/DEC Angular Distance
+//                     double dist1 = basic_AngDist(ALIGNMENT_STARS[j].ra, ALIGNMENT_STARS[j].dec, ALIGNMENT_STARS[k].ra, ALIGNMENT_STARS[k].dec);
+//                     // Aligned RA/DEC Angular Distance
+//                     basic_ScopeToEquatorial(ALIGNMENT_STARS[k].az, ALIGNMENT_STARS[k].az, ALIGNMENT_STARS[k].time, &ra2, &dec2);
+//                     double dist2 = basic_AngDist(ra1, dec1, ra2, dec2);
+
+//                     dist += abs(dist1 - dist2);
+//                 }
+//             }
+//             dist = dist / n;
+//             if (dist < bestDist)
+//             {
+//                 bestZ3 = Z3_ERR;
+//                 bestDist = dist;
+//             }
+//         }
+//     }
+//     Z3_ERR = bestZ3;
+// #ifdef SERIAL_DEBUG
+//     Serial.print("bestZ3 - ");
+//     Serial.print("startRange: ");
+//     Serial.print(startRange);
+//     Serial.print(" endRange: ");
+//     Serial.print(endRange);
+//     Serial.print(" resolution: ");
+//     Serial.print(resolution);
+//     Serial.println("");
+//     Serial.print("bestZ3: ");
+//     Serial.print(bestZ3);
+//     Serial.println("");
+// #endif
+// }
+
+double basic_AngSepDiff(AlignmentStar &a, AlignmentStar &z)
 {
-    double ra1, dec1;
-    double ra2, dec2;
-    double bestZ3 = HALF_REV;
-    double bestDist = HALF_REV;
+    double aHa = a.time - a.ra;
+    double zHa = z.time - z.ra;
+    return fabs(fabs(basic_AngDist(aHa, a.dec, zHa, z.dec)) - fabs(basic_AngDist(a.az, a.alt, z.az, z.alt)));
+}
 
-    // Covnert search ranges and resolution to Radians
-    startRange *= DEG_TO_RAD;
-    endRange *= DEG_TO_RAD;
-    resolution *= DEG_TO_RAD;
+double basic_CalcAltOffsetDirectly(AlignmentStar &a, AlignmentStar &z)
+{
+    double altOffset;
+    double aHa = a.time - a.ra;
+    double zHa = z.time - z.ra;
+    double n = cos(a.az - z.az);
+    double m = cos(basic_AngDist(aHa, a.dec, zHa, z.dec));
+    double x = (2 * m - (n + 1) * cos(a.alt - z.alt)) / (n - 1);
 
-    for (Z3_ERR = startRange; Z3_ERR < endRange; Z3_ERR += resolution)
+    double a1 = 0.5 * (+acos(x) - a.alt - z.alt);
+    double a2 = 0.5 * (-acos(x) - a.alt - z.alt);
+
+    if (fabs(a1) < fabs(a2))
+        altOffset = a1;
+    else
+        altOffset = a2;
+    return altOffset;
+}
+
+double basic_CalcAltOffsetIteratively(AlignmentStar &a, AlignmentStar &z)
+{
+    double aAlt, zAlt, diff, lastDiff, bestDiff, bestAltOff;
+    int searchRangeDeg = 45;
+    double altIncr = ARCSEC_TO_RAD;
+    double iMax = searchRangeDeg * DEG_TO_RAD / altIncr;
+    double i = 0;
+
+    aAlt = a.alt;
+    zAlt = z.alt;
+    bestDiff = LONG_MAX;
+    lastDiff = LONG_MAX;
+    
+    while (i < iMax)
     {
-        for (int j = 0; j < n; j++)
+        diff = basic_AngSepDiff(a, z);
+        #ifdef SERIAL_DEBUG
+            Serial.print("AngSepDiff: ");
+            Serial.print(diff);
+            Serial.println("");
+        #endif
+        if (diff < bestDiff)
         {
-            basic_ScopeToEquatorial(ALIGNMENT_STARS[j].az, ALIGNMENT_STARS[j].alt, ALIGNMENT_STARS[j].time, &ra1, &dec1);
-            double dist = 0;
-            for (int k = 0; k < n; k++)
-            {
-                if (j != k)
-                {
-                    // Star j to k catalogue vs aligned
-                    // Catalogue RA/DEC Angular Distance
-                    double dist1 = basic_AngDist(ALIGNMENT_STARS[j].ra, ALIGNMENT_STARS[j].dec, ALIGNMENT_STARS[k].ra, ALIGNMENT_STARS[k].dec);
-                    // Aligned RA/DEC Angular Distance
-                    basic_ScopeToEquatorial(ALIGNMENT_STARS[k].az, ALIGNMENT_STARS[k].az, ALIGNMENT_STARS[k].time, &ra2, &dec2);
-                    double dist2 = basic_AngDist(ra1, dec1, ra2, dec2);
-
-                    dist += abs(dist1 - dist2);
-                }
-            }
-            dist = dist / n;
-            if (dist < bestDist)
-            {
-                bestZ3 = Z3_ERR;
-                bestDist = dist;
-            }
+            bestDiff = diff;
+            bestAltOff = aAlt - a.alt;
         }
+        if (diff > lastDiff)
+            break;
+        else
+            lastDiff = diff;
+        i++;
+        aAlt += altIncr;
+        zAlt += altIncr;
     }
-    Z3_ERR = bestZ3;
+    aAlt = a.alt;
+    zAlt = z.alt;
+    lastDiff = LONG_MAX;
+    i = 0;
+    while (i < iMax)
+    {
+        diff = basic_AngSepDiff(a, z);
+        #ifdef SERIAL_DEBUG
+            Serial.print("AngSepDiff: ");
+            Serial.print(diff);
+            Serial.println("");
+        #endif
+        if (diff < bestDiff)
+        {
+            bestDiff = diff;
+            bestAltOff = aAlt - a.alt;
+        }
+        if (diff > lastDiff)
+            break;
+        else
+            lastDiff = diff;
+        i++;
+        aAlt -= altIncr;
+        zAlt -= altIncr;
+    }
+    return bestAltOff;
+}
+
+double basic_GetAltOffset(AlignmentStar &a, AlignmentStar &z)
+{
+    try
+    {
+        return basic_CalcAltOffsetDirectly(a, z);
+    }   
+    catch (const std::exception &e)
+    {
+        return basic_CalcAltOffsetIteratively(a, z);
+    }
+}
+
+void basic_BestZ3(int n)
+{
+    double accumAltOffset;
+    int count;
+
+    accumAltOffset = basic_GetAltOffset(ALIGNMENT_STARS[0], ALIGNMENT_STARS[1]);
+    count = 1;
+    if (n == 3)
+    {
+        accumAltOffset += basic_GetAltOffset(ALIGNMENT_STARS[0], ALIGNMENT_STARS[2]);
+        count++;
+        accumAltOffset += basic_GetAltOffset(ALIGNMENT_STARS[1], ALIGNMENT_STARS[2]);
+        count++;
+    }
+    Z3_ERR = accumAltOffset / n;
+#ifdef SERIAL_DEBUG
+    Serial.print("bestZ3 - ");
+    Serial.print(Z3_ERR);
+    Serial.println("");
+#endif
 }
 
 void basic_CalcBestZ12()
@@ -3345,10 +3515,11 @@ void basic_CalcBestZ12()
 
 void basic_CalcBestZ3()
 {
+    basic_BestZ3(3);
     // handles searching for Z3 up to +/- 10 degrees
-    basic_BestZ3(3, -10.0, 10.0, 2.0);                                                // 10 iterations
-    basic_BestZ3(3, (Z3_ERR * RAD_TO_DEG) - 2.0, (Z3_ERR * RAD_TO_DEG) + 2.0, 0.5);   // 8 iterations
-    basic_BestZ3(3, (Z3_ERR * RAD_TO_DEG) - 0.5, (Z3_ERR * RAD_TO_DEG) + 0.5, 0.062); // 16 iterations
+    // basic_BestZ3(3, -45.0, 45.0, 5.0);                                                // 10 iterations
+    // basic_BestZ3(3, (Z3_ERR * RAD_TO_DEG) - 2.0, (Z3_ERR * RAD_TO_DEG) + 2.0, 0.5);   // 8 iterations
+    // basic_BestZ3(3, (Z3_ERR * RAD_TO_DEG) - 0.5, (Z3_ERR * RAD_TO_DEG) + 0.5, 0.062); // 16 iterations
 }
 
 void basic_BestZ123()
