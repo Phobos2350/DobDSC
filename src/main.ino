@@ -3328,10 +3328,10 @@ void basic_BestZ12(int n, double range, double resolution)
     double alt1, alt2, az1, az2, pointingErrorRMS, pointingErrorRMSTotal, altError, azError;
     pointingErrorRMSTotal = 0;
 
-    #ifdef SERIAL_DEBUG
-        Serial.print("bestZ12 - ");
-        Serial.println("");
-    #endif
+#ifdef SERIAL_DEBUG
+    Serial.print("bestZ12 - ");
+    Serial.println("");
+#endif
     for (Z1_ERR = 0; Z1_ERR < range; Z1_ERR += resolution)
     {
         for (Z2_ERR = 0; Z2_ERR < range; Z2_ERR += resolution)
@@ -3353,28 +3353,28 @@ void basic_BestZ12(int n, double range, double resolution)
                 bestPointingErrorRMS = pointingErrorRMSTotal;
                 bestZ1 = Z1_ERR;
                 bestZ2 = Z2_ERR;
-                #ifdef SERIAL_DEBUG
-                    Serial.print("new bestPointingErrorRMS: ");
-                    Serial.print(bestPointingErrorRMS);
-                    Serial.print(" Z1 Error: ");
-                    Serial.print(bestZ1);
-                    Serial.print(" Z2 Error: ");
-                    Serial.print(bestZ2);
-                    Serial.println("");
-                #endif
+#ifdef SERIAL_DEBUG
+                Serial.print("new bestPointingErrorRMS: ");
+                Serial.print(bestPointingErrorRMS);
+                Serial.print(" Z1 Error: ");
+                Serial.print(bestZ1);
+                Serial.print(" Z2 Error: ");
+                Serial.print(bestZ2);
+                Serial.println("");
+#endif
             }
         }
     }
     Z1_ERR = bestZ1;
     Z2_ERR = bestZ2;
-    #ifdef SERIAL_DEBUG
-        Serial.print("Best Z1/2 Found: ");
-        Serial.print(" Z1 Error: ");
-        Serial.print(Z1_ERR);
-        Serial.print(" Z2 Error: ");
-        Serial.print(Z2_ERR);
-        Serial.println("");
-    #endif
+#ifdef SERIAL_DEBUG
+    Serial.print("Best Z1/2 Found: ");
+    Serial.print(" Z1 Error: ");
+    Serial.print(Z1_ERR);
+    Serial.print(" Z2 Error: ");
+    Serial.print(Z2_ERR);
+    Serial.println("");
+#endif
 }
 
 // BEST Z3
@@ -3474,15 +3474,15 @@ double basic_CalcAltOffsetIteratively(AlignmentStar &a, AlignmentStar &z)
     zAlt = z.alt;
     bestDiff = LONG_MAX;
     lastDiff = LONG_MAX;
-    
+
     while (i < iMax)
     {
         diff = basic_AngSepDiff(a, z);
-        #ifdef SERIAL_DEBUG
-            Serial.print("AngSepDiff: ");
-            Serial.print(diff);
-            Serial.println("");
-        #endif
+#ifdef SERIAL_DEBUG
+        Serial.print("AngSepDiff: ");
+        Serial.print(diff);
+        Serial.println("");
+#endif
         if (diff < bestDiff)
         {
             bestDiff = diff;
@@ -3503,11 +3503,11 @@ double basic_CalcAltOffsetIteratively(AlignmentStar &a, AlignmentStar &z)
     while (i < iMax)
     {
         diff = basic_AngSepDiff(a, z);
-        #ifdef SERIAL_DEBUG
-            Serial.print("AngSepDiff: ");
-            Serial.print(diff);
-            Serial.println("");
-        #endif
+#ifdef SERIAL_DEBUG
+        Serial.print("AngSepDiff: ");
+        Serial.print(diff);
+        Serial.println("");
+#endif
         if (diff < bestDiff)
         {
             bestDiff = diff;
@@ -3529,7 +3529,7 @@ double basic_GetAltOffset(AlignmentStar &a, AlignmentStar &z)
     try
     {
         return basic_CalcAltOffsetDirectly(a, z);
-    }   
+    }
     catch (const std::exception &e)
     {
         return basic_CalcAltOffsetIteratively(a, z);
@@ -5036,7 +5036,7 @@ void drawCatalogueSummaryScreen()
         tft.print("Asterisms:");
         tft.setCursor(210, 90);
         tft.print("1");
-        
+
         tft.setCursor(10, 110);
         tft.print("Glob. Clst.");
         tft.setCursor(210, 110);
@@ -5046,12 +5046,12 @@ void drawCatalogueSummaryScreen()
         tft.print("Open Clst.");
         tft.setCursor(210, 130);
         tft.print("26");
-        
+
         tft.setCursor(10, 150);
         tft.print("Galaxies");
         tft.setCursor(210, 150);
         tft.print("40");
-        
+
         tft.setCursor(10, 170);
         tft.print("Diffuse Neb.");
         tft.setCursor(210, 170);
@@ -5066,17 +5066,17 @@ void drawCatalogueSummaryScreen()
         tft.print("Supernova Rmnt.");
         tft.setCursor(210, 210);
         tft.print("1");
-        
+
         tft.setCursor(10, 230);
         tft.print("Star Cloud");
         tft.setCursor(210, 230);
-        tft.print("1"); 
+        tft.print("1");
 
         tft.setCursor(10, 250);
         tft.print("Double Star");
         tft.setCursor(210, 250);
         tft.print("1");
-    } 
+    }
     else if (LOAD_SELECTOR == 2)
     {
         tft.setTextColor(L_TEXT);
@@ -5110,7 +5110,7 @@ void drawCatalogueSummaryScreen()
         tft.print("Dark Neb.");
         tft.setCursor(210, 150);
         tft.print("1");
-        
+
         tft.setCursor(10, 170);
         tft.print("Diffuse Neb.");
         tft.setCursor(210, 170);
