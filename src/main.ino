@@ -6542,14 +6542,10 @@ void considerTouchInput(int lx, int ly)
                         {
                             basic_GenerateThirdStar();
                             basic_TransformMatrix();
-                            if (CORRECT_MOUNT_ERRS)
-                                basic_BestZ123();
                         }
                         else if (ALIGNMENT_METHOD == TAKI_ADVANCED)
                         {
                             initMatrix(2, CMWS_ALIGN);
-                            if (CORRECT_MOUNT_ERRS)
-                                bestZ123(CMWS_ALIGN, CMWS_ALIGN.z1Error, CMWS_ALIGN.z2Error, CMWS_ALIGN.z3Error);
                         }
                         drawMainScreen();
                     }
