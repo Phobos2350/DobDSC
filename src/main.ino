@@ -4500,13 +4500,13 @@ void considerTimeUpdates()
         tft.fillRect(70, 170, 170, 50, BLACK);
         tft.setTextColor(L_TEXT);
         // tft.setCursor(10, 170);
-        // tft.print("ALT: ");
-        tft.setCursor(70, 170);
-        tft.print(rad2dms(ALIGNMENT_STARS[starNum].alt, true, false));
-        // tft.setCursor(10, 190);
         // tft.print("AZ: ");
+        tft.setCursor(70, 170);
+        tft.print(rad2dms(ALIGNMENT_STARS[starNum].az, true, false));
+        // tft.setCursor(10, 190);
+        // tft.print("ALT: ");
         tft.setCursor(70, 190);
-        tft.print(rad2dms(ALIGNMENT_STARS[starNum].az, true, true));
+        tft.print(rad2dms(ALIGNMENT_STARS[starNum].alt, true, true));
     }
 }
 
