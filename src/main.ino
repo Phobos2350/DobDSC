@@ -4311,19 +4311,19 @@ void considerTimeUpdates()
         }
         tft.print((LST - (int)LST) * 60, 0);
 
-        // Update Telescope RA/DEC accoriding to new time
-        tft.fillRect(70, 110, 170, 20, BLACK);
-        tft.setTextColor(L_TEXT);
-        tft.setTextSize(1);
+        // // Update Telescope RA/DEC accoriding to new time
+        // tft.fillRect(70, 110, 170, 20, BLACK);
+        // tft.setTextColor(L_TEXT);
+        // tft.setTextSize(1);
 
-        // tft.setCursor(10, 110);
-        // tft.print("RA: ");
-        tft.setCursor(70, 110);
-        tft.print(CURR_RA);
-        // tft.setCursor(10, 120);
-        // tft.print("DEC: ");
-        tft.setCursor(70, 120);
-        tft.print(CURR_DEC);
+        // // tft.setCursor(10, 110);
+        // // tft.print("RA: ");
+        // tft.setCursor(70, 110);
+        // tft.print(CURR_RA);
+        // // tft.setCursor(10, 120);
+        // // tft.print("DEC: ");
+        // tft.setCursor(70, 120);
+        // tft.print(CURR_DEC);
 
         if ((CURRENT_OBJECT.name != ""))
         {
@@ -4333,13 +4333,13 @@ void considerTimeUpdates()
             tft.setTextSize(2);
 
             // tft.setCursor(10, 205);
-            // tft.print("ALT: ");
-            tft.setCursor(70, 205);
-            tft.print(rad2dms(CURRENT_OBJECT.alt, true, false));
-            // tft.setCursor(10, 225);
             // tft.print("AZ: ");
+            tft.setCursor(70, 205);
+            tft.print(rad2dms(CURRENT_OBJECT.az, true, false));
+            // tft.setCursor(10, 225);
+            // tft.print("ALT: ");
             tft.setCursor(70, 225);
-            tft.print(rad2dms(CURRENT_OBJECT.az, true, true));
+            tft.print(rad2dms(CURRENT_OBJECT.alt, true, true));
         }
 
         UPDATE_TIME = millis();
@@ -4533,6 +4533,8 @@ void considerTimeUpdates()
 //    * CURRENT_SCREEN == 10  - drawAlignModeScreen() - Select Master ALIGNMENT_METHOD
 //    * CURRENT_SCREEN == 11  - drawAlignCorrectionsScreen() - Enable Corrections
 //    * CURRENT_SCREEN == 12  - drawCatalogueScreen() - Select Catalogue to load objects from
+//    * CURRENT_SCREEN == 13  - drawCatalogueSummaryScreen() - Show summary and info about selected Catalogue
+//    * CURRENT_SCREEN == 14  - drawObjectSummaryScreen() - Display summary of selected object
 
 void removeTime_addXX()
 {
@@ -4894,13 +4896,13 @@ void drawMainScreen()
     tft.setTextSize(2);
     tft.setTextColor(L_TEXT);
     tft.setCursor(10, 70);
-    tft.print("ALT: ");
-    tft.setCursor(70, 70);
-    tft.print(CURR_ALT);
-    tft.setCursor(10, 90);
     tft.print("AZ: ");
-    tft.setCursor(70, 90);
+    tft.setCursor(70, 70);
     tft.print(CURR_AZ);
+    tft.setCursor(10, 90);
+    tft.print("ALT: ");
+    tft.setCursor(70, 90);
+    tft.print(CURR_ALT);
 
     tft.setTextSize(1);
     tft.setCursor(10, 110);
@@ -5157,7 +5159,7 @@ void drawCatalogueSummaryScreen()
         tft.print("43");
 
         tft.setCursor(10, 150);
-        tft.print("Galaxies - 39");
+        tft.print("Galaxies");
         tft.setCursor(210, 150);
         tft.print("39");
 
@@ -5176,7 +5178,7 @@ void drawCatalogueSummaryScreen()
         tft.setCursor(210, 210);
         tft.print("20");
     }
-    drawButton(20, 270, 200, 40, "Continue", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
+    drawButton(20, 270, 200, 40, "CONTINUE", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
 }
 
 void drawLoadScreen()
@@ -5305,6 +5307,90 @@ void drawLoadObjects()
             }
         }
     }
+}
+
+void drawObjectSummaryScreen()
+{
+    CURRENT_SCREEN = 14;
+    tft.fillScreen(BLACK);
+    tft.setCursor(10, 10);
+    tft.setTextColor(TITLE_TEXT, TITLE_TEXT_BG);
+    tft.setTextSize(3);
+    tft.print(" Object");
+
+    if (CURRENT_OBJECT.name != "")
+    {
+        tft.setTextSize(2);
+        tft.setCursor(10, 30);
+        tft.setTextColor(L_TEXT);
+        tft.print(CURRENT_OBJECT.name);
+        tft.setCursor(10, 55);
+        if (CURRENT_OBJECT.description.length() > 19)
+        {
+            tft.print(CURRENT_OBJECT.description.substring(0, 19));
+            int spacing = 230 - ((CURRENT_OBJECT.description.length() - 19) * 11);
+            tft.setCursor(spacing, 70);
+            tft.print("-" + CURRENT_OBJECT.description.substring(19, CURRENT_OBJECT.description.length() - 1));
+        }
+        else
+        {
+            tft.print(CURRENT_OBJECT.description);
+        }
+
+        if (CURRENT_OBJECT.alt < 0)
+        {
+            tft.setTextSize(2);
+            tft.setCursor(10, 85);
+            tft.setTextColor(TITLE_TEXT, TITLE_TEXT_BG);
+            tft.println("OBJECT NOT VISIBLE!");
+        }
+        else
+        {
+            tft.setTextSize(2);
+            tft.setCursor(10, 100);
+            tft.setTextColor(L_TEXT);
+            tft.print(CURRENT_OBJECT.constellation);
+            tft.setCursor(10, 115);
+            tft.print(CURRENT_OBJECT.type);
+            tft.setCursor(10, 130);
+            tft.print("Mag: ");
+            tft.print(CURRENT_OBJECT.mag);
+            tft.setCursor(10, 145);
+            tft.print("Size: ");
+            tft.print(CURRENT_OBJECT.size);
+        }
+
+        tft.setTextSize(2);
+        tft.setTextColor(L_TEXT);
+
+        tft.setCursor(10, 165);
+        tft.print("AZ: ");
+        tft.setCursor(70, 165);
+        tft.print(rad2dms(CURRENT_OBJECT.az, true, true));
+        tft.setCursor(10, 185);
+        tft.print("ALT: ");
+        tft.setCursor(70, 185);
+        tft.print(rad2dms(CURRENT_OBJECT.alt, true, false));
+
+        tft.setCursor(10, 205);
+        tft.print("RA: ");
+        tft.setCursor(70, 205);
+        tft.print(rad2hms(CURRENT_OBJECT.ra, true, true));
+        tft.setCursor(10, 205);
+        tft.print("DEC: ");
+        tft.setCursor(70, 205);
+        tft.print(rad2dms(CURRENT_OBJECT.dec, true, false));
+    }
+    else
+    {
+        tft.setTextSize(2);
+        tft.setTextColor(L_TEXT);
+        tft.setCursor(10, 85);
+        tft.println("No target selected!");
+    }
+
+    drawButton(10, 270, 100, 40, "BACK", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
+    drawButton(130, 270, 100, 40, "SELECT", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
 }
 
 void drawOptionsScreen()
@@ -6048,9 +6134,9 @@ void considerTouchInput(int lx, int ly)
                             //if (Messier_Array[zz] != "")
                             {
                                 selectObject(zz, 0);
-                                MESS_PAGER == 0;
                                 delay(150);
-                                drawMainScreen();
+                                // drawMainScreen();
+                                drawObjectSummaryScreen();
                             }
                         }
                     }
@@ -6079,9 +6165,9 @@ void considerTouchInput(int lx, int ly)
                             //if (Treasure_Array[zz] != "")
                             {
                                 selectObject(zz, 1);
-                                CALD_PAGER == 0;
                                 delay(150);
-                                drawMainScreen();
+                                // drawMainScreen();
+                                drawObjectSummaryScreen();
                             }
                         }
                     }
@@ -6111,9 +6197,9 @@ void considerTouchInput(int lx, int ly)
                             //if (Treasure_Array[zz] != "")
                             {
                                 selectObject(zz, 2);
-                                TREAS_PAGER == 0;
                                 delay(150);
-                                drawMainScreen();
+                                // drawMainScreen();
+                                drawObjectSummaryScreen();
                             }
                         }
                     }
@@ -6163,9 +6249,26 @@ void considerTouchInput(int lx, int ly)
             else if (lx > 20 && lx < 220 && ly > 270 && ly < 310)
             {
                 // BTN "Continue" pressed
-                drawButton(20, 270, 200, 40, "Continue", 0, BTN_L_BORDER, L_TEXT, 2);
+                drawButton(20, 270, 200, 40, "CONTINUE", 0, BTN_L_BORDER, L_TEXT, 2);
                 delay(150);
                 drawLoadScreen();
+            }
+        }
+        else if (CURRENT_SCREEN == 14)
+        { // captures touches on drawObjectSummaryScreen()
+            if (lx > 165 && lx < 230 && ly > 10 && ly < 40)
+            {
+                // BTN <Back pressed// BTN "BACK" pressed
+                drawButton(165, 10, 65, 30, "BACK", 0, BTN_L_BORDER, L_TEXT, 3);
+                delay(150);
+                drawLoadScreen();
+            }
+            else if (lx > 20 && lx < 220 && ly > 270 && ly < 310)
+            {
+                // BTN "SELECT" pressed
+                drawButton(20, 270, 200, 40, "SELECT", 0, BTN_L_BORDER, L_TEXT, 2);
+                delay(150);
+                drawMainScreen();
             }
         }
         else if (CURRENT_SCREEN == 5)
@@ -7085,11 +7188,11 @@ void loop(void)
             tft.setTextSize(2);
             tft.setTextColor(L_TEXT);
             tft.setCursor(70, 70);
-            //tft.print("ALT: ");
-            tft.print(CURR_ALT);
-            tft.setCursor(70, 90);
             //tft.print("AZ: ");
             tft.print(CURR_AZ);
+            tft.setCursor(70, 90);
+            //tft.print("ALT: ");
+            tft.print(CURR_ALT);
 
             tft.setTextSize(1);
             tft.setCursor(70, 110);
