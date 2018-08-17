@@ -4832,7 +4832,6 @@ void drawSelectAlignment()
     drawButton(20, 110, 200, 40, "3-Star Auto", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
     drawButton(20, 170, 200, 40, "2-Star Manual", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
     drawButton(20, 230, 200, 40, "3-Star Manual", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
-    //drawButton(20, 270, 200, 40, "Skip Align", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
 }
 
 void drawMainScreen()
@@ -5005,9 +5004,9 @@ void drawCatalogueScreen()
 
     drawButton(165, 10, 65, 30, "BACK", BTN_L_BORDER, 0, BTN_BLK_TEXT, 3);
 
-    drawButton(20, 50, 200, 40, "Messier", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
-    drawButton(20, 110, 200, 40, "Caldwell", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
-    drawButton(20, 170, 200, 40, "Treasures", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
+    drawButton(20, 50, 200, 40, "MESSIER", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
+    drawButton(20, 110, 200, 40, "CALDWELL", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
+    drawButton(20, 170, 200, 40, "TREASURES", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
 }
 
 void drawCatalogueSummaryScreen()
@@ -5018,8 +5017,6 @@ void drawCatalogueSummaryScreen()
     tft.setTextColor(TITLE_TEXT, TITLE_TEXT_BG);
     tft.setTextSize(2);
     tft.print(" CATALOGUE");
-
-    drawButton(165, 10, 65, 30, "BACK", BTN_L_BORDER, 0, BTN_BLK_TEXT, 3);
 
     if (LOAD_SELECTOR == 1)
     {
@@ -5178,7 +5175,8 @@ void drawCatalogueSummaryScreen()
         tft.setCursor(210, 210);
         tft.print("20");
     }
-    drawButton(20, 270, 200, 40, "CONTINUE", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
+    drawButton(10, 270, 100, 40, "BACK", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
+    drawButton(130, 270, 100, 40, "CONT.", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
 }
 
 void drawLoadScreen()
@@ -5321,15 +5319,15 @@ void drawObjectSummaryScreen()
     if (CURRENT_OBJECT.name != "")
     {
         tft.setTextSize(2);
-        tft.setCursor(10, 30);
+        tft.setCursor(10, 50);
         tft.setTextColor(L_TEXT);
         tft.print(CURRENT_OBJECT.name);
-        tft.setCursor(10, 55);
+        tft.setCursor(10, 70);
         if (CURRENT_OBJECT.description.length() > 19)
         {
             tft.print(CURRENT_OBJECT.description.substring(0, 19));
             int spacing = 230 - ((CURRENT_OBJECT.description.length() - 19) * 11);
-            tft.setCursor(spacing, 70);
+            tft.setCursor(spacing, 90);
             tft.print("-" + CURRENT_OBJECT.description.substring(19, CURRENT_OBJECT.description.length() - 1));
         }
         else
@@ -5340,22 +5338,22 @@ void drawObjectSummaryScreen()
         if (CURRENT_OBJECT.alt < 0)
         {
             tft.setTextSize(2);
-            tft.setCursor(10, 85);
+            tft.setCursor(10, 110);
             tft.setTextColor(TITLE_TEXT, TITLE_TEXT_BG);
             tft.println("OBJECT NOT VISIBLE!");
         }
         else
         {
             tft.setTextSize(2);
-            tft.setCursor(10, 100);
+            tft.setCursor(10, 130);
             tft.setTextColor(L_TEXT);
             tft.print(CURRENT_OBJECT.constellation);
-            tft.setCursor(10, 115);
+            tft.setCursor(10, 150);
             tft.print(CURRENT_OBJECT.type);
-            tft.setCursor(10, 130);
+            tft.setCursor(10, 170);
             tft.print("Mag: ");
             tft.print(CURRENT_OBJECT.mag);
-            tft.setCursor(10, 145);
+            tft.setCursor(10, 190);
             tft.print("Size: ");
             tft.print(CURRENT_OBJECT.size);
         }
@@ -5363,29 +5361,29 @@ void drawObjectSummaryScreen()
         tft.setTextSize(2);
         tft.setTextColor(L_TEXT);
 
-        tft.setCursor(10, 165);
+        tft.setCursor(10, 210);
         tft.print("AZ: ");
-        tft.setCursor(70, 165);
+        tft.setCursor(70, 210);
         tft.print(rad2dms(CURRENT_OBJECT.az, true, true));
-        tft.setCursor(10, 185);
+        tft.setCursor(10, 230);
         tft.print("ALT: ");
-        tft.setCursor(70, 185);
+        tft.setCursor(70, 230);
         tft.print(rad2dms(CURRENT_OBJECT.alt, true, false));
 
-        tft.setCursor(10, 205);
+        tft.setCursor(10, 250);
         tft.print("RA: ");
-        tft.setCursor(70, 205);
+        tft.setCursor(70, 250);
         tft.print(rad2hms(CURRENT_OBJECT.ra, true, true));
-        tft.setCursor(10, 205);
+        tft.setCursor(10, 270);
         tft.print("DEC: ");
-        tft.setCursor(70, 205);
+        tft.setCursor(70, 270);
         tft.print(rad2dms(CURRENT_OBJECT.dec, true, false));
     }
     else
     {
         tft.setTextSize(2);
         tft.setTextColor(L_TEXT);
-        tft.setCursor(10, 85);
+        tft.setCursor(10, 50);
         tft.println("No target selected!");
     }
 
@@ -5457,9 +5455,7 @@ void drawStarSelectScreen()
         for (int j = 0; j < 3; j++)
         {
             int i1 = OBJECTS[kk].indexOf(',');
-            int i2 = OBJECTS[kk].indexOf(',', i1 + 1);
-            String S_NAME = OBJECTS[kk].substring(i1 + 1, i2);
-            String C_NAME = OBJECTS[kk].substring(0, i1);
+            String S_NAME = OBJECTS[kk].substring(0, i1);
             if (S_NAME == "")
             {
                 break;
@@ -5474,21 +5470,17 @@ void drawStarSelectScreen()
                 String S_NAME_2 = S_NAME.substring(9, S_NAME.length() - 1);
                 int l1 = (S_NAME_1.length() / 2) * 6;
                 int l2 = (S_NAME_2.length() / 2) * 6;
-                tft.setCursor(((j * 75) + (44 - l1)), ((i * 50) + 50));
+                tft.setCursor(((j * 75) + (44 - l1)), ((i * 50) + 70));
                 tft.print(S_NAME_1);
-                tft.setCursor(((j * 75) + (44 - l2)), ((i * 50) + 60));
+                tft.setCursor(((j * 75) + (44 - l2)), ((i * 50) + 80));
                 tft.print(S_NAME_2);
             }
             else
             {
                 int l = (S_NAME.length() / 2) * 6;
-                tft.setCursor(((j * 75) + (44 - l)), ((i * 50) + 50));
+                tft.setCursor(((j * 75) + (44 - l)), ((i * 50) + 70));
                 tft.print(S_NAME);
             }
-
-            tft.setTextSize(2);
-            tft.setCursor(((j * 75) + 29), ((i * 50) + 70));
-            tft.print(C_NAME);
             kk += 1;
         }
     }
@@ -5686,9 +5678,7 @@ void drawAlignObjects_ali()
         for (int j = 0; j < 3; j++)
         {
             int i1 = OBJECTS[kk].indexOf(',');
-            int i2 = OBJECTS[kk].indexOf(',', i1 + 1);
-            String S_NAME = OBJECTS[kk].substring(i1 + 1, i2);
-            String C_NAME = OBJECTS[kk].substring(0, i1);
+            String S_NAME = OBJECTS[kk].substring(0, i1);
             if (S_NAME == "")
             {
                 break;
@@ -5703,21 +5693,17 @@ void drawAlignObjects_ali()
                 String S_NAME_2 = S_NAME.substring(9, S_NAME.length() - 1);
                 int l1 = (S_NAME_1.length() / 2) * 6;
                 int l2 = (S_NAME_2.length() / 2) * 6;
-                tft.setCursor(((j * 75) + (44 - l1)), ((i * 50) + 50));
+                tft.setCursor(((j * 75) + (44 - l1)), ((i * 50) + 70));
                 tft.print(S_NAME_1);
-                tft.setCursor(((j * 75) + (44 - l2)), ((i * 50) + 60));
+                tft.setCursor(((j * 75) + (44 - l2)), ((i * 50) + 80));
                 tft.print(S_NAME_2);
             }
             else
             {
                 int l = (S_NAME.length() / 2) * 6;
-                tft.setCursor(((j * 75) + (44 - l)), ((i * 50) + 50));
+                tft.setCursor(((j * 75) + (44 - l)), ((i * 50) + 70));
                 tft.print(S_NAME);
             }
-
-            tft.setTextSize(2);
-            tft.setCursor(((j * 75) + 29), ((i * 50) + 70));
-            tft.print(C_NAME);
             kk += 1;
         }
     }
@@ -5974,26 +5960,19 @@ void considerTouchInput(int lx, int ly)
                 // BTN "2-Star Manual" pressed
                 ALIGN_TYPE = 2;
                 NUM_ALIGNMENT_STARS = 2;
-                drawButton(20, 110, 200, 40, "2-Star Manual", 0, BTN_L_BORDER, L_TEXT, 2);
+                drawButton(20, 170, 200, 40, "2-Star Manual", 0, BTN_L_BORDER, L_TEXT, 2);
                 delay(150);
                 drawStarSelectScreen();
             }
-            else if (lx > 20 && lx < 220 && ly > 110 && ly < 150)
+            else if (lx > 20 && lx < 220 && ly > 230 && ly < 270)
             {
                 // BTN "3-Star Manual" pressed
                 ALIGN_TYPE = 2;
                 NUM_ALIGNMENT_STARS = 3;
-                drawButton(20, 110, 200, 40, "3-Star Manual", 0, BTN_L_BORDER, L_TEXT, 2);
+                drawButton(20, 230, 200, 40, "3-Star Manual", 0, BTN_L_BORDER, L_TEXT, 2);
                 delay(150);
                 drawStarSelectScreen();
             }
-            // else if (lx > 20 && lx < 220 && ly > 270 && ly < 310)
-            // {
-            //     // BTN "Skip Alignment" pressed
-            //     drawButton(20, 270, 200, 40, "Skip Align", 0, BTN_L_BORDER, L_TEXT, 2);
-            //     delay(150);
-            //     drawMainScreen();
-            // }
         }
         else if (CURRENT_SCREEN == 3)
         { // captures touches on drawMainScreen()
@@ -6218,55 +6197,55 @@ void considerTouchInput(int lx, int ly)
             if (lx > 20 && lx < 220 && ly > 50 && ly < 90)
             {
                 LOAD_SELECTOR = 1;
-                drawButton(20, 50, 200, 40, "Messier", 0, BTN_L_BORDER, L_TEXT, 2);
+                drawButton(20, 50, 200, 40, "MESSIER", 0, BTN_L_BORDER, L_TEXT, 2);
                 delay(150);
                 drawCatalogueSummaryScreen();
             }
             else if (lx > 20 && lx < 220 && ly > 110 && ly < 150)
             {
                 LOAD_SELECTOR = 2;
-                drawButton(20, 110, 200, 40, "Caldwell", 0, BTN_L_BORDER, L_TEXT, 2);
+                drawButton(20, 110, 200, 40, "CALDWELL", 0, BTN_L_BORDER, L_TEXT, 2);
                 delay(150);
                 drawCatalogueSummaryScreen();
             }
             else if (lx > 20 && lx < 220 && ly > 170 && ly < 210)
             {
                 LOAD_SELECTOR = 3;
-                drawButton(20, 170, 200, 40, "Treasures", 0, BTN_L_BORDER, L_TEXT, 2);
+                drawButton(20, 170, 200, 40, "TREASURES", 0, BTN_L_BORDER, L_TEXT, 2);
                 delay(150);
                 drawCatalogueSummaryScreen();
             }
         }
         else if (CURRENT_SCREEN == 13)
         { // captures touches on drawCatalogueSummaryScreen()
-            if (lx > 165 && lx < 230 && ly > 10 && ly < 40)
+            if (lx > 10 && lx < 110 && ly > 270 && ly < 310)
             {
                 // BTN <Back pressed// BTN <Back pressed
-                drawButton(165, 10, 65, 30, "BACK", 0, BTN_L_BORDER, L_TEXT, 3);
+                drawButton(10, 270, 100, 40, "BACK", 0, BTN_L_BORDER, L_TEXT, 3);
                 delay(150);
                 drawCatalogueScreen();
             }
-            else if (lx > 20 && lx < 220 && ly > 270 && ly < 310)
+            else if (lx > 130 && lx < 230 && ly > 270 && ly < 310)
             {
                 // BTN "Continue" pressed
-                drawButton(20, 270, 200, 40, "CONTINUE", 0, BTN_L_BORDER, L_TEXT, 2);
+                drawButton(130, 270, 100, 40, "CONT.", 0, BTN_L_BORDER, L_TEXT, 2);
                 delay(150);
                 drawLoadScreen();
             }
         }
         else if (CURRENT_SCREEN == 14)
         { // captures touches on drawObjectSummaryScreen()
-            if (lx > 165 && lx < 230 && ly > 10 && ly < 40)
+            if (lx > 10 && lx < 110 && ly > 270 && ly < 310)
             {
                 // BTN <Back pressed// BTN "BACK" pressed
-                drawButton(165, 10, 65, 30, "BACK", 0, BTN_L_BORDER, L_TEXT, 3);
+                drawButton(10, 270, 100, 40, "BACK", 0, BTN_L_BORDER, L_TEXT, 3);
                 delay(150);
                 drawLoadScreen();
             }
-            else if (lx > 20 && lx < 220 && ly > 270 && ly < 310)
+            else if (lx > 130 && lx < 230 && ly > 270 && ly < 310)
             {
                 // BTN "SELECT" pressed
-                drawButton(20, 270, 200, 40, "SELECT", 0, BTN_L_BORDER, L_TEXT, 2);
+                drawButton(130, 270, 200, 40, "SELECT", 0, BTN_L_BORDER, L_TEXT, 2);
                 delay(150);
                 drawMainScreen();
             }
