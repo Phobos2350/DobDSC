@@ -2595,7 +2595,7 @@ void autoSelectAlignmentStars()
         //                      &this_alt, &this_az);
         getAltAzTrig(CURRENT_ALIGN_STAR.ra, CURRENT_ALIGN_STAR.dec, CURRENT_ALIGN_STAR.time, CURRENT_ALIGN_STAR.lat, &CURRENT_ALIGN_STAR.alt, &CURRENT_ALIGN_STAR.az);
         // If catalogue star is higher than 25 degrees above the horizon.
-        if (CURRENT_ALIGN_STAR.alt > 0.436332313)
+        if (CURRENT_ALIGN_STAR.alt > 25 * DEG_TO_RAD)
         {
             // Copy catalogue star to alignment star.
             ALIGNMENT_STARS[n] = CURRENT_ALIGN_STAR;
@@ -2824,7 +2824,7 @@ boolean basic_isReady()
 void basic_ScopeToEquatorial(double az, double alt, double sidT, double *ra, double *dec)
 {
     double ra_tmp, ha_tmp, dec_tmp;
-    if (CORRECT_REFRACTION && alt > -0.0349066 || alt < 1.55334) // If alt is > -2 deg or < 89 deg
+    if (CORRECT_REFRACTION && alt > -2 * DEG_TO_RAD || alt < 89 * DEG_TO_RAD) // If alt is > -2 deg or < 89 deg
     {
         double deltaAlt;
         calcRefractionFromApparentBennett(alt, deltaAlt);
@@ -6288,8 +6288,8 @@ void considerTouchInput(int lx, int ly)
                             //                       &this_alt, &this_az);
                             getAltAzTrig(CURRENT_ALIGN_STAR.ra, CURRENT_ALIGN_STAR.dec, CURRENT_ALIGN_STAR.time, CURRENT_ALIGN_STAR.lat, &CURRENT_ALIGN_STAR.alt, &CURRENT_ALIGN_STAR.az);
                             uint8_t n = ALIGN_STEP - 1;
-                            // If catalogue star is higher than 25 degrees above the horizon.
-                            if (CURRENT_ALIGN_STAR.alt > 0.436332313)
+                            // If catalogue star is higher than 10 degrees above the horizon.
+                            if (CURRENT_ALIGN_STAR.alt > 10 * DEG_TO_RAD)
                             {
                                 // Copy catalogue star to alignment star.
                                 ALIGNMENT_STARS[n] = CURRENT_ALIGN_STAR;
