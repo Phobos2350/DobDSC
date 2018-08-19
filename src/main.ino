@@ -1060,10 +1060,10 @@ void calcNutation(double ra, double dec, double *deltaRA, double *deltaDEC)
     double tanDec = tan(dec);
     double cosEclipObliq = cos(ECLIPTIC_OBLIQ);
     double sinEclipObliq = sin(ECLIPTIC_OBLIQ);
-    double deltaRa = (cosEclipObliq + sinEclipObliq * sinRa * tanDec) * NUTATION_LON - (cosRa * tanDec) * NUTATION_OBLIQ;
+    double deltaRa = (cosEclipObliq + sinEclipObliq * sinRa * tanDec) * NUTATION_LON - cosRa * tanDec * NUTATION_OBLIQ;
     deltaRa *= ARCSEC_TO_RAD;
 
-    double deltaDec = sinEclipObliq * cosRa * NUTATION_LON + sinRa * NUTATION_OBLIQ;
+    double deltaDec = (sinEclipObliq * cosRa) * NUTATION_LON + sinRa * NUTATION_OBLIQ;
     deltaDec *= ARCSEC_TO_RAD;
 
     (*deltaRA) = deltaRa;
