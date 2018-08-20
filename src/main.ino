@@ -69,6 +69,8 @@
 #include <RtcDS3231.h>
 #include <LSM303.h> // Install this on Arudino IDE: "LSM303 Library by Pololu" (I used version 3.0.1), https://github.com/pololu/lsm303-arduino
 
+#include <libnova/libnova.h>
+
 // #define SERIAL_DEBUG // comment out to deactivate the serial debug mode
 // #define PERFECT_ALIGN
 // #define DEBUG_REFRACTION
@@ -327,7 +329,7 @@ const double ARCSEC_TO_REV = 1.0 / 1296000;
 const double ARCSEC_TO_RAD = PI / 648000;
 const double TENTH_ARCSEC_TO_RAD = ARCSEC_TO_RAD / 10.0;
 
-const float JD2000 = 2451545.0;
+const float J2000 = 2451545.0;
 const float JDMOD = 2400000.5;
 const float JDYEAR = 365.25;
 const float JDCENTURY = 36525.0;
@@ -928,10 +930,10 @@ void equatorialToCelestial(float alt, float az, float lat,
 
 double getJulianYear(double jd)
 {
-    if (jd == JD2000)
+    if (jd == J2000)
         return 2000.0;
     else
-        return (jd - JD2000) / JDYEAR + 2000.0;
+        return (jd - J2000) / JDYEAR + 2000.0;
 }
 
 void calcProperMotion(double motionRa, double motionDec, double deltaJulianYear, double *deltaRa, double *deltaDec)
@@ -1022,9 +1024,9 @@ void calcPrecessionRigorous(double ra, double dec, double startJulianYear, doubl
     (*deltaDec) = validDec(precessedDec - unflippedDec);
 }
 
-void celestialParameters(int julianYearsSinceJD2000)
+void celestialParameters(int julianYearsSinceJ2000)
 {
-    double t = julianYearsSinceJD2000 / 100;
+    double t = julianYearsSinceJ2000 / 100;
     // Longitudes
     double sunMeanLng = validRev((280.46646 + 36000.76983 * t) * DEG_TO_RAD);
     double moonMeanLng = validRev((218.3165 + 481267.8813 * t) * DEG_TO_RAD);
@@ -1097,10 +1099,10 @@ void calcProperMotionPrecessionNutationAberration(double ra, double dec, double 
 {
     double tmpRa, tmpDec, totalDeltaRa, totalDeltaDec, properMotionRa, properMotionDec;
     double precessedRa, precessedDec, nutationRa, nutationDec, aberrationRa, aberrationDec;
-    double coordJDYear = getJulianYear(JD2000);
+    double coordJDYear = getJulianYear(J2000);
     double currJDYear = getJulianYear(JDN);
     double deltaJulianYear = currJDYear - coordJDYear;
-    //double julianYearSinceJD2000 = currJDYear - 2000;
+    //double julianYearSinceJ2000 = currJDYear - 2000;
 #ifdef SERIAL_DEBUG
     Serial.print("CO-ORD JDYEAR: ");
     Serial.print(coordJDYear);
@@ -1122,7 +1124,7 @@ void calcProperMotionPrecessionNutationAberration(double ra, double dec, double 
     // calcPrecessionRigorous(tmpRa, tmpRa, coordJDYear, deltaJulianYear, &precessedRa, &precessedDec);
     totalDeltaRa += precessedRa;
     totalDeltaDec += precessedDec;
-    //celestialParameters(julianYearSinceJD2000);
+    //celestialParameters(julianYearSinceJ2000);
     calcNutation(tmpRa, tmpRa, &nutationRa, &nutationDec);
     totalDeltaRa += nutationRa;
     totalDeltaDec += nutationDec;
@@ -1172,8 +1174,8 @@ void calcProperMotionPrecessionNutationAberration(double ra, double dec, double 
 void calcCelestialParams()
 {
     double currJDYear = getJulianYear(JDN);
-    double julianYearSinceJD2000 = currJDYear - 2000;
-    celestialParameters(julianYearSinceJD2000);
+    double julianYearSinceJ2000 = currJDYear - 2000;
+    celestialParameters(julianYearSinceJ2000);
 }
 
 double calcAngularSepHaversine(Position &aStar, Position &bStar, boolean equatorial)
@@ -3797,7 +3799,7 @@ void getECoords(float az, float alt, float t, double *ra, double *dec)
 
 void getPlanetPosition(int object_number, Object &object)
 {
-    float T = (JDN - JD2000) / JDCENTURY;
+    float T = (JDN - J2000) / JDCENTURY;
 
     float semiMajorAxis = OBJECT_DATA[object_number][0] + (T * OBJECT_DATA[object_number][1]); // offset + T * delta
     float eccentricity = OBJECT_DATA[object_number][2] + (T * OBJECT_DATA[object_number][3]);
