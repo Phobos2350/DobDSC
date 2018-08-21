@@ -1253,11 +1253,6 @@ void processAlignmentStar(int index, AlignmentStar &star)
     //ln_get_hrz_from_equ(&star.equPos, &SCOPE.lnLatPos, SCOPE.JD, &star.hrzPos);
     getAltAzTrig(&star.equPos, &SCOPE.lnLatPos, SCOPE.LST, &star.hrzPos);
 
-    // Reverse az by half a revolution for North = 0 Azimuth as is common
-    double tmpAz = ln_deg_to_rad(star.hrzPos.az);
-    tmpAz = reverseRev(validRev(tmpAz));
-    star.hrzPos.az = ln_rad_to_deg(tmpAz);
-
 #ifdef SERIAL_DEBUG
     Serial.print("processAlignmentStar() ");
     Serial.print(star.name);
