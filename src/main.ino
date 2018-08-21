@@ -442,183 +442,190 @@ String padding(String str, uint8_t length)
     return str;
 }
 
-String rad2hms(float rad, boolean highPrecision, boolean withUnits)
+String rad2hms(double rad, boolean highPrecision, boolean withUnits)
 {
-    // if (rad < 0)
-    //     rad = rad + 2.0 * PI;
+    double degs;
 
-    double validatedRad = validRev(rad);
-    float hours = validatedRad * 12.0 / PI;
-    float minutes = (hours - floor(hours)) * 60.0;
-    float seconds = (minutes - floor(minutes)) * 60.0;
+    rad = ln_range_radians(rad);
+    degs = ln_rad_to_deg(rad);
 
-    if (highPrecision)
-    {
-        if (withUnits)
-        {
-            return padding((String) int(floor(hours)), (uint8_t)2) + "h" +
-                   padding((String) int(floor(minutes)), (uint8_t)2) + "m" +
-                   padding((String) int(floor(seconds)), (uint8_t)2) + "s";
-        }
-        else
-        {
-            return padding((String) int(floor(hours)), (uint8_t)2) + ":" +
-                   padding((String) int(floor(minutes)), (uint8_t)2) + ":" +
-                   padding((String) int(floor(seconds)), (uint8_t)2);
-        }
-    }
-    else
-    {
-        if (withUnits)
-        {
-            return padding((String) int(floor(hours)), (uint8_t)2) + "h" +
-                   padding((String) int(floor(minutes)), (uint8_t)2) + "." +
-                   (String) int(floor((minutes - floor(minutes)) * 10.0)) + "m";
-        }
-        return padding((String) int(floor(hours)), (uint8_t)2) + ":" +
-               padding((String) int(floor(minutes)), (uint8_t)2) + "." +
-               (String) int(floor((minutes - floor(minutes)) * 10.0));
-    }
+    return deg2hms(degs, highPrecision, withUnits);
+
+    // double validatedRad = validRev(rad);
+    // float hours = validatedRad * 12.0 / PI;
+    // float minutes = (hours - floor(hours)) * 60.0;
+    // float seconds = (minutes - floor(minutes)) * 60.0;
+
+    // if (highPrecision)
+    // {
+    //     if (withUnits)
+    //     {
+    //         return padding((String) int(floor(hours)), (uint8_t)2) + "h" +
+    //                padding((String) int(floor(minutes)), (uint8_t)2) + "m" +
+    //                padding((String) int(floor(seconds)), (uint8_t)2) + "s";
+    //     }
+    //     else
+    //     {
+    //         return padding((String) int(floor(hours)), (uint8_t)2) + ":" +
+    //                padding((String) int(floor(minutes)), (uint8_t)2) + ":" +
+    //                padding((String) int(floor(seconds)), (uint8_t)2);
+    //     }
+    // }
+    // else
+    // {
+    //     if (withUnits)
+    //     {
+    //         return padding((String) int(floor(hours)), (uint8_t)2) + "h" +
+    //                padding((String) int(floor(minutes)), (uint8_t)2) + "." +
+    //                (String) int(floor((minutes - floor(minutes)) * 10.0)) + "m";
+    //     }
+    //     return padding((String) int(floor(hours)), (uint8_t)2) + ":" +
+    //            padding((String) int(floor(minutes)), (uint8_t)2) + "." +
+    //            (String) int(floor((minutes - floor(minutes)) * 10.0));
+    // }
 }
 
-String rad2dms(float rad, boolean highPrecision, boolean asAzimuth)
+String rad2dms(double rad, boolean highPrecision, boolean asAzimuth)
 {
-#ifdef SERIAL_DEBUG
-    if (rad > 2.0 * PI || rad < -2.0 * PI || isnan(rad))
-    {
-        Serial.print("rad2dms() called on RAD= ");
-        Serial.print(rad);
-        Serial.println("");
-    }
-#endif
-    float degs = fabs(rad) * RAD_TO_DEG;
-    float minutes = (degs - floor(degs)) * 60.0;
-    float seconds = (minutes - floor(minutes)) * 60.0;
-    String sign = "";
+    double degs = ln_rad_to_deg(rad);
+    return deg2dms(degs, highPrecision, asAzimuth);
 
-    if (!asAzimuth)
-    {
-        sign = "+";
-        if (rad < 0)
-            sign = "-";
-    }
+    // float degs = fabs(rad) * RAD_TO_DEG;
+    // float minutes = (degs - floor(degs)) * 60.0;
+    // float seconds = (minutes - floor(minutes)) * 60.0;
+    // String sign = "";
 
-    if (highPrecision)
-    {
-        return sign + padding((String) int(floor(fabs(degs))), (uint8_t)2) + (char)247 +
-               padding((String) int(floor(minutes)), (uint8_t)2) + "'" +
-               padding((String) int(floor(seconds)), (uint8_t)2);
-    }
-    else
-    {
-        return sign + padding((String) int(floor(fabs(degs))), (uint8_t)2) + "*" +
-               padding((String) int(floor(minutes)), (uint8_t)2);
-    }
+    // if (!asAzimuth)
+    // {
+    //     sign = "+";
+    //     if (rad < 0)
+    //         sign = "-";
+    // }
+
+    // if (highPrecision)
+    // {
+    //     return sign + padding((String) int(floor(fabs(degs))), (uint8_t)2) + (char)247 +
+    //            padding((String) int(floor(minutes)), (uint8_t)2) + "'" +
+    //            padding((String) int(floor(seconds)), (uint8_t)2);
+    // }
+    // else
+    // {
+    //     return sign + padding((String) int(floor(fabs(degs))), (uint8_t)2) + "*" +
+    //            padding((String) int(floor(minutes)), (uint8_t)2);
+    // }
 }
 
 String deg2hms(double deg, boolean highPrecision, boolean withUnits)
 {
-    double dTemp;
-    deg = ln_range_degrees(deg);
+    struct ln_hms lnHMS;
+    ln_deg_to_hms(deg, &lnHMS);
 
-    // Div degrees by 15 to get hours
-    dTemp = deg / 15.0;
-    unsigned short hours = (unsigned short)dTemp;
+    // double dTemp;
+    // deg = ln_range_degrees(deg);
 
-    // Mult remainder by 60 for mins
-    dTemp = 60.0 * (dTemp - hours);
-    unsigned short minutes = (unsigned short)dTemp;
-    // Mult remainder by 60 for secs
-    unsigned short seconds = 60.0 * (dTemp - minutes);
+    // // Div degrees by 15 to get hours
+    // dTemp = deg / 15.0;
+    // unsigned short hours = (unsigned short)dTemp;
 
-    // Catch overflows
-    if (seconds > 59)
-    {
-        seconds = 0.0;
-        minutes++;
-    }
-    if (minutes > 59)
-    {
-        minutes = 0;
-        hours++;
-    }
+    // // Mult remainder by 60 for mins
+    // dTemp = 60.0 * (dTemp - hours);
+    // unsigned short minutes = (unsigned short)dTemp;
+    // // Mult remainder by 60 for secs
+    // unsigned short seconds = 60.0 * (dTemp - minutes);
+
+    // // Catch overflows
+    // if (seconds > 59)
+    // {
+    //     seconds = 0.0;
+    //     minutes++;
+    // }
+    // if (minutes > 59)
+    // {
+    //     minutes = 0;
+    //     hours++;
+    // }
 
     if (highPrecision)
     {
         if (withUnits)
         {
-            return padding((String) int(hours), (uint8_t)2) + "h" +
-                   padding((String) int(minutes), (uint8_t)2) + "m" +
-                   padding((String) int(seconds), (uint8_t)2) + "s";
+            return padding((String) int(lnHMS.hours), (uint8_t)2) + "h" +
+                   padding((String) int(lnHMS.minutes), (uint8_t)2) + "m" +
+                   padding((String) int(lnHMS.seconds), (uint8_t)2) + "s";
         }
         else
         {
-            return padding((String) int(hours), (uint8_t)2) + ":" +
-                   padding((String) int(minutes), (uint8_t)2) + ":" +
-                   padding((String) int(seconds), (uint8_t)2);
+            return padding((String) int(lnHMS.hours), (uint8_t)2) + ":" +
+                   padding((String) int(lnHMS.minutes), (uint8_t)2) + ":" +
+                   padding((String) int(lnHMS.seconds), (uint8_t)2);
         }
     }
     else
     {
         if (withUnits)
         {
-            return padding((String) int(hours), (uint8_t)2) + "h" +
-                   padding((String) int(minutes), (uint8_t)2) + "." +
-                   (String) int(minutes - floor(minutes) * 10.0) + "m";
+            return padding((String) int(lnHMS.hours), (uint8_t)2) + "h" +
+                   padding((String) int(lnHMS.minutes), (uint8_t)2) + "." +
+                   (String) int(lnHMS.seconds / 60.0) + "m";
         }
-        return padding((String) int(hours), (uint8_t)2) + ":" +
-               padding((String) int(minutes), (uint8_t)2) + "." +
-               (String) int(minutes - floor(minutes) * 10.0);
+        return padding((String) int(lnHMS.hours), (uint8_t)2) + ":" +
+               padding((String) int(lnHMS.minutes), (uint8_t)2) + "." +
+               (String) int(lnHMS.seconds / 60.0);
     }
 }
 
 String deg2dms(double deg, boolean highPrecision, boolean asAzimuth)
 {
-    double dTemp;
-    char sign;
+    struct ln_dms lnDMS;
+    ln_deg_to_dms(deg, &lnDMS);
+    // double dTemp;
+    // char sign;
 
-    if (deg >= 0.0)
-        sign = 0;
-    else
-        sign = 1;
+    // if (deg >= 0.0)
+    //     sign = 0;
+    // else
+    //     sign = 1;
 
-    deg = fabs(deg);
-    unsigned short degs = (int)deg;
-    // Mult remainder by 60 for mins
-    dTemp = 60.0 * (deg - degs);
-    unsigned short minutes = (unsigned short)dTemp;
-    // Mult remainder by 60 for secs
-    unsigned short seconds = 60.0 * (dTemp - minutes);
+    // deg = fabs(deg);
+    // unsigned short degs = (int)deg;
+    // // Mult remainder by 60 for mins
+    // dTemp = 60.0 * (deg - degs);
+    // unsigned short minutes = (unsigned short)dTemp;
+    // // Mult remainder by 60 for secs
+    // unsigned short seconds = 60.0 * (dTemp - minutes);
 
-    // Catch overflows
-    if (seconds > 59)
-    {
-        seconds = 0.0;
-        minutes++;
-    }
-    if (minutes > 59)
-    {
-        minutes = 0;
-        degs++;
-    }
+    // // Catch overflows
+    // if (seconds > 59)
+    // {
+    //     seconds = 0.0;
+    //     minutes++;
+    // }
+    // if (minutes > 59)
+    // {
+    //     minutes = 0;
+    //     degs++;
+    // }
 
-    if (!asAzimuth)
-    {
-        sign = '+';
-        if (deg < 0)
-            sign = '-';
-    }
+    // if (!asAzimuth)
+    // {
+    //     sign = '+';
+    //     if (deg < 0)
+    //         sign = '-';
+    // }
+    char sign = '+';
+    if (lnDMS.neg == 1)
+        sign = '-';
 
     if (highPrecision)
     {
-        return sign + padding((String) int(degs), (uint8_t)2) + "*" +
-               padding((String) int(minutes), (uint8_t)2) + "'" +
-               padding((String) int(seconds), (uint8_t)2);
+        return sign + padding((String) int(lnDMS.degrees), (uint8_t)2) + "*" +
+               padding((String) int(lnDMS.minutes), (uint8_t)2) + "'" +
+               padding((String) int(lnDMS.seconds), (uint8_t)2);
     }
     else
     {
-        return sign + padding((String) int(degs), (uint8_t)2) + "*" +
-               padding((String) int(minutes), (uint8_t)2);
+        return sign + padding((String) int(lnDMS.degrees), (uint8_t)2) + "*" +
+               padding((String) int(lnDMS.minutes), (uint8_t)2);
     }
 }
 
@@ -694,7 +701,7 @@ void calculateLST()
     SCOPE.LST = SCOPE.GAST + (SCOPE.lnLatPos.lng / 15.0);   // Convert Longitude degrees to hours
 #ifdef SERIAL_DEBUG
     Serial.print("calculateLST() - TIME: ");
-    Serial.printf("%i/%i/%i - %i:%i:%4.2f", SCOPE.date.years, SCOPE.date.months, SCOPE.date.days, SCOPE.date.hours, SCOPE.date.minutes, SCOPE.date.seconds);
+    Serial.printf("%i/%i/%i - %i:%i:%2.0f", SCOPE.date.years, SCOPE.date.months, SCOPE.date.days, SCOPE.date.hours, SCOPE.date.minutes, SCOPE.date.seconds);
     Serial.print(" JD: ");
     Serial.print((double)SCOPE.JD);
     Serial.print(" GMST: ");
@@ -1114,8 +1121,6 @@ void processAlignmentStar(int index, AlignmentStar &star)
     Serial.print(star.name);
     Serial.print(" - MAG: ");
     Serial.print(starMag);
-    Serial.print(" MAG(processed): ");
-    Serial.print(star.mag);
     Serial.print(" RA_H: ");
     Serial.print(ra_h);
     Serial.print(" RA_M: ");
@@ -1131,10 +1136,10 @@ void processAlignmentStar(int index, AlignmentStar &star)
     Serial.print(" DEC_S: ");
     Serial.print(dec_s);
     Serial.println("");
-    Serial.print(" RA(rads): ");
-    Serial.print(star.equPos.ra);
-    Serial.print(" DEC(rads): ");
-    Serial.print(star.equPos.dec);
+    Serial.print(" RA: ");
+    Serial.print(deg2hms(star.equPos.ra, true, true));
+    Serial.print(" DEC: ");
+    Serial.print(deg2dms(star.equPos.dec, true, false));
     Serial.println("");
 #endif
     // Correct for astronomical movements and refraction if needed
@@ -1144,9 +1149,9 @@ void processAlignmentStar(int index, AlignmentStar &star)
     }
 #ifdef SERIAL_DEBUG
     Serial.print("Added Corrections - RA: ");
-    Serial.print(star.equPos.ra);
+    Serial.print(deg2hms(star.equPos.ra, true, true));
     Serial.print(" DEC: ");
-    Serial.print(star.equPos.dec);
+    Serial.print(deg2dms(star.equPos.dec, true, false));
     Serial.println("");
 #endif
 }
@@ -1200,9 +1205,9 @@ void processObject(int index, Object &object)
     Serial.print("processObject() ");
     Serial.print(object.name);
     Serial.print(" - RA: ");
-    Serial.print(object.equPos.ra);
+    Serial.print(deg2hms(object.equPos.ra, true, true));
     Serial.print(" DEC: ");
-    Serial.print(object.equPos.dec);
+    Serial.print(deg2dms(object.equPos.dec, true, false));
     Serial.println("");
 #endif
     // Correct for astronomical movements
@@ -1212,9 +1217,9 @@ void processObject(int index, Object &object)
     }
 #ifdef SERIAL_DEBUG
     Serial.print("Added Corrections - RA: ");
-    Serial.print(object.equPos.ra);
+    Serial.print(deg2hms(object.equPos.ra, true, true));
     Serial.print(" DEC: ");
-    Serial.print(object.equPos.dec);
+    Serial.print(deg2dms(object.equPos.dec, true, false));
     Serial.println("");
 #endif
 }
