@@ -69,7 +69,7 @@
 #include <RtcDS3231.h>
 #include <LSM303.h> // Install this on Arudino IDE: "LSM303 Library by Pololu" (I used version 3.0.1), https://github.com/pololu/lsm303-arduino
 
-#include <libnova/libnova.h>
+#include <libnova_main.h>
 
 // #define SERIAL_DEBUG // comment out to deactivate the serial debug mode
 // #define PERFECT_ALIGN
