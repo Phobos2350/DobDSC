@@ -1083,9 +1083,9 @@ void processAlignmentStar(int index, AlignmentStar &star)
 
     star.name = starName;
     star.constellation = starConst;
-    star.mag = starMag.toFloat();
+    star.mag = starMag;
 
-    unsigned short dec_neg = sign == '+' ? 0 : 1;
+    unsigned short dec_neg = (sign == '+' ? 0 : 1);
 
     star.hEquPos.ra.hours = ra_h;
     star.hEquPos.ra.minutes = ra_m;
@@ -1168,11 +1168,11 @@ void processObject(int index, Object &object)
     object.name = objName;
     object.constellation = OBJECTS[index].substring(i3 + 1, i4);
     object.type = OBJECTS[index].substring(i4 + 1, i5);
-    object.mag = OBJECTS[index].substring(i5 + 1, i6).toFloat();
+    object.mag = OBJECTS[index].substring(i5 + 1, i6);
     object.size = OBJECTS[index].substring(i6 + 1, i7);
     object.description = OBJECTS[index].substring(i7 + 1, OBJECTS[index].length() - 1);
 
-    unsigned short dec_neg = sign == '+' ? 0 : 1;
+    unsigned short dec_neg = (sign == '+' ? 0 : 1);
 
     object.hEquPos.ra.hours = ra_h;
     object.hEquPos.ra.minutes = ra_m;
@@ -1239,7 +1239,7 @@ boolean isReady()
 
 void scopeToEquatorial(struct ln_hrz_posn *hor, struct ln_lnlat_posn *obs, double JD, struct ln_equ_posn *pos)
 {
-    long double ha, sidereal, ra, dec, az, alt, lng, lat;
+    long double ha, sidereal, ra, dec, az, alt, lng;
     az = ln_deg_to_rad(hor->az);
     alt = ln_deg_to_rad(hor->alt);
     lng = ln_deg_to_rad(obs->lng);
