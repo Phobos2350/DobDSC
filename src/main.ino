@@ -247,17 +247,17 @@ const String FirmwareName = "DobDSC";
 const String FirmwareTime = "21:00:00";
 //
 
-const double ONE_REV = PI * 2.0;
-const double THREE_QRT_REV = PI * 3.0 / 2.0;
-const double HALF_REV = PI;
-const double QRT_REV = PI / 2.0;
-const double HOUR_TO_RAD = PI / 12.0;
-const double MINUTE_TO_RAD = PI / 720.0;
-const double SEC_TO_RAD = PI / 43200;
-const double DEG_TO_REV = 1.0 / 360.0;
-const double ARCMIN_TO_RAD = PI / 10800.0;
-const double ARCSEC_TO_RAD = PI / 648000.0;
-const double TENTH_ARCSEC_TO_RAD = ARCSEC_TO_RAD / 10.0;
+const long double ONE_REV = PI * 2.0;
+const long double THREE_QRT_REV = PI * 3.0 / 2.0;
+const long double HALF_REV = PI;
+const long double QRT_REV = PI / 2.0;
+const long double HOUR_TO_RAD = PI / 12.0;
+const long double MINUTE_TO_RAD = PI / 720.0;
+const long double SEC_TO_RAD = PI / 43200;
+const long double DEG_TO_REV = 1.0 / 360.0;
+const long double ARCMIN_TO_RAD = PI / 10800.0;
+const long double ARCSEC_TO_RAD = PI / 648000.0;
+const long double TENTH_ARCSEC_TO_RAD = ARCSEC_TO_RAD / 10.0;
 
 const int NUM_ALIGN_STARS = 100;
 
@@ -282,8 +282,6 @@ boolean IS_IN_OPERATION = false; // This variable becomes True when Main screen 
 float OBSERVATION_LONGITUDE = -0.01365997; // (-0.01365997* - Home)
 float OBSERVATION_LATTITUDE = 51.18078754; // (51.18078754* - Home)
 float OBSERVATION_ALTITUDE = 52.00;        // Lingfield, UK
-double OBSERVATION_LONGITUDE_RADS = -0.000238237442896635;
-double OBSERVATION_LATTITUDE_RADS = 0.89327172847324593;
 double ATMO_PRESS = 1010; // Default 1010 mBar atmospheric pressure
 double ATMO_TEMP = 10;    // Default 10C air temperature
 
@@ -714,6 +712,125 @@ void calculateLST()
 #endif
 }
 
+double convertPrimaryAxis(double fromPri, double fromSec, double toSec, double lat)
+{
+    if (lat == QRT_REV)
+        return validRev(fromPri + HALF_REV);
+
+    double cosToPri = (sin(fromSec) - sin(lat) * sin(toSec)) / (cos(lat) * cos(toSec));
+    if (cosToPri < -1)
+        cosToPri = -1;
+    else if (cosToPri > 1)
+        cosToPri = 1;
+    double toPri = acos(cosToPri);
+    if (sin(fromPri) > 0)
+        toPri = reverseRev(toPri);
+    return toPri;
+}
+
+double convertSecondaryAxis(double fromPri, double fromSec, double lat)
+{
+    double sinToSec = sin(fromSec) * sin(lat) + cos(fromSec) * cos(lat) * cos(fromPri);
+    return asin(sinToSec);
+}
+
+void getAltAzTrig(struct ln_equ_posn *object, struct ln_lnlat_posn *observer, double sidereal, struct ln_hrz_posn *position)
+{
+    long double ra, dec, ha, absLat, lat, lng, alt, az;
+    
+    // Change sidereal from hours to radians
+    sidereal *= HOUR_TO_RAD;
+    
+    lat = ln_deg_to_rad(observer->lat);
+    lng = ln_deg_to_rad(observer->lng);
+    absLat = fabs(lat);
+
+    dec = ln_deg_to_rad(object->dec);
+    ra = ln_deg_to_rad(object->ra);
+
+    // Flip for Southern Hemisphere
+    if (lat < 0)
+        dec = -dec;
+    if (dec > QRT_REV || dec < -QRT_REV)
+    {
+        dec = HALF_REV - dec;
+        ra = validRev(ra + HALF_REV);
+    }
+
+    // Calculate Hour Angle from LST - RA
+    ha = (sidereal + lng) - ra;
+
+    alt = convertSecondaryAxis(ha, dec, absLat);
+    az = convertPrimaryAxis(ha, dec, alt, absLat);
+
+    // Flip for Southern Hemisphere
+    if (lat < 0)
+        az = reverseRev(az);
+    position->alt = ln_rad_to_deg(alt);
+    position->az = ln_rad_to_deg(az);
+#ifdef SERIAL_DEBUG
+    Serial.print("getAltAzTrig() - RA: ");
+    Serial.print(rad2hms(ra, true, true));
+    Serial.print(" DEC: ");
+    Serial.print(rad2dms(dec, true, false));
+    Serial.print(" HA: ");
+    Serial.print(rad2hms(ha, true, true));
+    Serial.print(" ---> AZ: ");
+    Serial.print(rad2dms(az, true, true));
+    Serial.print(" ALT: ");
+    Serial.print(rad2dms(alt, true, true));
+    Serial.println("");
+#endif
+}
+
+void getEquatTrig(struct ln_hrz_posn *object, struct ln_lnlat_posn *observer, double jd, struct ln_equ_posn *position)
+{
+    long double az, alt, absLat, lat, lng, ha, ra, dec, sidereal;
+
+    // Calc apparent LST and convert to radians
+    sidereal = ln_get_apparent_sidereal_time(jd);
+    sidereal *= HOUR_TO_RAD;
+
+    lat = ln_deg_to_rad(observer->lat);
+    lng = ln_deg_to_rad(observer->lng);
+    absLat = fabs(lat);
+
+    az = ln_deg_to_rad(object->az);
+    alt = ln_deg_to_rad(object->alt);
+
+    // Flip for Southern Hemisphere
+    if (alt > QRT_REV || alt < -QRT_REV)
+    {
+        alt = HALF_REV - alt;
+        az = validRev(az + HALF_REV);
+    }
+    if (lat < 0)
+        az = reverseRev(az);
+
+    dec = convertSecondaryAxis(az, alt, absLat);
+    ha = convertPrimaryAxis(az, alt, dec, absLat);
+    ra = validRev(sidereal - ha);
+
+    position->ra = ra;
+    if (lat < 0)
+        position->dec = -dec;
+    else
+        position->dec = dec;
+#ifdef SERIAL_DEBUG
+    Serial.print("getEquatTrig() - AZ: ");
+    Serial.print(rad2dms(az, true, true));
+    Serial.print(" ALT: ");
+    Serial.print(rad2dms(alt, true, false));
+    Serial.print(" ---> RA: ");
+    Serial.print(rad2hms(ra, true, true));
+    Serial.print(" HA: ");
+    Serial.print(rad2hms(ha, true, true));
+    Serial.print(" DEC: ");
+    Serial.print(rad2dms(dec, true, false));
+    Serial.println("");
+#endif
+}
+
 void selectObject(int index_, int objects)
 {
     if (objects == 0)
@@ -908,6 +1025,10 @@ void loadGPSFromSPIFFS()
     File dataFile = SPIFFS.open("/GPSData", "r");
     if (dataFile)
     {
+        #ifdef SERIAL_DEBUG
+            Serial.print("Read GPS data from file...");
+            Serial.println("");
+        #endif
         while (dataFile.available())
         {
             in_char = dataFile.read();
@@ -915,23 +1036,37 @@ void loadGPSFromSPIFFS()
             if (in_char == '\n')
             {
                 if (i == 0)
-                    OBSERVATION_LATTITUDE_RADS = items.toFloat();
+                {
+                    OBSERVATION_LATTITUDE = items.toFloat();
+                    #ifdef SERIAL_DEBUG
+                        Serial.print("Lat: ");
+                        Serial.print(OBSERVATION_LATTITUDE);
+                    #endif
+                } 
                 else if (i == 1)
-                    OBSERVATION_LONGITUDE_RADS = items.toFloat();
+                {
+                    OBSERVATION_LONGITUDE = items.toFloat();
+                    #ifdef SERIAL_DEBUG
+                        Serial.print(" Lon: ");
+                        Serial.print(OBSERVATION_LONGITUDE);
+                    #endif
+                }
+                else if (i == 2)
+                {
+                    OBSERVATION_ALTITUDE = items.toFloat();
+                    #ifdef SERIAL_DEBUG
+                        Serial.print(" Alt: ");
+                        Serial.print(OBSERVATION_ALTITUDE);
+                    #endif
+                }
                 i += 1;
                 items = "";
             }
         }
+        #ifdef SERIAL_DEBUG
+            Serial.println("");
+        #endif
     }
-#ifdef SERIAL_DEBUG
-    Serial.print("Read GPS data from file...");
-    Serial.println("");
-    Serial.print("Lat: ");
-    Serial.print(OBSERVATION_LATTITUDE_RADS);
-    Serial.print(" Lon: ");
-    Serial.print(OBSERVATION_LONGITUDE_RADS);
-    Serial.println("");
-#endif
 }
 
 void writeGPSToSPIFFS()
@@ -940,8 +1075,9 @@ void writeGPSToSPIFFS()
     File dataFile = SPIFFS.open("/GPSData", "w");
     if (dataFile)
     {
-        dataFile.print(OBSERVATION_LATTITUDE_RADS);
-        dataFile.print(OBSERVATION_LONGITUDE_RADS);
+        dataFile.println(OBSERVATION_LATTITUDE);
+        dataFile.println(OBSERVATION_LONGITUDE);
+        dataFile.println(OBSERVATION_ALTITUDE);
         dataFile.close();
     }
 #ifdef SERIAL_DEBUG
@@ -1056,13 +1192,13 @@ void autoSelectAlignmentStars()
             Serial.println("");
             Serial.print(ALIGNMENT_STARS[n].name);
             Serial.print(" - RA: ");
-            Serial.print(ALIGNMENT_STARS[n].equPos.ra);
+            Serial.print(deg2hms(ALIGNMENT_STARS[n].equPos.ra, true, true));
             Serial.print(" DEC: ");
-            Serial.print(ALIGNMENT_STARS[n].equPos.dec);
+            Serial.print(deg2dms(ALIGNMENT_STARS[n].equPos.dec, true, false));
             Serial.print(" ALT: ");
-            Serial.print(ALIGNMENT_STARS[n].hrzPos.alt);
+            Serial.print(deg2dms(ALIGNMENT_STARS[n].hrzPos.alt, true, false));
             Serial.print(" AZ: ");
-            Serial.print(ALIGNMENT_STARS[n].hrzPos.az);
+            Serial.print(deg2dms(ALIGNMENT_STARS[n].hrzPos.az, true, true));
             Serial.println("");
 #endif
             n++;
@@ -1114,7 +1250,13 @@ void processAlignmentStar(int index, AlignmentStar &star)
     hEquPos.dec.seconds = dec_s;
     
     ln_hequ_to_equ(&hEquPos, &star.equPos);
-    ln_get_hrz_from_equ(&star.equPos, &SCOPE.lnLatPos, SCOPE.JD, &star.hrzPos);
+    //ln_get_hrz_from_equ(&star.equPos, &SCOPE.lnLatPos, SCOPE.JD, &star.hrzPos);
+    getAltAzTrig(&star.equPos, &SCOPE.lnLatPos, SCOPE.LST, &star.hrzPos);
+
+    // Reverse az by half a revolution for North = 0 Azimuth as is common
+    double tmpAz = ln_deg_to_rad(star.hrzPos.az);
+    tmpAz = reverseRev(validRev(tmpAz));
+    star.hrzPos.az = ln_rad_to_deg(tmpAz);
 
 #ifdef SERIAL_DEBUG
     Serial.print("processAlignmentStar() ");
@@ -2248,7 +2390,7 @@ void considerTimeUpdates()
         tft.fillRect(100, 0, 140, 20, BLACK);
         tft.setCursor(100, 10);
         tft.print("LST ");
-        tft.print(hrs2hms(SCOPE.LST, true, false));
+        tft.print(hrs2hms(SCOPE.LST, false, false));
         // if ((int)SCOPE.LST < 10)
         // {
         //     tft.print("0");
@@ -2379,11 +2521,13 @@ void considerTimeUpdates()
 
         if ((GPS_ITERATIONS > 2) && (gps.location.lat() != 0))
         {
-            SCOPE.lnLatPos.lng = gps.location.lng();
             SCOPE.lnLatPos.lat = gps.location.lat();
+            SCOPE.lnLatPos.lng = gps.location.lng();
             SCOPE.observationAlt = gps.altitude.meters();
-            OBSERVATION_LONGITUDE_RADS = SCOPE.lnLatPos.lng * DEG_TO_RAD;
-            OBSERVATION_LATTITUDE_RADS = SCOPE.lnLatPos.lat * DEG_TO_RAD;
+            // Save this location to SPIFFS for next session
+            OBSERVATION_LATTITUDE = SCOPE.lnLatPos.lat;
+            OBSERVATION_LONGITUDE = SCOPE.lnLatPos.lng;
+            OBSERVATION_ALTITUDE = SCOPE.observationAlt;
             writeGPSToSPIFFS();
 #ifdef SERIAL_DEBUG
             Serial.print("OBSERVATION LATTITUDE: ");
@@ -2435,7 +2579,7 @@ void considerTimeUpdates()
         tft.setCursor(70, 170);
         tft.print(deg2dms(ALIGNMENT_STARS[starNum].hrzPos.az, true, true));
         tft.setCursor(70, 190);
-        tft.print(rad2dms(ALIGNMENT_STARS[starNum].hrzPos.alt, true, false));
+        tft.print(deg2dms(ALIGNMENT_STARS[starNum].hrzPos.alt, true, false));
     }
 }
 
@@ -2583,6 +2727,14 @@ void drawInitScreen()
 void drawGPSScreen()
 {
     CURRENT_SCREEN = 0;
+    // First try to load saved co-ords from last session
+    loadGPSFromSPIFFS();
+
+    // Now fill scope pos with loaded values or hard-coded values
+    SCOPE.lnLatPos.lng = OBSERVATION_LONGITUDE;
+    SCOPE.lnLatPos.lat = OBSERVATION_LATTITUDE;
+    SCOPE.observationAlt = OBSERVATION_ALTITUDE;
+
     tft.fillScreen(BLACK);
     tft.setCursor(10, 10);
     tft.setTextColor(TITLE_TEXT, TITLE_TEXT_BG);
@@ -2595,8 +2747,6 @@ void drawGPSScreen()
     tft.print("Searching for");
     tft.setCursor(10, 60);
     tft.print("Satellites...");
-
-    loadGPSFromSPIFFS();
 
     drawButton(40, 270, 160, 40, "SKIP", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
 }
@@ -2771,7 +2921,7 @@ void drawMainScreen()
     // Local Sidereal Time
     tft.setCursor(100, 10);
     tft.print("LST ");
-    tft.print(hrs2hms(SCOPE.LST, true, false));
+    tft.print(hrs2hms(SCOPE.LST, false, false));
     // if ((int)SCOPE.LST < 10)
     // {
     //     tft.print("0");
@@ -4242,13 +4392,13 @@ void considerTouchInput(int lx, int ly)
                                 Serial.println("");
                                 Serial.print(ALIGNMENT_STARS[n].name);
                                 Serial.print(" - RA: ");
-                                Serial.print(ALIGNMENT_STARS[n].equPos.ra);
+                                Serial.print(deg2hms(ALIGNMENT_STARS[n].equPos.ra, true, true));
                                 Serial.print(" DEC: ");
-                                Serial.print(ALIGNMENT_STARS[n].equPos.dec);
+                                Serial.print(deg2dms(ALIGNMENT_STARS[n].equPos.dec, true, false));
                                 Serial.print(" ALT: ");
-                                Serial.print(ALIGNMENT_STARS[n].hrzPos.alt);
+                                Serial.print(deg2dms(ALIGNMENT_STARS[n].hrzPos.alt, true, false));
                                 Serial.print(" AZ: ");
-                                Serial.print(ALIGNMENT_STARS[n].hrzPos.az);
+                                Serial.print(deg2dms(ALIGNMENT_STARS[n].hrzPos.az, true, true));
                                 Serial.println("");
 #endif
                                 delay(150);
@@ -4309,10 +4459,10 @@ void considerTouchInput(int lx, int ly)
                     Serial.print("Manual Align on ");
                 Serial.print(ALIGNMENT_STARS[starNum].name);
                 Serial.println("");
-                Serial.print("Alt ");
-                Serial.print(ALIGNMENT_STARS[starNum].hrzPos.alt);
-                Serial.print(" Az ");
-                Serial.print(ALIGNMENT_STARS[starNum].hrzPos.az);
+                Serial.print("AZ ");
+                Serial.print(deg2dms(ALIGNMENT_STARS[starNum].hrzPos.az, true, true));
+                Serial.print(" Alt ");
+                Serial.print(deg2dms(ALIGNMENT_STARS[starNum].hrzPos.alt, true, false));
                 Serial.println("");
 #endif
                 delay(150);
@@ -4384,7 +4534,8 @@ void considerTouchInput(int lx, int ly)
             {
                 // BTN Mercury pressed
                 drawButton(10, 50, 100, 40, "Mercury", 0, BTN_L_BORDER, L_TEXT, 2);
-                getPlanetPosition(0, CURRENT_OBJECT);
+                getPlanetPosition(1, CURRENT_OBJECT);
+                objectAltAz();
                 delay(150);
                 drawMainScreen();
             }
@@ -4392,7 +4543,8 @@ void considerTouchInput(int lx, int ly)
             {
                 // BTN Mercury pressed
                 drawButton(130, 50, 100, 40, "Venus", 0, BTN_L_BORDER, L_TEXT, 2);
-                getPlanetPosition(1, CURRENT_OBJECT);
+                getPlanetPosition(2, CURRENT_OBJECT);
+                objectAltAz();
                 delay(150);
                 drawMainScreen();
             }
@@ -4400,7 +4552,8 @@ void considerTouchInput(int lx, int ly)
             {
                 // BTN Mercury pressed
                 drawButton(10, 110, 100, 40, "Mars", 0, BTN_L_BORDER, L_TEXT, 2);
-                getPlanetPosition(3, CURRENT_OBJECT);
+                getPlanetPosition(4, CURRENT_OBJECT);
+                objectAltAz();
                 delay(150);
                 drawMainScreen();
             }
@@ -4408,7 +4561,8 @@ void considerTouchInput(int lx, int ly)
             {
                 // BTN Mercury pressed
                 drawButton(130, 110, 100, 40, "Jupiter", 0, BTN_L_BORDER, L_TEXT, 2);
-                getPlanetPosition(4, CURRENT_OBJECT);
+                getPlanetPosition(5, CURRENT_OBJECT);
+                objectAltAz();
                 delay(150);
                 drawMainScreen();
             }
@@ -4416,7 +4570,8 @@ void considerTouchInput(int lx, int ly)
             {
                 // BTN Mercury pressed
                 drawButton(10, 170, 100, 40, "Saturn", 0, BTN_L_BORDER, L_TEXT, 2);
-                getPlanetPosition(5, CURRENT_OBJECT);
+                getPlanetPosition(6, CURRENT_OBJECT);
+                objectAltAz();
                 delay(150);
                 drawMainScreen();
             }
@@ -4424,7 +4579,8 @@ void considerTouchInput(int lx, int ly)
             {
                 // BTN Mercury pressed
                 drawButton(130, 170, 100, 40, "Uranus", 0, BTN_L_BORDER, L_TEXT, 2);
-                getPlanetPosition(6, CURRENT_OBJECT);
+                getPlanetPosition(7, CURRENT_OBJECT);
+                objectAltAz();
                 delay(150);
                 drawMainScreen();
             }
@@ -4432,7 +4588,8 @@ void considerTouchInput(int lx, int ly)
             {
                 // BTN Mercury pressed
                 drawButton(10, 230, 100, 40, "Neptune", 0, BTN_L_BORDER, L_TEXT, 2);
-                getPlanetPosition(7, CURRENT_OBJECT);
+                getPlanetPosition(8, CURRENT_OBJECT);
+                objectAltAz();
                 delay(150);
                 drawMainScreen();
             }
@@ -4440,7 +4597,8 @@ void considerTouchInput(int lx, int ly)
             {
                 // BTN Mercury pressed
                 drawButton(130, 230, 100, 40, "Pluto", 0, BTN_L_BORDER, L_TEXT, 2);
-                getPlanetPosition(8, CURRENT_OBJECT);
+                getPlanetPosition(9, CURRENT_OBJECT);
+                objectAltAz();
                 delay(150);
                 drawMainScreen();
             }
@@ -4805,10 +4963,6 @@ void setup(void)
 
     ALT_MULTIPLIER = ONE_REV / (float)STEPS_IN_FULL_CIRCLE;
     AZ_MULTIPLIER = ONE_REV / (float)STEPS_IN_FULL_CIRCLE;
-
-    SCOPE.lnLatPos.lng = OBSERVATION_LONGITUDE;
-    SCOPE.lnLatPos.lat = OBSERVATION_LATTITUDE;
-    SCOPE.observationAlt = OBSERVATION_ALTITUDE;
 
     LOAD_SELECTOR = 1; // Load Messier by default
 
