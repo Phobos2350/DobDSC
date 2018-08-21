@@ -71,10 +71,9 @@
 
 #include <libnova_main.h>
 
-// #define SERIAL_DEBUG // comment out to deactivate the serial debug mode
-// #define PERFECT_ALIGN
+#define SERIAL_DEBUG // comment out to deactivate the serial debug mode
+#define PERFECT_ALIGN
 // #define DEBUG_REFRACTION
-// #define DEBUG_ORBITAL_VARS
 // #define DEBUG_MOUNT_ERRS
 
 #define GEAR_LARGE 60.0f
@@ -195,10 +194,6 @@ class IMU : public LSM303
 // Scope Struct
 struct Scope
 {
-    struct lnh_equ_posn hEquPos;
-    struct lnh_hrz_posn hHrzPos;
-    struct lnh_lnlat_posn hLnLatPos;
-    
     struct ln_date date;
     struct ln_equ_posn equPos;
     struct ln_hrz_posn hrzPos;
@@ -206,16 +201,13 @@ struct Scope
 
     long double JD;
     double LST, GMST, GAST;
-    
+
     float observationAlt;
 };
 
 // Star Structs
 struct Object
 {
-    struct lnh_equ_posn hEquPos;
-    struct lnh_hrz_posn hHrzPos;
-
     struct ln_equ_posn equPos;
     struct ln_equ_posn propMotion;
     struct ln_hrz_posn hrzPos;
@@ -230,13 +222,10 @@ struct Object
 
 struct AlignmentStar
 {
-    struct lnh_equ_posn hEquPos;
-    struct lnh_hrz_posn hHrzPos;
-
     struct ln_equ_posn equPos;
     struct ln_equ_posn propMotion;
     struct ln_hrz_posn hrzPos;
-    
+
     String name;
     String constellation;
     String mag;
@@ -295,8 +284,8 @@ float OBSERVATION_LATTITUDE = 51.18078754; // (51.18078754* - Home)
 float OBSERVATION_ALTITUDE = 52.00;        // Lingfield, UK
 double OBSERVATION_LONGITUDE_RADS = -0.000238237442896635;
 double OBSERVATION_LATTITUDE_RADS = 0.89327172847324593;
-double ATMO_PRESS = 1010;   // Default 1010 mBar atmospheric pressure
-double ATMO_TEMP = 10;      // Default 10C air temperature
+double ATMO_PRESS = 1010; // Default 1010 mBar atmospheric pressure
+double ATMO_TEMP = 10;    // Default 10C air temperature
 
 unsigned int AZ_STEPS, ALT_STEPS; // Current position of the decoders in Steps! - when movement occures, values are changed accordingly
 
@@ -311,7 +300,7 @@ double ALT_MULTIPLIER, AZ_MULTIPLIER;
 String OBJECTS[130];
 
 int LAST_BUTTON, MESS_PAGER, CALD_PAGER, TREAS_PAGER, STARS_PAGER, LOAD_SELECTOR; // selector to show which LOADING mechanism is used: 1 - Messier, 2 - File, 3 - NGCs
-int W_DATE_TIME[12] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // array to store date - as updated from updater screen - Wishing_Date
+int W_DATE_TIME[12] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};                       // array to store date - as updated from updater screen - Wishing_Date
 int DATE_ENTRY_POS = 0;
 int SUMMER_TIME = 0;
 int16_t L_TEXT, D_TEXT, BTN_L_BORDER, BTN_BLK_TEXT, TITLE_TEXT_BG, TITLE_TEXT, MSG_BOX_BG, MSG_BOX_TEXT; // defines string constants for the clor - Depending on the DAY/NIGHT modes
@@ -592,7 +581,7 @@ String deg2dms(double deg, boolean highPrecision, boolean asAzimuth)
         sign = 0;
     else
         sign = 1;
-    
+
     deg = fabs(deg);
     unsigned short degs = (int)deg;
     // Mult remainder by 60 for mins
@@ -631,6 +620,22 @@ String deg2dms(double deg, boolean highPrecision, boolean asAzimuth)
         return sign + padding((String) int(degs), (uint8_t)2) + "*" +
                padding((String) int(minutes), (uint8_t)2);
     }
+}
+
+String hrs2hms(double decTime, boolean highPrecision, boolean withUnits)
+{
+    return deg2hms(decTime * 15.0, highPrecision, withUnits);
+}
+
+void setScopeDateTime()
+{
+    NOW = rtc.GetDateTime();
+    SCOPE.date.years = NOW.Year();
+    SCOPE.date.months = NOW.Month();
+    SCOPE.date.days = NOW.Day();
+    SCOPE.date.hours = NOW.Hour();
+    SCOPE.date.minutes = NOW.Minute();
+    SCOPE.date.seconds = NOW.Second();
 }
 
 void readEncoders()
@@ -682,20 +687,24 @@ void objectAltAz()
 
 void calculateLST()
 {
-    struct ln_date lnDate;
-
-    NOW = rtc.GetDateTime();
-    lnDate.days = NOW.Day();
-    lnDate.months = NOW.Month();
-    lnDate.years = NOW.Year();
-    lnDate.hours = NOW.Hour();
-    lnDate.minutes = NOW.Minute();
-    lnDate.seconds = NOW.Second();
-
-    SCOPE.JD = ln_get_julian_day(&lnDate);
+    setScopeDateTime();
+    SCOPE.JD = ln_get_julian_day(&SCOPE.date);
     SCOPE.GMST = ln_get_mean_sidereal_time(SCOPE.JD);
     SCOPE.GAST = ln_get_apparent_sidereal_time(SCOPE.JD);
-    SCOPE.LST = SCOPE.GAST + SCOPE.lnLatPos.lng;
+    SCOPE.LST = SCOPE.GAST + (SCOPE.lnLatPos.lng / 15.0);   // Convert Longitude degrees to hours
+#ifdef SERIAL_DEBUG
+    Serial.print("calculateLST() - TIME: ");
+    Serial.printf("%i/%i/%i - %i:%i:%4.2f", SCOPE.date.years, SCOPE.date.months, SCOPE.date.days, SCOPE.date.hours, SCOPE.date.minutes, SCOPE.date.seconds);
+    Serial.print(" JD: ");
+    Serial.print((double)SCOPE.JD);
+    Serial.print(" GMST: ");
+    Serial.print(hrs2hms(SCOPE.GMST, true, false));
+    Serial.print(" GAST: ");
+    Serial.print(hrs2hms(SCOPE.GAST, true, false));
+    Serial.print(" LST: ");
+    Serial.print(hrs2hms(SCOPE.LST, true, false));
+    Serial.println("");
+#endif
 }
 
 void selectObject(int index_, int objects)
@@ -1030,7 +1039,7 @@ void autoSelectAlignmentStars()
     {
         processAlignmentStar(i, CURRENT_ALIGN_STAR);
         // If catalogue star is higher than 25 degrees above the horizon.
-        if (CURRENT_ALIGN_STAR.hHrzPos.alt.neg != 1 &&  CURRENT_ALIGN_STAR.hHrzPos.alt.degrees > 25.0)
+        if (CURRENT_ALIGN_STAR.hrzPos.alt > 25.0)
         {
             // Copy catalogue star to alignment star.
             ALIGNMENT_STARS[n] = CURRENT_ALIGN_STAR;
@@ -1040,13 +1049,13 @@ void autoSelectAlignmentStars()
             Serial.println("");
             Serial.print(ALIGNMENT_STARS[n].name);
             Serial.print(" - RA: ");
-            Serial.print(ALIGNMENT_STARS[n].ra);
+            Serial.print(ALIGNMENT_STARS[n].equPos.ra);
             Serial.print(" DEC: ");
-            Serial.print(ALIGNMENT_STARS[n].dec);
+            Serial.print(ALIGNMENT_STARS[n].equPos.dec);
             Serial.print(" ALT: ");
-            Serial.print(ALIGNMENT_STARS[n].alt);
+            Serial.print(ALIGNMENT_STARS[n].hrzPos.alt);
             Serial.print(" AZ: ");
-            Serial.print(ALIGNMENT_STARS[n].az);
+            Serial.print(ALIGNMENT_STARS[n].hrzPos.az);
             Serial.println("");
 #endif
             n++;
@@ -1087,15 +1096,17 @@ void processAlignmentStar(int index, AlignmentStar &star)
 
     unsigned short dec_neg = (sign == '+' ? 0 : 1);
 
-    star.hEquPos.ra.hours = ra_h;
-    star.hEquPos.ra.minutes = ra_m;
-    star.hEquPos.ra.seconds = ra_s;
-    star.hEquPos.dec.neg = dec_neg;
-    star.hEquPos.dec.degrees = dec_d;
-    star.hEquPos.dec.minutes = dec_m;
-    star.hEquPos.dec.seconds = dec_s;
+    struct lnh_equ_posn hEquPos;
 
-    ln_hequ_to_equ(&star.hEquPos, &star.equPos);
+    hEquPos.ra.hours = ra_h;
+    hEquPos.ra.minutes = ra_m;
+    hEquPos.ra.seconds = ra_s;
+    hEquPos.dec.neg = dec_neg;
+    hEquPos.dec.degrees = dec_d;
+    hEquPos.dec.minutes = dec_m;
+    hEquPos.dec.seconds = dec_s;
+    
+    ln_hequ_to_equ(&hEquPos, &star.equPos);
     ln_get_hrz_from_equ(&star.equPos, &SCOPE.lnLatPos, SCOPE.JD, &star.hrzPos);
 
 #ifdef SERIAL_DEBUG
@@ -1121,22 +1132,21 @@ void processAlignmentStar(int index, AlignmentStar &star)
     Serial.print(dec_s);
     Serial.println("");
     Serial.print(" RA(rads): ");
-    Serial.print(star.ra);
+    Serial.print(star.equPos.ra);
     Serial.print(" DEC(rads): ");
-    Serial.print(star.dec);
+    Serial.print(star.equPos.dec);
     Serial.println("");
 #endif
     // Correct for astronomical movements and refraction if needed
     if (CORRECT_PRECESSION_ETC)
     {
         ln_get_apparent_posn(&star.equPos, &star.propMotion, SCOPE.JD, &star.equPos);
-        ln_equ_to_hequ(&star.equPos, &star.hEquPos);
     }
 #ifdef SERIAL_DEBUG
     Serial.print("Added Corrections - RA: ");
-    Serial.print(star.ra);
+    Serial.print(star.equPos.ra);
     Serial.print(" DEC: ");
-    Serial.print(star.dec);
+    Serial.print(star.equPos.dec);
     Serial.println("");
 #endif
 }
@@ -1174,36 +1184,37 @@ void processObject(int index, Object &object)
 
     unsigned short dec_neg = (sign == '+' ? 0 : 1);
 
-    object.hEquPos.ra.hours = ra_h;
-    object.hEquPos.ra.minutes = ra_m;
-    object.hEquPos.ra.seconds = ra_s;
-    object.hEquPos.dec.neg = dec_neg;
-    object.hEquPos.dec.degrees = dec_d;
-    object.hEquPos.dec.minutes = dec_m;
-    object.hEquPos.dec.seconds = dec_s;
+    struct lnh_equ_posn hEquPos;
 
-    ln_hequ_to_equ(&object.hEquPos, &object.equPos);
+    hEquPos.ra.hours = ra_h;
+    hEquPos.ra.minutes = ra_m;
+    hEquPos.ra.seconds = ra_s;
+    hEquPos.dec.neg = dec_neg;
+    hEquPos.dec.degrees = dec_d;
+    hEquPos.dec.minutes = dec_m;
+    hEquPos.dec.seconds = dec_s;
+    
+    ln_hequ_to_equ(&hEquPos, &object.equPos);
 
 #ifdef SERIAL_DEBUG
     Serial.print("processObject() ");
     Serial.print(object.name);
     Serial.print(" - RA: ");
-    Serial.print(object.ra);
+    Serial.print(object.equPos.ra);
     Serial.print(" DEC: ");
-    Serial.print(object.dec);
+    Serial.print(object.equPos.dec);
     Serial.println("");
 #endif
     // Correct for astronomical movements
     if (CORRECT_PRECESSION_ETC)
     {
         ln_get_apparent_posn(&object.equPos, &object.propMotion, SCOPE.JD, &object.equPos);
-        ln_equ_to_hequ(&object.equPos, &object.hEquPos);
     }
 #ifdef SERIAL_DEBUG
     Serial.print("Added Corrections - RA: ");
-    Serial.print(object.ra);
+    Serial.print(object.equPos.ra);
     Serial.print(" DEC: ");
-    Serial.print(object.dec);
+    Serial.print(object.equPos.dec);
     Serial.println("");
 #endif
 }
@@ -1289,15 +1300,15 @@ void scopeToEquatorial(struct ln_hrz_posn *hor, struct ln_lnlat_posn *obs, doubl
     if ((millis() - UPDATE_LAST) > 5000)
     {
         Serial.print("scopeToEquatorial() - AZ: ");
-        Serial.print(rad2dms(az, true, true));
+        Serial.print(deg2dms(hor->az, true, true));
         Serial.print(" ALT: ");
-        Serial.print(rad2dms(alt, true, false));
+        Serial.print(deg2dms(hor->alt, true, false));
         Serial.print(" ---> RA: ");
-        Serial.print(rad2hms(*ra, true, true));
+        Serial.print(deg2hms(pos->ra, true, true));
         Serial.print(" HA: ");
-        Serial.print(rad2hms(ha_tmp, true, true));
+        Serial.print(deg2hms(ha, true, true));
         Serial.print(" DEC: ");
-        Serial.print(rad2dms(*dec, true, false));
+        Serial.print(deg2dms(pos->dec, true, false));
         Serial.println("");
     }
 #endif
@@ -1307,11 +1318,11 @@ void equatorialToScope(struct ln_equ_posn *pos, struct ln_lnlat_posn *obs, doubl
 {
     long double ha, ra, dec, az, alt;
     double sidereal = ln_get_mean_sidereal_time(JD);
-    sidereal *= 2.0 * PI / 24.0;   // Change sidereal time from hours to radians
+    sidereal *= 2.0 * PI / 24.0; // Change sidereal time from hours to radians
 
     ra = ln_deg_to_rad(pos->ra);
     dec = ln_deg_to_rad(pos->dec);
-    ha = ra - sidereal + ln_deg_to_rad(obs->lng);   // HourAngle from ra - LST (backwards)
+    ha = ra - sidereal + ln_deg_to_rad(obs->lng); // HourAngle from ra - LST (backwards)
 
     X[1][1] = cos(dec) * cos(ha);
     X[2][1] = cos(dec) * sin(ha);
@@ -1371,7 +1382,7 @@ void addStar(int starNum, int totalAlignStars, double JD, struct ln_lnlat_posn *
 {
     long double ha, ra, dec, az, alt;
     double sidereal = ln_get_mean_sidereal_time(JD);
-    sidereal *= 2.0 * PI / 24.0;   // Change sidereal time from hours to radians
+    sidereal *= 2.0 * PI / 24.0; // Change sidereal time from hours to radians
 
     ra = ln_deg_to_rad(star->equPos.ra);
     dec = ln_deg_to_rad(star->equPos.dec);
@@ -1808,7 +1819,6 @@ double calcAltOffsetIteratively(AlignmentStar &a, AlignmentStar &z)
     zAlt = z.hrzPos.alt;
     bestDiff = LONG_MAX;
     lastDiff = LONG_MAX;
-    
 
     while (i < iMax)
     {
@@ -1923,7 +1933,7 @@ String getTimeString(struct ln_zonedate date)
         toStr = '0' + String(date.hours);
     else
         toStr = String(date.hours);
-    
+
     toStr += ':';
 
     if (date.minutes < 10)
@@ -1938,177 +1948,177 @@ void getPlanetPosition(int planetNum, Object &planet)
     struct ln_rst_time rst;
     struct ln_zonedate rise, set;
 
-    switch(planetNum)
+    switch (planetNum)
     {
-        // Mercury
-        case 1 :
-            planet.name = "Mercury";
-            ln_get_mercury_equ_coords(SCOPE.JD, &planet.equPos);
-            ln_equ_to_hequ(&planet.equPos, &planet.hEquPos);
-            planet.description = String(ln_get_mercury_earth_dist(SCOPE.JD), 2);
-            planet.mag = String(ln_get_mercury_magnitude(SCOPE.JD), 2);
-            planet.size = String(ln_get_mercury_sdiam(SCOPE.JD), 2);
-            if (ln_get_mercury_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst) == 0)
-            {
-                ln_get_local_date(rst.rise, &rise);
-                ln_get_local_date(rst.set, &set);
+    // Mercury
+    case 1:
+        planet.name = "Mercury";
+        ln_get_mercury_equ_coords(SCOPE.JD, &planet.equPos);
+        planet.description = String(ln_get_mercury_earth_dist(SCOPE.JD), 2);
+        planet.mag = String(ln_get_mercury_magnitude(SCOPE.JD), 2);
+        planet.size = String(ln_get_mercury_sdiam(SCOPE.JD), 2);
+        if (ln_get_mercury_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst) == 0)
+        {
+            ln_get_local_date(rst.rise, &rise);
+            ln_get_local_date(rst.set, &set);
 
-                planet.constellation = "RISE: " + getTimeString(rise);
-                planet.type = "SET: " + getTimeString(set);
-            }
-            else {
-                planet.constellation = "BELOW HORIZON";
-                planet.type = "CIRCUMPOLAR ORBIT";
-            }
-            break;
-        case 2 :
-            planet.name = "Venus";
-            ln_get_venus_equ_coords(SCOPE.JD, &planet.equPos);
-            ln_equ_to_hequ(&planet.equPos, &planet.hEquPos);
-            planet.description = String(ln_get_venus_earth_dist(SCOPE.JD), 2);
-            planet.mag = String(ln_get_venus_magnitude(SCOPE.JD), 2);
-            planet.size = String(ln_get_venus_sdiam(SCOPE.JD), 2);
-            if (ln_get_venus_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst) == 0)
-            {
-                ln_get_local_date(rst.rise, &rise);
-                ln_get_local_date(rst.set, &set);
+            planet.constellation = "RISE: " + getTimeString(rise);
+            planet.type = "SET: " + getTimeString(set);
+        }
+        else
+        {
+            planet.constellation = "BELOW HORIZON";
+            planet.type = "CIRCUMPOLAR ORBIT";
+        }
+        break;
+    case 2:
+        planet.name = "Venus";
+        ln_get_venus_equ_coords(SCOPE.JD, &planet.equPos);
+        planet.description = String(ln_get_venus_earth_dist(SCOPE.JD), 2);
+        planet.mag = String(ln_get_venus_magnitude(SCOPE.JD), 2);
+        planet.size = String(ln_get_venus_sdiam(SCOPE.JD), 2);
+        if (ln_get_venus_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst) == 0)
+        {
+            ln_get_local_date(rst.rise, &rise);
+            ln_get_local_date(rst.set, &set);
 
-                planet.constellation = "RISE: " + getTimeString(rise);
-                planet.type = "SET: " + getTimeString(set);
-            }
-            else {
-                planet.constellation = "BELOW HORIZON";
-                planet.type = "CIRCUMPOLAR ORBIT";
-            }
-            break;
-        case 3 :
-            planet.name = "Earth";
-            planet.description = "";
-            planet.mag = "";
-            planet.size = "";
-            planet.constellation = "";
-            planet.type = "";
-            break;
-        case 4 :
-            planet.name = "Mars";
-            ln_get_mars_equ_coords(SCOPE.JD, &planet.equPos);
-            ln_equ_to_hequ(&planet.equPos, &planet.hEquPos);
-            planet.description = String(ln_get_mars_earth_dist(SCOPE.JD), 2);
-            planet.mag = String(ln_get_mars_magnitude(SCOPE.JD), 2);
-            planet.size = String(ln_get_mars_sdiam(SCOPE.JD), 2);
-            if (ln_get_mars_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst) == 0)
-            {
-                ln_get_local_date(rst.rise, &rise);
-                ln_get_local_date(rst.set, &set);
+            planet.constellation = "RISE: " + getTimeString(rise);
+            planet.type = "SET: " + getTimeString(set);
+        }
+        else
+        {
+            planet.constellation = "BELOW HORIZON";
+            planet.type = "CIRCUMPOLAR ORBIT";
+        }
+        break;
+    case 3:
+        planet.name = "Earth";
+        planet.description = "";
+        planet.mag = "";
+        planet.size = "";
+        planet.constellation = "";
+        planet.type = "";
+        break;
+    case 4:
+        planet.name = "Mars";
+        ln_get_mars_equ_coords(SCOPE.JD, &planet.equPos);
+        planet.description = String(ln_get_mars_earth_dist(SCOPE.JD), 2);
+        planet.mag = String(ln_get_mars_magnitude(SCOPE.JD), 2);
+        planet.size = String(ln_get_mars_sdiam(SCOPE.JD), 2);
+        if (ln_get_mars_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst) == 0)
+        {
+            ln_get_local_date(rst.rise, &rise);
+            ln_get_local_date(rst.set, &set);
 
-                planet.constellation = "RISE: " + getTimeString(rise);
-                planet.type = "SET: " + getTimeString(set);
-            }
-            else {
-                planet.constellation = "BELOW HORIZON";
-                planet.type = "CIRCUMPOLAR ORBIT";
-            }
-            break;
-        case 5 :
-            planet.name = "Jupiter";
-            ln_get_jupiter_equ_coords(SCOPE.JD, &planet.equPos);
-            ln_equ_to_hequ(&planet.equPos, &planet.hEquPos);
-            planet.description = String(ln_get_jupiter_earth_dist(SCOPE.JD), 2);
-            planet.mag = String(ln_get_jupiter_magnitude(SCOPE.JD), 2);
-            planet.size = String(ln_get_jupiter_equ_sdiam(SCOPE.JD), 2);
-            if (ln_get_jupiter_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst) == 0)
-            {
-                ln_get_local_date(rst.rise, &rise);
-                ln_get_local_date(rst.set, &set);
+            planet.constellation = "RISE: " + getTimeString(rise);
+            planet.type = "SET: " + getTimeString(set);
+        }
+        else
+        {
+            planet.constellation = "BELOW HORIZON";
+            planet.type = "CIRCUMPOLAR ORBIT";
+        }
+        break;
+    case 5:
+        planet.name = "Jupiter";
+        ln_get_jupiter_equ_coords(SCOPE.JD, &planet.equPos);
+        planet.description = String(ln_get_jupiter_earth_dist(SCOPE.JD), 2);
+        planet.mag = String(ln_get_jupiter_magnitude(SCOPE.JD), 2);
+        planet.size = String(ln_get_jupiter_equ_sdiam(SCOPE.JD), 2);
+        if (ln_get_jupiter_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst) == 0)
+        {
+            ln_get_local_date(rst.rise, &rise);
+            ln_get_local_date(rst.set, &set);
 
-                planet.constellation = "RISE: " + getTimeString(rise);
-                planet.type = "SET: " + getTimeString(set);
-            }
-            else {
-                planet.constellation = "BELOW HORIZON";
-                planet.type = "CIRCUMPOLAR ORBIT";
-            }
-            break;
-        case 6 :
-            planet.name = "Saturn";
-            ln_get_saturn_equ_coords(SCOPE.JD, &planet.equPos);
-            ln_equ_to_hequ(&planet.equPos, &planet.hEquPos);
-            planet.description = String(ln_get_saturn_earth_dist(SCOPE.JD), 2);
-            planet.mag = String(ln_get_saturn_magnitude(SCOPE.JD), 2);
-            planet.size = String(ln_get_saturn_equ_sdiam(SCOPE.JD), 2);
-            if (ln_get_saturn_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst) == 0)
-            {
-                ln_get_local_date(rst.rise, &rise);
-                ln_get_local_date(rst.set, &set);
+            planet.constellation = "RISE: " + getTimeString(rise);
+            planet.type = "SET: " + getTimeString(set);
+        }
+        else
+        {
+            planet.constellation = "BELOW HORIZON";
+            planet.type = "CIRCUMPOLAR ORBIT";
+        }
+        break;
+    case 6:
+        planet.name = "Saturn";
+        ln_get_saturn_equ_coords(SCOPE.JD, &planet.equPos);
+        planet.description = String(ln_get_saturn_earth_dist(SCOPE.JD), 2);
+        planet.mag = String(ln_get_saturn_magnitude(SCOPE.JD), 2);
+        planet.size = String(ln_get_saturn_equ_sdiam(SCOPE.JD), 2);
+        if (ln_get_saturn_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst) == 0)
+        {
+            ln_get_local_date(rst.rise, &rise);
+            ln_get_local_date(rst.set, &set);
 
-                planet.constellation = "RISE: " + getTimeString(rise);
-                planet.type = "SET: " + getTimeString(set);
-            }
-            else {
-                planet.constellation = "BELOW HORIZON";
-                planet.type = "CIRCUMPOLAR ORBIT";
-            }
-            break;
-        case 7 :
-            planet.name = "Uranus";
-            ln_get_uranus_equ_coords(SCOPE.JD, &planet.equPos);
-            ln_equ_to_hequ(&planet.equPos, &planet.hEquPos);
-            planet.description = String(ln_get_uranus_earth_dist(SCOPE.JD), 2);
-            planet.mag = String(ln_get_uranus_magnitude(SCOPE.JD), 2);
-            planet.size = String(ln_get_uranus_sdiam(SCOPE.JD), 2);
-            if (ln_get_uranus_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst) == 0)
-            {
-                ln_get_local_date(rst.rise, &rise);
-                ln_get_local_date(rst.set, &set);
+            planet.constellation = "RISE: " + getTimeString(rise);
+            planet.type = "SET: " + getTimeString(set);
+        }
+        else
+        {
+            planet.constellation = "BELOW HORIZON";
+            planet.type = "CIRCUMPOLAR ORBIT";
+        }
+        break;
+    case 7:
+        planet.name = "Uranus";
+        ln_get_uranus_equ_coords(SCOPE.JD, &planet.equPos);
+        planet.description = String(ln_get_uranus_earth_dist(SCOPE.JD), 2);
+        planet.mag = String(ln_get_uranus_magnitude(SCOPE.JD), 2);
+        planet.size = String(ln_get_uranus_sdiam(SCOPE.JD), 2);
+        if (ln_get_uranus_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst) == 0)
+        {
+            ln_get_local_date(rst.rise, &rise);
+            ln_get_local_date(rst.set, &set);
 
-                planet.constellation = "RISE: " + getTimeString(rise);
-                planet.type = "SET: " + getTimeString(set);
-            }
-            else {
-                planet.constellation = "BELOW HORIZON";
-                planet.type = "CIRCUMPOLAR ORBIT";
-            }
-            break;
-        case 8 :
-            planet.name = "Neptune";
-            ln_get_neptune_equ_coords(SCOPE.JD, &planet.equPos);
-            ln_equ_to_hequ(&planet.equPos, &planet.hEquPos);
-            planet.description = String(ln_get_neptune_earth_dist(SCOPE.JD), 2);
-            planet.mag = String(ln_get_neptune_magnitude(SCOPE.JD), 2);
-            planet.size = String(ln_get_neptune_sdiam(SCOPE.JD), 2);
-            if (ln_get_neptune_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst) == 0)
-            {
-                ln_get_local_date(rst.rise, &rise);
-                ln_get_local_date(rst.set, &set);
+            planet.constellation = "RISE: " + getTimeString(rise);
+            planet.type = "SET: " + getTimeString(set);
+        }
+        else
+        {
+            planet.constellation = "BELOW HORIZON";
+            planet.type = "CIRCUMPOLAR ORBIT";
+        }
+        break;
+    case 8:
+        planet.name = "Neptune";
+        ln_get_neptune_equ_coords(SCOPE.JD, &planet.equPos);
+        planet.description = String(ln_get_neptune_earth_dist(SCOPE.JD), 2);
+        planet.mag = String(ln_get_neptune_magnitude(SCOPE.JD), 2);
+        planet.size = String(ln_get_neptune_sdiam(SCOPE.JD), 2);
+        if (ln_get_neptune_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst) == 0)
+        {
+            ln_get_local_date(rst.rise, &rise);
+            ln_get_local_date(rst.set, &set);
 
-                planet.constellation = "RISE: " + getTimeString(rise);
-                planet.type = "SET: " + getTimeString(set);
-            }
-            else {
-                planet.constellation = "BELOW HORIZON";
-                planet.type = "CIRCUMPOLAR ORBIT";
-            }
-            break;
-        case 9 :
-            planet.name = "Pluto";
-            ln_get_pluto_equ_coords(SCOPE.JD, &planet.equPos);
-            ln_equ_to_hequ(&planet.equPos, &planet.hEquPos);
-            planet.description = String(ln_get_pluto_earth_dist(SCOPE.JD), 2);
-            planet.mag = String(ln_get_pluto_magnitude(SCOPE.JD), 2);
-            planet.size = String(ln_get_pluto_sdiam(SCOPE.JD), 2);
-            if (ln_get_pluto_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst) == 0)
-            {
-                ln_get_local_date(rst.rise, &rise);
-                ln_get_local_date(rst.set, &set);
+            planet.constellation = "RISE: " + getTimeString(rise);
+            planet.type = "SET: " + getTimeString(set);
+        }
+        else
+        {
+            planet.constellation = "BELOW HORIZON";
+            planet.type = "CIRCUMPOLAR ORBIT";
+        }
+        break;
+    case 9:
+        planet.name = "Pluto";
+        ln_get_pluto_equ_coords(SCOPE.JD, &planet.equPos);
+        planet.description = String(ln_get_pluto_earth_dist(SCOPE.JD), 2);
+        planet.mag = String(ln_get_pluto_magnitude(SCOPE.JD), 2);
+        planet.size = String(ln_get_pluto_sdiam(SCOPE.JD), 2);
+        if (ln_get_pluto_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst) == 0)
+        {
+            ln_get_local_date(rst.rise, &rise);
+            ln_get_local_date(rst.set, &set);
 
-                planet.constellation = "RISE: " + getTimeString(rise);
-                planet.type = "SET: " + getTimeString(set);
-            }
-            else {
-                planet.constellation = "BELOW HORIZON";
-                planet.type = "CIRCUMPOLAR ORBIT";
-            }
-            break;
+            planet.constellation = "RISE: " + getTimeString(rise);
+            planet.type = "SET: " + getTimeString(set);
+        }
+        else
+        {
+            planet.constellation = "BELOW HORIZON";
+            planet.type = "CIRCUMPOLAR ORBIT";
+        }
+        break;
     }
 }
 
@@ -2233,17 +2243,18 @@ void considerTimeUpdates()
         tft.fillRect(100, 0, 140, 20, BLACK);
         tft.setCursor(100, 10);
         tft.print("LST ");
-        if ((int)SCOPE.LST < 10)
-        {
-            tft.print("0");
-        }
-        tft.print((int)SCOPE.LST);
-        tft.print(":");
-        if ((SCOPE.LST - (int)SCOPE.LST) * 60 < 10)
-        {
-            tft.print("0");
-        }
-        tft.print((SCOPE.LST - (int)SCOPE.LST) * 60, 0);
+        tft.print(hrs2hms(SCOPE.LST, true, false));
+        // if ((int)SCOPE.LST < 10)
+        // {
+        //     tft.print("0");
+        // }
+        // tft.print((int)SCOPE.LST);
+        // tft.print(":");
+        // if ((SCOPE.LST - (int)SCOPE.LST) * 60 < 10)
+        // {
+        //     tft.print("0");
+        // }
+        // tft.print((SCOPE.LST - (int)SCOPE.LST) * 60, 0);
 
         if ((CURRENT_OBJECT.name != ""))
         {
@@ -2588,13 +2599,16 @@ void drawGPSScreen()
 void drawClockScreen()
 {
     CURRENT_SCREEN = 1;
+    NOW = rtc.GetDateTime();
+    setTime(NOW.Hour(), NOW.Minute(), NOW.Second(), NOW.Day(), NOW.Month(), NOW.Year());
+    setScopeDateTime();
+
     tft.fillScreen(BLACK);
     tft.setCursor(10, 10);
     tft.setTextColor(TITLE_TEXT, TITLE_TEXT_BG);
     tft.setTextSize(3);
     tft.print(" Date/Time");
-
-    NOW = rtc.GetDateTime();
+    
     tft.setTextSize(2);
     tft.setTextColor(L_TEXT);
     tft.setCursor(70, 50);
@@ -2752,17 +2766,18 @@ void drawMainScreen()
     // Local Sidereal Time
     tft.setCursor(100, 10);
     tft.print("LST ");
-    if ((int)SCOPE.LST < 10)
-    {
-        tft.print("0");
-    }
-    tft.print((int)SCOPE.LST);
-    tft.print(":");
-    if ((SCOPE.LST - (int)SCOPE.LST) * 60 < 10)
-    {
-        tft.print("0");
-    }
-    tft.print((SCOPE.LST - (int)SCOPE.LST) * 60, 0);
+    tft.print(hrs2hms(SCOPE.LST, true, false));
+    // if ((int)SCOPE.LST < 10)
+    // {
+    //     tft.print("0");
+    // }
+    // tft.print((int)SCOPE.LST);
+    // tft.print(":");
+    // if ((SCOPE.LST - (int)SCOPE.LST) * 60 < 10)
+    // {
+    //     tft.print("0");
+    // }
+    // tft.print((SCOPE.LST - (int)SCOPE.LST) * 60, 0);
 
     tft.setTextSize(1);
     tft.setTextColor(L_TEXT);
@@ -3625,9 +3640,26 @@ void considerTouchInput(int lx, int ly)
                     int yy = (W_DATE_TIME[4] * 1000) + (W_DATE_TIME[5] * 100) + (W_DATE_TIME[6] * 10) + W_DATE_TIME[7];
                     rtc.SetDateTime(RtcDateTime(yy, mo, dd, hh, mm, 00));
                 }
-                OLD_DAY = rtc.GetDateTime();
+                NOW = rtc.GetDateTime();
+                setTime(NOW.Hour(), NOW.Minute(), NOW.Second(), NOW.Day(), NOW.Month(), NOW.Year());
+                setScopeDateTime();
                 delay(150);
                 drawAlignCorrectionsScreen();
+#ifdef SERIAL_DEBUG
+                Serial.print("Date/Time: ");
+                Serial.print(NOW.Year());
+                Serial.print("/");
+                Serial.print(NOW.Month());
+                Serial.print("/");
+                Serial.print(NOW.Day());
+                Serial.print(" - ");
+                Serial.print(NOW.Hour());
+                Serial.print(":");
+                Serial.print(NOW.Minute());
+                Serial.print(":");
+                Serial.print(NOW.Second());
+                Serial.println("");
+#endif
             }
             else if (lx > 10 && lx < 75 && ly > 120 && ly < 160)
             {
@@ -4205,13 +4237,13 @@ void considerTouchInput(int lx, int ly)
                                 Serial.println("");
                                 Serial.print(ALIGNMENT_STARS[n].name);
                                 Serial.print(" - RA: ");
-                                Serial.print(ALIGNMENT_STARS[n].ra);
+                                Serial.print(ALIGNMENT_STARS[n].equPos.ra);
                                 Serial.print(" DEC: ");
-                                Serial.print(ALIGNMENT_STARS[n].dec);
+                                Serial.print(ALIGNMENT_STARS[n].equPos.dec);
                                 Serial.print(" ALT: ");
-                                Serial.print(ALIGNMENT_STARS[n].alt);
+                                Serial.print(ALIGNMENT_STARS[n].hrzPos.alt);
                                 Serial.print(" AZ: ");
-                                Serial.print(ALIGNMENT_STARS[n].az);
+                                Serial.print(ALIGNMENT_STARS[n].hrzPos.az);
                                 Serial.println("");
 #endif
                                 delay(150);
@@ -4260,8 +4292,8 @@ void considerTouchInput(int lx, int ly)
 
 #ifdef PERFECT_ALIGN
                 // Debug with proper trig values
-                CURRENT_ALIGN_STAR.alt = ALIGNMENT_STARS[starNum].alt;
-                CURRENT_ALIGN_STAR.az = ALIGNMENT_STARS[starNum].az;
+                CURRENT_ALIGN_STAR.hrzPos.alt = ALIGNMENT_STARS[starNum].hrzPos.alt;
+                CURRENT_ALIGN_STAR.hrzPos.az = ALIGNMENT_STARS[starNum].hrzPos.az;
 #endif
 
                 ALIGNMENT_STARS[starNum] = CURRENT_ALIGN_STAR;
@@ -4273,9 +4305,9 @@ void considerTouchInput(int lx, int ly)
                 Serial.print(ALIGNMENT_STARS[starNum].name);
                 Serial.println("");
                 Serial.print("Alt ");
-                Serial.print(ALIGNMENT_STARS[starNum].alt);
+                Serial.print(ALIGNMENT_STARS[starNum].hrzPos.alt);
                 Serial.print(" Az ");
-                Serial.print(ALIGNMENT_STARS[starNum].az);
+                Serial.print(ALIGNMENT_STARS[starNum].hrzPos.az);
                 Serial.println("");
 #endif
                 delay(150);
