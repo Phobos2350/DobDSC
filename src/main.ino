@@ -73,8 +73,8 @@
 
 #define SERIAL_DEBUG // comment out to deactivate the serial debug mode
 #define PERFECT_ALIGN
-// #define DEBUG_REFRACTION
-// #define DEBUG_MOUNT_ERRS
+#define DEBUG_REFRACTION
+#define DEBUG_MOUNT_ERRS
 
 #define GEAR_LARGE 60.0f
 #define GEAR_SMALL 18.0f
@@ -1465,23 +1465,6 @@ void equatorialToScope(struct ln_equ_posn *pos, struct ln_lnlat_posn *obs, doubl
 
     hor->alt = alt - Z3_ERR;
     hor->az = ln_rad_to_deg(reverseRev(validRev(az)));
-#ifdef SERIAL_DEBUG
-#ifdef DEBUG_MOUNT_ERRS
-    Serial.print("equatorialToScope() - RA: ");
-    Serial.print(rad2hms(ra, true, true));
-    Serial.print(" DEC: ");
-    Serial.print(rad2dms(dec, true, false));
-    Serial.print(" HA: ");
-    Serial.print(rad2hms(ha_tmp, true, true));
-    Serial.print(" ---> AZ: ");
-    Serial.print(rad2dms(*az, true, true));
-    Serial.print(" AZ(RAW): ");
-    Serial.print(rad2dms(az_tmp, true, true));
-    Serial.print(" ALT: ");
-    Serial.print(rad2dms(*alt, true, true));
-    Serial.println("");
-#endif
-#endif
 }
 
 void addStar(int starNum, int totalAlignStars, double JD, struct ln_lnlat_posn *obs, AlignmentStar *star)
@@ -2675,6 +2658,10 @@ void drawGPSScreen()
     tft.print("Searching for");
     tft.setCursor(10, 60);
     tft.print("Satellites...");
+
+    tft.setTextSize(1);
+    tft.setCursor(10, 80);
+    tft.print("Allow > 60s for cold start up");
 
     drawButton(40, 270, 160, 40, "SKIP", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
 }
@@ -4369,6 +4356,21 @@ void considerTouchInput(int lx, int ly)
                 CURRENT_ALIGN_STAR.hrzPos.alt = ALIGNMENT_STARS[starNum].hrzPos.alt;
                 CURRENT_ALIGN_STAR.hrzPos.az = ALIGNMENT_STARS[starNum].hrzPos.az;
 #endif
+                // Correct for atmospheric refraction before doing anything else
+                if (CORRECT_REFRACTION)
+                {
+                    double deltaAlt = ln_get_refraction_adj(CURRENT_ALIGN_STAR.hrzPos.alt, ATMO_PRESS, ATMO_TEMP);
+                    CURRENT_ALIGN_STAR.hrzPos.alt -= deltaAlt;
+
+            #ifdef SERIAL_DEBUG
+            #ifdef DEBUG_REFRACTION
+                    Serial.print("calRefractionFromApparent - ");
+                    Serial.print(" Refract Amount(ARCMIN): ");
+                    Serial.print(deltaAlt);
+                    Serial.println("");
+            #endif
+            #endif
+                }
 
                 ALIGNMENT_STARS[starNum] = CURRENT_ALIGN_STAR;
 #ifdef SERIAL_DEBUG
