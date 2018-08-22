@@ -195,6 +195,7 @@ class IMU : public LSM303
 struct Scope
 {
     struct ln_date date;
+    struct ln_zonedate localDate;
     struct ln_equ_posn equPos;
     struct ln_hrz_posn hrzPos;
     struct ln_lnlat_posn lnLatPos;
@@ -268,7 +269,8 @@ const double STEPS_TO_RAD = STEPS_IN_FULL_CIRCLE / ONE_REV;
 uint8_t ALIGN_STEP = 1;   // Using this variable to count the allignment steps - 1: Synchronize, 2: Allign and centre, 3:....
 uint8_t ALIGN_TYPE = 0;   // Variable to store the alignment type (0-Skip Alignment, 1-1 Star alignment, 2-2 Star alignment
 uint8_t LOADED_STARS = 0; // What Objects are loaded from SPIFFS 1 == alignment, 2 == messier, 3 == treasure
-uint8_t TIME_ZONE = 0;
+uint8_t LOCAL_TIME_H_OFFSET = 0;
+uint8_t LOCAL_TIME_D_OFFSET = 0;
 uint8_t GPS_ITERATIONS = 0;
 uint8_t CURRENT_SCREEN = -1;
 uint8_t OLD_MIN, OLD_DAY;
@@ -287,7 +289,7 @@ double ATMO_TEMP = 10;    // Default 10C air temperature
 
 unsigned int AZ_STEPS, ALT_STEPS; // Current position of the decoders in Steps! - when movement occures, values are changed accordingly
 
-unsigned long UPDATE_LAST, UPDATE_TIME;
+unsigned long UPDATE_LAST, UPDATE_TIME, UPDATE_CLOCK;
 unsigned long LAST_MEASUREMENT = 0;  // millisecond timestamp of last measurement, to measure only every XXX milliseconds
 unsigned long SCOPE_POS_UPDATE = 30; // 30ms updated = 30FPS
 unsigned long LAST_POS_UPDATE = 0;
@@ -518,31 +520,6 @@ String deg2hms(double deg, boolean highPrecision, boolean withUnits)
     struct ln_hms lnHMS;
     ln_deg_to_hms(deg, &lnHMS);
 
-    // double dTemp;
-    // deg = ln_range_degrees(deg);
-
-    // // Div degrees by 15 to get hours
-    // dTemp = deg / 15.0;
-    // unsigned short hours = (unsigned short)dTemp;
-
-    // // Mult remainder by 60 for mins
-    // dTemp = 60.0 * (dTemp - hours);
-    // unsigned short minutes = (unsigned short)dTemp;
-    // // Mult remainder by 60 for secs
-    // unsigned short seconds = 60.0 * (dTemp - minutes);
-
-    // // Catch overflows
-    // if (seconds > 59)
-    // {
-    //     seconds = 0.0;
-    //     minutes++;
-    // }
-    // if (minutes > 59)
-    // {
-    //     minutes = 0;
-    //     hours++;
-    // }
-
     if (highPrecision)
     {
         if (withUnits)
@@ -576,40 +553,6 @@ String deg2dms(double deg, boolean highPrecision, boolean asAzimuth)
 {
     struct ln_dms lnDMS;
     ln_deg_to_dms(deg, &lnDMS);
-    // double dTemp;
-    // char sign;
-
-    // if (deg >= 0.0)
-    //     sign = 0;
-    // else
-    //     sign = 1;
-
-    // deg = fabs(deg);
-    // unsigned short degs = (int)deg;
-    // // Mult remainder by 60 for mins
-    // dTemp = 60.0 * (deg - degs);
-    // unsigned short minutes = (unsigned short)dTemp;
-    // // Mult remainder by 60 for secs
-    // unsigned short seconds = 60.0 * (dTemp - minutes);
-
-    // // Catch overflows
-    // if (seconds > 59)
-    // {
-    //     seconds = 0.0;
-    //     minutes++;
-    // }
-    // if (minutes > 59)
-    // {
-    //     minutes = 0;
-    //     degs++;
-    // }
-
-    // if (!asAzimuth)
-    // {
-    //     sign = '+';
-    //     if (deg < 0)
-    //         sign = '-';
-    // }
     char sign = '+';
     if (lnDMS.neg == 1)
         sign = '-';
@@ -630,6 +573,22 @@ String deg2dms(double deg, boolean highPrecision, boolean asAzimuth)
 String hrs2hms(double decTime, boolean highPrecision, boolean withUnits)
 {
     return deg2hms(decTime * 15.0, highPrecision, withUnits);
+}
+
+void getLocalDate(double jd, struct ln_zonedate *zonedate)
+{
+    struct ln_date date;
+    long gmtoff = 0;
+    // Rough calculation of the timezone delay based on longitude
+    int timeZone = round(SCOPE.lnLatPos.lng * 4.0 / 60.0);
+
+    gmtoff += (timeZone * 3600);
+    
+    if (SUMMER_TIME)
+        gmtoff += 3600;
+
+    ln_get_date(jd, &date);
+    ln_date_to_zonedate(&date, zonedate, gmtoff);
 }
 
 void setScopeDateTime()
@@ -1248,10 +1207,7 @@ void processAlignmentStar(int index, AlignmentStar &star)
     hEquPos.dec.degrees = dec_d;
     hEquPos.dec.minutes = dec_m;
     hEquPos.dec.seconds = dec_s;
-    
     ln_hequ_to_equ(&hEquPos, &star.equPos);
-    //ln_get_hrz_from_equ(&star.equPos, &SCOPE.lnLatPos, SCOPE.JD, &star.hrzPos);
-    getAltAzTrig(&star.equPos, &SCOPE.lnLatPos, SCOPE.LST, &star.hrzPos);
 
 #ifdef SERIAL_DEBUG
     Serial.print("processAlignmentStar() ");
@@ -1291,11 +1247,15 @@ void processAlignmentStar(int index, AlignmentStar &star)
     Serial.print(deg2dms(star.equPos.dec, true, false));
     Serial.println("");
 #endif
+    // ln_get_hrz_from_equ(&star.equPos, &SCOPE.lnLatPos, SCOPE.JD, &star.hrzPos);
+    getAltAzTrig(&star.equPos, &SCOPE.lnLatPos, SCOPE.LST, &star.hrzPos);
+    // double azTmp = ln_deg_to_rad(star.hrzPos.az);
+    // azTmp = reverseRev(validRev(azTmp));
+    // star.hrzPos.az = ln_rad_to_deg(azTmp);
 }
 
 void processObject(int index, Object &object)
 {
-
     int i1 = OBJECTS[index].indexOf(',');
     int i2 = OBJECTS[index].indexOf(',', i1 + 1);
     int i3 = OBJECTS[index].indexOf(',', i2 + 1);
@@ -1498,9 +1458,8 @@ void equatorialToScope(struct ln_equ_posn *pos, struct ln_lnlat_posn *obs, doubl
 #endif
     }
 
-    hor->alt = alt - Z3_ERR;
-    hor->az = reverseRev(validRev(az));
-    // (*az) = az_tmp;
+    hor->alt = ln_rad_to_deg(alt - Z3_ERR);
+    hor->az = ln_rad_to_deg(reverseRev(validRev(az)));
 #ifdef SERIAL_DEBUG
 #ifdef DEBUG_MOUNT_ERRS
     Serial.print("equatorialToScope() - RA: ");
@@ -2096,41 +2055,39 @@ void getPlanetPosition(int planetNum, Object &planet)
     case 1:
         planet.name = "Mercury";
         ln_get_mercury_equ_coords(SCOPE.JD, &planet.equPos);
-        planet.description = String(ln_get_mercury_earth_dist(SCOPE.JD), 2);
+        planet.constellation = "DIST: " + String(ln_get_mercury_earth_dist(SCOPE.JD), 2) + " AU";
+        planet.type = "DISK: " + String(ln_get_mercury_disk(SCOPE.JD), 2);
         planet.mag = String(ln_get_mercury_magnitude(SCOPE.JD), 2);
         planet.size = String(ln_get_mercury_sdiam(SCOPE.JD), 2);
         if (ln_get_mercury_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst) == 0)
         {
-            ln_get_local_date(rst.rise, &rise);
-            ln_get_local_date(rst.set, &set);
-
-            planet.constellation = "RISE: " + getTimeString(rise);
-            planet.type = "SET: " + getTimeString(set);
+            getLocalDate(rst.rise, &rise);
+            getLocalDate(rst.set, &set);
+            planet.description = "RISE: " + getTimeString(rise);
+            planet.description += " SET: " + getTimeString(set);
         }
         else
         {
-            planet.constellation = "BELOW HORIZON";
-            planet.type = "CIRCUMPOLAR ORBIT";
+            planet.description = "BELOW HORIZON";
         }
         break;
     case 2:
         planet.name = "Venus";
         ln_get_venus_equ_coords(SCOPE.JD, &planet.equPos);
-        planet.description = String(ln_get_venus_earth_dist(SCOPE.JD), 2);
+        planet.constellation = "DIST: " + String(ln_get_venus_earth_dist(SCOPE.JD), 2) + " AU";
+        planet.type = "DISK: " + String(ln_get_venus_disk(SCOPE.JD), 2);
         planet.mag = String(ln_get_venus_magnitude(SCOPE.JD), 2);
         planet.size = String(ln_get_venus_sdiam(SCOPE.JD), 2);
         if (ln_get_venus_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst) == 0)
         {
-            ln_get_local_date(rst.rise, &rise);
-            ln_get_local_date(rst.set, &set);
-
-            planet.constellation = "RISE: " + getTimeString(rise);
-            planet.type = "SET: " + getTimeString(set);
+            getLocalDate(rst.rise, &rise);
+            getLocalDate(rst.set, &set);
+            planet.description = "RISE: " + getTimeString(rise);
+            planet.description += " SET: " + getTimeString(set);
         }
         else
         {
-            planet.constellation = "BELOW HORIZON";
-            planet.type = "CIRCUMPOLAR ORBIT";
+            planet.description = "BELOW HORIZON";
         }
         break;
     case 3:
@@ -2144,121 +2101,115 @@ void getPlanetPosition(int planetNum, Object &planet)
     case 4:
         planet.name = "Mars";
         ln_get_mars_equ_coords(SCOPE.JD, &planet.equPos);
-        planet.description = String(ln_get_mars_earth_dist(SCOPE.JD), 2);
+        planet.constellation = "DIST: " + String(ln_get_mars_earth_dist(SCOPE.JD), 2) + " AU";
+        planet.type = "DISK: " + String(ln_get_mars_disk(SCOPE.JD), 2);
         planet.mag = String(ln_get_mars_magnitude(SCOPE.JD), 2);
         planet.size = String(ln_get_mars_sdiam(SCOPE.JD), 2);
         if (ln_get_mars_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst) == 0)
         {
-            ln_get_local_date(rst.rise, &rise);
-            ln_get_local_date(rst.set, &set);
-
-            planet.constellation = "RISE: " + getTimeString(rise);
-            planet.type = "SET: " + getTimeString(set);
+            getLocalDate(rst.rise, &rise);
+            getLocalDate(rst.set, &set);
+            planet.description = "RISE: " + getTimeString(rise);
+            planet.description += " SET: " + getTimeString(set);
         }
         else
         {
-            planet.constellation = "BELOW HORIZON";
-            planet.type = "CIRCUMPOLAR ORBIT";
+            planet.description = "BELOW HORIZON";
         }
         break;
     case 5:
         planet.name = "Jupiter";
         ln_get_jupiter_equ_coords(SCOPE.JD, &planet.equPos);
-        planet.description = String(ln_get_jupiter_earth_dist(SCOPE.JD), 2);
+        planet.constellation = "DIST: " + String(ln_get_jupiter_earth_dist(SCOPE.JD), 2) + " AU";
+        planet.type = "DISK: " + String(ln_get_jupiter_disk(SCOPE.JD), 2);
         planet.mag = String(ln_get_jupiter_magnitude(SCOPE.JD), 2);
         planet.size = String(ln_get_jupiter_equ_sdiam(SCOPE.JD), 2);
         if (ln_get_jupiter_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst) == 0)
         {
-            ln_get_local_date(rst.rise, &rise);
-            ln_get_local_date(rst.set, &set);
-
-            planet.constellation = "RISE: " + getTimeString(rise);
-            planet.type = "SET: " + getTimeString(set);
+            getLocalDate(rst.rise, &rise);
+            getLocalDate(rst.set, &set);
+            planet.description = "RISE: " + getTimeString(rise);
+            planet.description += " SET: " + getTimeString(set);
         }
         else
         {
-            planet.constellation = "BELOW HORIZON";
-            planet.type = "CIRCUMPOLAR ORBIT";
+            planet.description = "BELOW HORIZON";
         }
         break;
     case 6:
         planet.name = "Saturn";
         ln_get_saturn_equ_coords(SCOPE.JD, &planet.equPos);
-        planet.description = String(ln_get_saturn_earth_dist(SCOPE.JD), 2);
+        planet.constellation = "DIST: " + String(ln_get_saturn_earth_dist(SCOPE.JD), 2) + " AU";
+        planet.type = "DISK: " + String(ln_get_saturn_disk(SCOPE.JD), 2);
         planet.mag = String(ln_get_saturn_magnitude(SCOPE.JD), 2);
         planet.size = String(ln_get_saturn_equ_sdiam(SCOPE.JD), 2);
         if (ln_get_saturn_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst) == 0)
         {
-            ln_get_local_date(rst.rise, &rise);
-            ln_get_local_date(rst.set, &set);
-
-            planet.constellation = "RISE: " + getTimeString(rise);
-            planet.type = "SET: " + getTimeString(set);
+            getLocalDate(rst.rise, &rise);
+            getLocalDate(rst.set, &set);
+            planet.description = "RISE: " + getTimeString(rise);
+            planet.description += " SET: " + getTimeString(set);
         }
         else
         {
-            planet.constellation = "BELOW HORIZON";
-            planet.type = "CIRCUMPOLAR ORBIT";
+            planet.description = "BELOW HORIZON";
         }
         break;
     case 7:
         planet.name = "Uranus";
         ln_get_uranus_equ_coords(SCOPE.JD, &planet.equPos);
-        planet.description = String(ln_get_uranus_earth_dist(SCOPE.JD), 2);
+        planet.constellation = "DIST: " + String(ln_get_uranus_earth_dist(SCOPE.JD), 2) + " AU";
+        planet.type = "DISK: " + String(ln_get_uranus_disk(SCOPE.JD), 2);
         planet.mag = String(ln_get_uranus_magnitude(SCOPE.JD), 2);
         planet.size = String(ln_get_uranus_sdiam(SCOPE.JD), 2);
         if (ln_get_uranus_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst) == 0)
         {
-            ln_get_local_date(rst.rise, &rise);
-            ln_get_local_date(rst.set, &set);
-
-            planet.constellation = "RISE: " + getTimeString(rise);
-            planet.type = "SET: " + getTimeString(set);
+            getLocalDate(rst.rise, &rise);
+            getLocalDate(rst.set, &set);
+            planet.description = "RISE: " + getTimeString(rise);
+            planet.description += " SET: " + getTimeString(set);
         }
         else
         {
-            planet.constellation = "BELOW HORIZON";
-            planet.type = "CIRCUMPOLAR ORBIT";
+            planet.description = "BELOW HORIZON";
         }
         break;
     case 8:
         planet.name = "Neptune";
         ln_get_neptune_equ_coords(SCOPE.JD, &planet.equPos);
-        planet.description = String(ln_get_neptune_earth_dist(SCOPE.JD), 2);
+        planet.constellation = "DIST: " + String(ln_get_neptune_earth_dist(SCOPE.JD), 2) + " AU";
+        planet.type = "DISK: " + String(ln_get_neptune_disk(SCOPE.JD), 2);
         planet.mag = String(ln_get_neptune_magnitude(SCOPE.JD), 2);
         planet.size = String(ln_get_neptune_sdiam(SCOPE.JD), 2);
         if (ln_get_neptune_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst) == 0)
         {
-            ln_get_local_date(rst.rise, &rise);
-            ln_get_local_date(rst.set, &set);
-
-            planet.constellation = "RISE: " + getTimeString(rise);
-            planet.type = "SET: " + getTimeString(set);
+            getLocalDate(rst.rise, &rise);
+            getLocalDate(rst.set, &set);
+            planet.description = "RISE: " + getTimeString(rise);
+            planet.description += " SET: " + getTimeString(set);
         }
         else
         {
-            planet.constellation = "BELOW HORIZON";
-            planet.type = "CIRCUMPOLAR ORBIT";
+            planet.description = "BELOW HORIZON";
         }
         break;
     case 9:
         planet.name = "Pluto";
         ln_get_pluto_equ_coords(SCOPE.JD, &planet.equPos);
-        planet.description = String(ln_get_pluto_earth_dist(SCOPE.JD), 2);
+        planet.constellation = "DIST: " + String(ln_get_pluto_earth_dist(SCOPE.JD), 2) + " AU";
+        planet.type = "DISK: " + String(ln_get_pluto_disk(SCOPE.JD), 2);
         planet.mag = String(ln_get_pluto_magnitude(SCOPE.JD), 2);
         planet.size = String(ln_get_pluto_sdiam(SCOPE.JD), 2);
         if (ln_get_pluto_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst) == 0)
         {
-            ln_get_local_date(rst.rise, &rise);
-            ln_get_local_date(rst.set, &set);
-
-            planet.constellation = "RISE: " + getTimeString(rise);
-            planet.type = "SET: " + getTimeString(set);
+            getLocalDate(rst.rise, &rise);
+            getLocalDate(rst.set, &set);
+            planet.description = "RISE: " + getTimeString(rise);
+            planet.description += " SET: " + getTimeString(set);
         }
         else
         {
-            planet.constellation = "BELOW HORIZON";
-            planet.type = "CIRCUMPOLAR ORBIT";
+            planet.description = "BELOW HORIZON";
         }
         break;
     }
@@ -2358,45 +2309,42 @@ void considerTimeUpdates()
             changes = 1;
         }
     }
+    // Update clock every 2mins
+    if ((millis() - UPDATE_CLOCK) > 120000)
+    {
+        NOW = rtc.GetDateTime();
+        setTime(NOW.Hour(), NOW.Minute(), NOW.Second(), NOW.Day(), NOW.Month(), NOW.Year());
+        UPDATE_CLOCK = millis();
+    }
+
     if (CURRENT_SCREEN == 3 && (millis() - UPDATE_TIME) > 5000)
     {
         // Main Screen
-        NOW = rtc.GetDateTime();
-
+        setScopeDateTime();
+        getLocalDate(SCOPE.JD, &SCOPE.localDate);
         tft.setTextColor(TITLE_TEXT, TITLE_TEXT_BG);
         tft.setTextSize(2);
-        if (OLD_MIN != NOW.Minute())
+        if (OLD_MIN != SCOPE.localDate.minutes)
         {
-            OLD_MIN = NOW.Minute();
+            OLD_MIN = SCOPE.localDate.minutes;
             tft.fillRect(0, 0, 80, 20, BLACK);
             tft.setCursor(10, 10);
-            if (NOW.Hour() < 10)
+            if (SCOPE.localDate.hours < 10)
             {
                 tft.print("0");
             }
-            tft.print(NOW.Hour());
+            tft.print(SCOPE.localDate.hours);
             tft.print(":");
-            if (NOW.Minute() < 10)
+            if (SCOPE.localDate.minutes < 10)
             {
                 tft.print("0");
             }
-            tft.print(NOW.Minute());
+            tft.print(SCOPE.localDate.minutes);
         }
         tft.fillRect(100, 0, 140, 20, BLACK);
         tft.setCursor(100, 10);
         tft.print("LST ");
         tft.print(hrs2hms(SCOPE.LST, false, false));
-        // if ((int)SCOPE.LST < 10)
-        // {
-        //     tft.print("0");
-        // }
-        // tft.print((int)SCOPE.LST);
-        // tft.print(":");
-        // if ((SCOPE.LST - (int)SCOPE.LST) * 60 < 10)
-        // {
-        //     tft.print("0");
-        // }
-        // tft.print((SCOPE.LST - (int)SCOPE.LST) * 60, 0);
 
         if ((CURRENT_OBJECT.name != ""))
         {
@@ -2407,10 +2355,8 @@ void considerTimeUpdates()
 
             tft.setCursor(70, 205);
             tft.print(deg2dms(CURRENT_OBJECT.hrzPos.az, true, true));
-            // tft.print(rad2dms(CURRENT_OBJECT.az, true, false));
             tft.setCursor(70, 225);
             tft.print(deg2dms(CURRENT_OBJECT.hrzPos.alt, true, false));
-            // tft.print(rad2dms(CURRENT_OBJECT.alt, true, true));
         }
 
         UPDATE_TIME = millis();
@@ -2525,42 +2471,14 @@ void considerTimeUpdates()
             OBSERVATION_ALTITUDE = SCOPE.observationAlt;
             writeGPSToSPIFFS();
 #ifdef SERIAL_DEBUG
-            Serial.print("OBSERVATION LATTITUDE: ");
+            Serial.print("GOT GPS DATA - LAT: ");
             Serial.print(OBSERVATION_LATTITUDE);
+            Serial.print(" LNG: ");
+            Serial.print(OBSERVATION_LONGITUDE);
+            Serial.print(" ALT: ");
+            Serial.print(OBSERVATION_ALTITUDE);
             Serial.println("");
 #endif
-            CURRENT_SCREEN = 1;
-
-            int ora, date_delay = 0;
-            int time_delay = round(gps.location.lng() * 4 / 60); //rough calculation of the timezone delay
-
-            // convert to epoch
-            setTime(gps.time.hour(), gps.time.minute(), gps.time.second(), gps.date.day(), gps.date.month(), gps.date.year());
-#ifdef SERIAL_DEBUG
-            Serial.print("EPOCH: ");
-            Serial.print(now());
-            Serial.println("");
-#endif
-
-            if (isSummerTime())
-            {
-                //If in summer time sum 1h and put SUMMER_TIME flag as 1
-                time_delay += 1;
-                SUMMER_TIME = 1;
-            }
-
-            //update the value of the variable ora
-            ora = gps.time.hour() + time_delay;
-
-            //to update the real time
-            if (ora >= 24)
-            {
-                ora -= 24;
-                date_delay = 1;
-            }
-            setTime(ora, gps.time.minute(), gps.time.second(), gps.date.day() + date_delay, gps.date.month(), gps.date.year());
-            RtcDateTime gpsTime = RtcDateTime(gps.date.year(), gps.date.month(), gps.date.day() + date_delay, ora, gps.time.minute(), gps.time.second());
-            rtc.SetDateTime(gpsTime);
             drawClockScreen();
         }
         UPDATE_TIME = millis();
@@ -2757,7 +2675,7 @@ void drawClockScreen()
     tft.setCursor(10, 10);
     tft.setTextColor(TITLE_TEXT, TITLE_TEXT_BG);
     tft.setTextSize(3);
-    tft.print(" Date/Time");
+    tft.print(" GMT/UTC");
     
     tft.setTextSize(2);
     tft.setTextColor(L_TEXT);
@@ -2917,17 +2835,6 @@ void drawMainScreen()
     tft.setCursor(100, 10);
     tft.print("LST ");
     tft.print(hrs2hms(SCOPE.LST, false, false));
-    // if ((int)SCOPE.LST < 10)
-    // {
-    //     tft.print("0");
-    // }
-    // tft.print((int)SCOPE.LST);
-    // tft.print(":");
-    // if ((SCOPE.LST - (int)SCOPE.LST) * 60 < 10)
-    // {
-    //     tft.print("0");
-    // }
-    // tft.print((SCOPE.LST - (int)SCOPE.LST) * 60, 0);
 
     tft.setTextSize(1);
     tft.setTextColor(L_TEXT);
@@ -3790,9 +3697,12 @@ void considerTouchInput(int lx, int ly)
                     int yy = (W_DATE_TIME[4] * 1000) + (W_DATE_TIME[5] * 100) + (W_DATE_TIME[6] * 10) + W_DATE_TIME[7];
                     rtc.SetDateTime(RtcDateTime(yy, mo, dd, hh, mm, 00));
                 }
+                
                 NOW = rtc.GetDateTime();
                 setTime(NOW.Hour(), NOW.Minute(), NOW.Second(), NOW.Day(), NOW.Month(), NOW.Year());
+                SUMMER_TIME = isSummerTime();
                 setScopeDateTime();
+                calculateLST();
                 delay(150);
                 drawAlignCorrectionsScreen();
 #ifdef SERIAL_DEBUG
