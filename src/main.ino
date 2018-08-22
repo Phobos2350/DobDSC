@@ -1362,7 +1362,7 @@ void scopeToEquatorial(struct ln_hrz_posn *hor, struct ln_lnlat_posn *obs, doubl
 
 #ifdef SERIAL_DEBUG
 #ifdef DEBUG_REFRACTION
-        Serial.print("calRefractionFromApparent - ");
+        Serial.print("calREFRACTIONFromApparent - ");
         Serial.print(" Refract Amount(ARCMIN): ");
         Serial.print(deltaAlt);
         Serial.println("");
@@ -1455,7 +1455,7 @@ void equatorialToScope(struct ln_equ_posn *pos, struct ln_lnlat_posn *obs, doubl
         alt += deltaAlt;
 #ifdef SERIAL_DEBUG
 #ifdef DEBUG_REFRACTION
-        Serial.print("calRefractionFromTrue - ");
+        Serial.print("calREFRACTIONFromTrue - ");
         Serial.print(" Refract Amount(ARCMIN): ");
         Serial.print(deltaAlt);
         Serial.println("");
@@ -2758,17 +2758,17 @@ void drawAlignCorrectionsScreen()
     drawButton(165, 10, 65, 30, "BACK", BTN_L_BORDER, 0, BTN_BLK_TEXT, 3);
 
     if (CORRECT_REFRACTION)
-        drawButton(20, 50, 200, 40, "Refraction", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
+        drawButton(20, 50, 200, 40, "REFRACTION", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
     else
-        drawButton(20, 50, 200, 40, "Refraction", 0, BTN_L_BORDER, L_TEXT, 2);
+        drawButton(20, 50, 200, 40, "REFRACTION", 0, BTN_L_BORDER, L_TEXT, 2);
     if (CORRECT_PRECESSION_ETC)
-        drawButton(20, 110, 200, 40, "Orbital Anoms.", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
+        drawButton(20, 110, 200, 40, "ORBITAL ANOMS.", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
     else
-        drawButton(20, 110, 200, 40, "Orbital Anoms.", 0, BTN_L_BORDER, L_TEXT, 2);
+        drawButton(20, 110, 200, 40, "ORBITAL ANOMS.", 0, BTN_L_BORDER, L_TEXT, 2);
     if (CORRECT_MOUNT_ERRS)
-        drawButton(20, 170, 200, 40, "Mount Errors", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
+        drawButton(20, 170, 200, 40, "MOUNT ERRORS", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
     else
-        drawButton(20, 170, 200, 40, "Mount Errors", 0, BTN_L_BORDER, L_TEXT, 2);
+        drawButton(20, 170, 200, 40, "MOUNT ERRORS", 0, BTN_L_BORDER, L_TEXT, 2);
 
     tft.setTextColor(L_TEXT);
     tft.setCursor(10, 230);
@@ -2783,7 +2783,7 @@ void drawAlignCorrectionsScreen()
     tft.print(rad2dms(Z3_ERR, true, false));
 
     if (!ALIGN_READY)
-        drawButton(20, 270, 200, 40, "Begin Align", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
+        drawButton(20, 270, 200, 40, "BEGIN ALIGN", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
 }
 
 void drawSelectAlignment()
@@ -2801,10 +2801,10 @@ void drawSelectAlignment()
 
     drawButton(165, 10, 65, 30, "BACK", BTN_L_BORDER, 0, BTN_BLK_TEXT, 3);
 
-    drawButton(20, 50, 200, 40, "2-Star Auto", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
-    drawButton(20, 110, 200, 40, "3-Star Auto", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
-    drawButton(20, 170, 200, 40, "2-Star Manual", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
-    drawButton(20, 230, 200, 40, "3-Star Manual", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
+    drawButton(20, 50, 200, 40, "2-STAR AUTO", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
+    drawButton(20, 110, 200, 40, "3-STAR AUTO", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
+    drawButton(20, 170, 200, 40, "2-STAR MANUAL", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
+    drawButton(20, 230, 200, 40, "3-STAR MANUAL", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
 }
 
 void drawMainScreen()
@@ -2904,6 +2904,7 @@ void drawMainScreen()
             tft.setCursor(10, 185);
             tft.setTextColor(TITLE_TEXT, TITLE_TEXT_BG);
             tft.println("OBJECT NOT VISIBLE!");
+            tft.setTextColor(L_TEXT);
         }
         else
         {
@@ -3284,6 +3285,7 @@ void drawObjectSummaryScreen()
             tft.setCursor(10, 110);
             tft.setTextColor(TITLE_TEXT, TITLE_TEXT_BG);
             tft.println("OBJECT NOT VISIBLE!");
+            tft.setTextColor(L_TEXT);
         }
         else
         {
@@ -3295,10 +3297,10 @@ void drawObjectSummaryScreen()
         tft.setCursor(10, 130);
         tft.print(CURRENT_OBJECT.type);
         tft.setCursor(10, 150);
-        tft.print("Mag: ");
+        tft.print("MAG: ");
         tft.print(CURRENT_OBJECT.mag);
         tft.setCursor(10, 170);
-        tft.print("Size: ");
+        tft.print("SIZE: ");
         tft.print(CURRENT_OBJECT.size);
         
 
@@ -3353,7 +3355,7 @@ void drawOptionsScreen()
     tft.print("Remote Modes");
 
     drawButton(10, 70, 65, 40, "BT", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
-    drawButton(85, 70, 65, 40, "WiFi", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
+    drawButton(85, 70, 65, 40, "WIFI", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
 
     // Adjust configurations
     tft.setCursor(10, 130);
@@ -3361,16 +3363,16 @@ void drawOptionsScreen()
     tft.setTextColor(L_TEXT);
     tft.print("Configuration");
 
-    drawButton(10, 150, 65, 40, "Align", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
+    drawButton(10, 150, 65, 40, "ALIGN", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
     drawButton(85, 150, 65, 40, "GPS", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
-    drawButton(165, 150, 65, 40, "Clock", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
+    drawButton(165, 150, 65, 40, "CLOCK", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
 
     tft.setCursor(10, 210);
     tft.setTextSize(2);
     tft.setTextColor(L_TEXT);
     tft.print("Corrections");
 
-    drawButton(10, 230, 65, 40, "Corr.", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
+    drawButton(10, 230, 65, 40, "CORR.", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
 }
 
 void drawStarSelectScreen()
@@ -3505,7 +3507,7 @@ void drawRemoteScreen()
     else if (IS_WIFI_MODE_ON)
     //if (IS_WIFI_MODE_ON)
     {
-        tft.print(" WiFi");
+        tft.print(" WIFI");
     }
 
     drawButton(165, 10, 65, 30, "BACK", BTN_L_BORDER, 0, BTN_BLK_TEXT, 3);
@@ -3531,17 +3533,17 @@ void drawPlanetScreen()
 
     drawButton(165, 10, 65, 30, "BACK", BTN_L_BORDER, 0, BTN_BLK_TEXT, 3);
 
-    drawButton(10, 50, 100, 40, "Mercury", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
-    drawButton(130, 50, 100, 40, "Venus", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
+    drawButton(10, 50, 100, 40, "MERCURY", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
+    drawButton(130, 50, 100, 40, "VENUS", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
 
-    drawButton(10, 110, 100, 40, "Mars", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
-    drawButton(130, 110, 100, 40, "Jupiter", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
+    drawButton(10, 110, 100, 40, "MARS", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
+    drawButton(130, 110, 100, 40, "JUPITER", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
 
-    drawButton(10, 170, 100, 40, "Saturn", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
-    drawButton(130, 170, 100, 40, "Uranus", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
+    drawButton(10, 170, 100, 40, "SATURN", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
+    drawButton(130, 170, 100, 40, "URANUS", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
 
-    drawButton(10, 230, 100, 40, "Neptune", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
-    drawButton(130, 230, 100, 40, "Pluto", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
+    drawButton(10, 230, 100, 40, "NEPTUNE", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
+    drawButton(130, 230, 100, 40, "PLUTO", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
 }
 
 void OnScreenMsg(int Msg)
@@ -3825,32 +3827,32 @@ void considerTouchInput(int lx, int ly)
             }
             if (lx > 20 && lx < 220 && ly > 50 && ly < 90)
             {
-                // BTN "Refraction" pressed
+                // BTN "REFRACTION" pressed
                 CORRECT_REFRACTION = !CORRECT_REFRACTION;
                 if (CORRECT_REFRACTION)
-                    drawButton(20, 50, 200, 40, "Refraction", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
+                    drawButton(20, 50, 200, 40, "REFRACTION", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
                 else
-                    drawButton(20, 50, 200, 40, "Refraction", 0, BTN_L_BORDER, L_TEXT, 2);
+                    drawButton(20, 50, 200, 40, "REFRACTION", 0, BTN_L_BORDER, L_TEXT, 2);
                 delay(150);
             }
             else if (lx > 20 && lx < 220 && ly > 110 && ly < 150)
             {
-                // BTN "Orbital Anoms." pressed
+                // BTN "ORBITAL ANOMS." pressed
                 CORRECT_PRECESSION_ETC = !CORRECT_PRECESSION_ETC;
                 if (CORRECT_PRECESSION_ETC)
-                    drawButton(20, 110, 200, 40, "Orbital Anoms.", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
+                    drawButton(20, 110, 200, 40, "ORBITAL ANOMS.", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
                 else
-                    drawButton(20, 110, 200, 40, "Orbital Anoms.", 0, BTN_L_BORDER, L_TEXT, 2);
+                    drawButton(20, 110, 200, 40, "ORBITAL ANOMS.", 0, BTN_L_BORDER, L_TEXT, 2);
                 delay(150);
             }
             else if (lx > 20 && lx < 220 && ly > 170 && ly < 210)
             {
-                // BTN "Mount Errors" pressed
+                // BTN "MOUNT ERRORS" pressed
                 CORRECT_MOUNT_ERRS = !CORRECT_MOUNT_ERRS;
                 if (CORRECT_MOUNT_ERRS)
-                    drawButton(20, 170, 200, 40, "Mount Errors", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
+                    drawButton(20, 170, 200, 40, "MOUNT ERRORS", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
                 else
-                    drawButton(20, 170, 200, 40, "Mount Errors", 0, BTN_L_BORDER, L_TEXT, 2);
+                    drawButton(20, 170, 200, 40, "MOUNT ERRORS", 0, BTN_L_BORDER, L_TEXT, 2);
                 delay(150);
             }
             else if (lx > 20 && lx < 220 && ly > 270 && ly < 310)
@@ -3858,7 +3860,7 @@ void considerTouchInput(int lx, int ly)
                 // BTN "Begin Align" pressed
                 if (!ALIGN_READY) // Don't let us align if we're just checking errors
                 {
-                    drawButton(20, 270, 200, 40, "Begin Align", 0, BTN_L_BORDER, L_TEXT, 2);
+                    drawButton(20, 270, 200, 40, "BEGIN ALIGN", 0, BTN_L_BORDER, L_TEXT, 2);
                     delay(150);
                     drawSelectAlignment();
                 }
@@ -3879,7 +3881,7 @@ void considerTouchInput(int lx, int ly)
                 // BTN "2-Star Auto" pressed
                 ALIGN_TYPE = 1;
                 NUM_ALIGNMENT_STARS = 2;
-                drawButton(20, 50, 200, 40, "2-Star Auto", 0, BTN_L_BORDER, L_TEXT, 2);
+                drawButton(20, 50, 200, 40, "2-STAR AUTO", 0, BTN_L_BORDER, L_TEXT, 2);
                 autoSelectAlignmentStars();
                 delay(150);
                 drawAlignScreen();
@@ -3889,7 +3891,7 @@ void considerTouchInput(int lx, int ly)
                 // BTN "3-Star Auto" pressed
                 ALIGN_TYPE = 1;
                 NUM_ALIGNMENT_STARS = 3;
-                drawButton(20, 110, 200, 40, "3-Star Auto", 0, BTN_L_BORDER, L_TEXT, 2);
+                drawButton(20, 110, 200, 40, "3-STAR AUTO", 0, BTN_L_BORDER, L_TEXT, 2);
                 autoSelectAlignmentStars();
                 delay(150);
                 drawAlignScreen();
@@ -3899,7 +3901,7 @@ void considerTouchInput(int lx, int ly)
                 // BTN "2-Star Manual" pressed
                 ALIGN_TYPE = 2;
                 NUM_ALIGNMENT_STARS = 2;
-                drawButton(20, 170, 200, 40, "2-Star Manual", 0, BTN_L_BORDER, L_TEXT, 2);
+                drawButton(20, 170, 200, 40, "2-STAR MANUAL", 0, BTN_L_BORDER, L_TEXT, 2);
                 delay(150);
                 drawStarSelectScreen();
             }
@@ -3908,7 +3910,7 @@ void considerTouchInput(int lx, int ly)
                 // BTN "3-Star Manual" pressed
                 ALIGN_TYPE = 2;
                 NUM_ALIGNMENT_STARS = 3;
-                drawButton(20, 230, 200, 40, "3-Star Manual", 0, BTN_L_BORDER, L_TEXT, 2);
+                drawButton(20, 230, 200, 40, "3-STAR MANUAL", 0, BTN_L_BORDER, L_TEXT, 2);
                 delay(150);
                 drawStarSelectScreen();
             }
@@ -4142,7 +4144,7 @@ void considerTouchInput(int lx, int ly)
             if (lx > 10 && lx < 110 && ly > 270 && ly < 310)
             {
                 // BTN <Back pressed// BTN <Back pressed
-                drawButton(10, 270, 100, 40, "BACK", 0, BTN_L_BORDER, L_TEXT, 3);
+                drawButton(10, 270, 100, 40, "BACK", 0, BTN_L_BORDER, L_TEXT, 2);
                 delay(150);
                 drawCatalogueScreen();
             }
@@ -4159,7 +4161,7 @@ void considerTouchInput(int lx, int ly)
             if (lx > 10 && lx < 110 && ly > 270 && ly < 310)
             {
                 // BTN <Back pressed// BTN "BACK" pressed
-                drawButton(10, 270, 100, 40, "BACK", 0, BTN_L_BORDER, L_TEXT, 3);
+                drawButton(10, 270, 100, 40, "BACK", 0, BTN_L_BORDER, L_TEXT, 2);
                 delay(150);
                 drawLoadScreen();
             }
@@ -4194,7 +4196,7 @@ void considerTouchInput(int lx, int ly)
             {
                 // Touched WiFi Toggle
                 tft.drawRect(85, 70, 65, 40, BLACK);
-                drawButton(85, 70, 65, 40, "WiFi", 0, BTN_L_BORDER, L_TEXT, 2);
+                drawButton(85, 70, 65, 40, "WIFI", 0, BTN_L_BORDER, L_TEXT, 2);
                 delay(150);
                 IS_WIFI_MODE_ON = true;
                 drawRemoteScreen();
@@ -4202,7 +4204,7 @@ void considerTouchInput(int lx, int ly)
             if (lx > 10 && lx < 75 && ly > 150 && ly < 190)
             {
                 // Touched Align Button
-                drawButton(10, 150, 65, 40, "Align", 0, BTN_L_BORDER, L_TEXT, 2);
+                drawButton(10, 150, 65, 40, "ALIGN", 0, BTN_L_BORDER, L_TEXT, 2);
                 delay(150);
                 drawSelectAlignment();
             }
@@ -4216,13 +4218,13 @@ void considerTouchInput(int lx, int ly)
             if (lx > 165 && lx < 230 && ly > 150 && ly < 190)
             {
                 //Touched Clock configuration
-                drawButton(165, 130, 65, 40, "Clock", 0, BTN_L_BORDER, L_TEXT, 2);
+                drawButton(165, 130, 65, 40, "CLOCK", 0, BTN_L_BORDER, L_TEXT, 2);
                 delay(150);
                 drawClockScreen();
             }
             if (lx > 10 && lx < 75 && ly > 230 && ly < 270)
             {
-                drawButton(10, 230, 65, 40, "Corr.", 0, BTN_L_BORDER, L_TEXT, 2);
+                drawButton(10, 230, 65, 40, "CORR.", 0, BTN_L_BORDER, L_TEXT, 2);
                 delay(150);
                 drawAlignCorrectionsScreen();
             }
@@ -4364,7 +4366,7 @@ void considerTouchInput(int lx, int ly)
 
             #ifdef SERIAL_DEBUG
             #ifdef DEBUG_REFRACTION
-                    Serial.print("calRefractionFromApparent - ");
+                    Serial.print("calREFRACTIONFromApparent - ");
                     Serial.print(" Refract Amount(ARCMIN): ");
                     Serial.print(deltaAlt);
                     Serial.println("");
