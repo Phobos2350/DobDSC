@@ -1104,7 +1104,7 @@ void listDir(fs::FS &fs, const char *dirname, uint8_t levels)
         if (file.isDirectory())
         {
             Serial.print("  DIR : ");
-            Serial.println(file.name());
+            Serial.print(file.name());
             Serial.println("");
             if (levels)
             {
@@ -1116,7 +1116,7 @@ void listDir(fs::FS &fs, const char *dirname, uint8_t levels)
             Serial.print("  FILE: ");
             Serial.print(file.name());
             Serial.print("  SIZE: ");
-            Serial.println(file.size());
+            Serial.print(file.size());
             Serial.println("");
         }
         file = root.openNextFile();
@@ -1235,7 +1235,7 @@ void processAlignmentStar(int index, AlignmentStar &star)
     Serial.print(deg2dms(star.equPos.dec, true, false));
     Serial.println("");
 #endif
-    // Correct for astronomical movements and refraction if needed
+    // Correct for astronomical proper motion, aberration, precession and nutation
     if (CORRECT_PRECESSION_ETC)
     {
         ln_get_apparent_posn(&star.equPos, &star.propMotion, SCOPE.JD, &star.equPos);
@@ -1307,7 +1307,7 @@ void processObject(int index, Object &object)
     Serial.print(deg2dms(object.equPos.dec, true, false));
     Serial.println("");
 #endif
-    // Correct for astronomical movements
+    // Correct for astronomical proper motion, aberration, precession and nutation
     if (CORRECT_PRECESSION_ETC)
     {
         ln_get_apparent_posn(&object.equPos, &object.propMotion, SCOPE.JD, &object.equPos);
@@ -1353,10 +1353,8 @@ boolean isReady()
 void scopeToEquatorial(struct ln_hrz_posn *hor, struct ln_lnlat_posn *obs, double JD, struct ln_equ_posn *pos)
 {
     long double ha, sidereal, ra, dec, az, alt, lng;
-    az = ln_deg_to_rad(hor->az);
-    alt = ln_deg_to_rad(hor->alt);
-    lng = ln_deg_to_rad(obs->lng);
 
+    // Correct for atmospheric refraction before doing anything else
     if (CORRECT_REFRACTION)
     {
         double deltaAlt = ln_get_refraction_adj(alt, ATMO_PRESS, ATMO_TEMP);
@@ -1366,11 +1364,15 @@ void scopeToEquatorial(struct ln_hrz_posn *hor, struct ln_lnlat_posn *obs, doubl
 #ifdef DEBUG_REFRACTION
         Serial.print("calRefractionFromApparent - ");
         Serial.print(" Refract Amount(ARCMIN): ");
-        Serial.print(deltaAlt * RAD_TO_DEG);
+        Serial.print(deltaAlt);
         Serial.println("");
 #endif
 #endif
     }
+
+    az = ln_deg_to_rad(hor->az);
+    alt = ln_deg_to_rad(hor->alt);
+    lng = ln_deg_to_rad(obs->lng);
 
     double pri = reverseRev(az);
     double sec = alt + Z3_ERR;
@@ -1444,6 +1446,9 @@ void equatorialToScope(struct ln_equ_posn *pos, struct ln_lnlat_posn *obs, doubl
     subroutine_2(az, alt, 1);
     angleSubroutine(&az, &alt);
 
+    // Bring alt back into degrees before adding refraction or mount error corrections
+    alt = ln_rad_to_deg(alt);
+
     if (CORRECT_REFRACTION)
     {
         double deltaAlt = ln_get_refraction_adj(alt, ATMO_PRESS, ATMO_TEMP);
@@ -1452,13 +1457,13 @@ void equatorialToScope(struct ln_equ_posn *pos, struct ln_lnlat_posn *obs, doubl
 #ifdef DEBUG_REFRACTION
         Serial.print("calRefractionFromTrue - ");
         Serial.print(" Refract Amount(ARCMIN): ");
-        Serial.print(deltaAlt * RAD_TO_DEG);
+        Serial.print(deltaAlt);
         Serial.println("");
 #endif
 #endif
     }
 
-    hor->alt = ln_rad_to_deg(alt - Z3_ERR);
+    hor->alt = alt - Z3_ERR;
     hor->az = ln_rad_to_deg(reverseRev(validRev(az)));
 #ifdef SERIAL_DEBUG
 #ifdef DEBUG_MOUNT_ERRS
@@ -2055,39 +2060,37 @@ void getPlanetPosition(int planetNum, Object &planet)
     case 1:
         planet.name = "Mercury";
         ln_get_mercury_equ_coords(SCOPE.JD, &planet.equPos);
-        planet.constellation = "DIST: " + String(ln_get_mercury_earth_dist(SCOPE.JD), 2) + " AU";
-        planet.type = "DISK: " + String(ln_get_mercury_disk(SCOPE.JD), 2);
+        planet.description = "DIST: " + String(ln_get_mercury_earth_dist(SCOPE.JD), 2) + " AU";
         planet.mag = String(ln_get_mercury_magnitude(SCOPE.JD), 2);
         planet.size = String(ln_get_mercury_sdiam(SCOPE.JD), 2);
         if (ln_get_mercury_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst) == 0)
         {
             getLocalDate(rst.rise, &rise);
             getLocalDate(rst.set, &set);
-            planet.description = "RISE: " + getTimeString(rise);
-            planet.description += " SET: " + getTimeString(set);
+            planet.constellation = "RISE: " + getTimeString(rise);
+            planet.type = "SET: " + getTimeString(set);
         }
         else
         {
-            planet.description = "BELOW HORIZON";
+            planet.constellation = "BELOW HORIZON";
         }
         break;
     case 2:
         planet.name = "Venus";
         ln_get_venus_equ_coords(SCOPE.JD, &planet.equPos);
-        planet.constellation = "DIST: " + String(ln_get_venus_earth_dist(SCOPE.JD), 2) + " AU";
-        planet.type = "DISK: " + String(ln_get_venus_disk(SCOPE.JD), 2);
+        planet.description = "DIST: " + String(ln_get_venus_earth_dist(SCOPE.JD), 2) + " AU";
         planet.mag = String(ln_get_venus_magnitude(SCOPE.JD), 2);
         planet.size = String(ln_get_venus_sdiam(SCOPE.JD), 2);
         if (ln_get_venus_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst) == 0)
         {
             getLocalDate(rst.rise, &rise);
             getLocalDate(rst.set, &set);
-            planet.description = "RISE: " + getTimeString(rise);
-            planet.description += " SET: " + getTimeString(set);
+            planet.constellation = "RISE: " + getTimeString(rise);
+            planet.type+= "SET: " + getTimeString(set);
         }
         else
         {
-            planet.description = "BELOW HORIZON";
+            planet.constellation = "BELOW HORIZON";
         }
         break;
     case 3:
@@ -2101,118 +2104,124 @@ void getPlanetPosition(int planetNum, Object &planet)
     case 4:
         planet.name = "Mars";
         ln_get_mars_equ_coords(SCOPE.JD, &planet.equPos);
-        planet.constellation = "DIST: " + String(ln_get_mars_earth_dist(SCOPE.JD), 2) + " AU";
-        planet.type = "DISK: " + String(ln_get_mars_disk(SCOPE.JD), 2);
+        planet.description = "DIST: " + String(ln_get_mars_earth_dist(SCOPE.JD), 2) + " AU";
         planet.mag = String(ln_get_mars_magnitude(SCOPE.JD), 2);
         planet.size = String(ln_get_mars_sdiam(SCOPE.JD), 2);
         if (ln_get_mars_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst) == 0)
         {
             getLocalDate(rst.rise, &rise);
             getLocalDate(rst.set, &set);
-            planet.description = "RISE: " + getTimeString(rise);
-            planet.description += " SET: " + getTimeString(set);
+            planet.constellation = "RISE: " + getTimeString(rise);
+            planet.type = "SET: " + getTimeString(set);
         }
         else
         {
-            planet.description = "BELOW HORIZON";
+            planet.constellation = "BELOW HORIZON";
         }
         break;
     case 5:
         planet.name = "Jupiter";
         ln_get_jupiter_equ_coords(SCOPE.JD, &planet.equPos);
-        planet.constellation = "DIST: " + String(ln_get_jupiter_earth_dist(SCOPE.JD), 2) + " AU";
-        planet.type = "DISK: " + String(ln_get_jupiter_disk(SCOPE.JD), 2);
-        planet.mag = String(ln_get_jupiter_magnitude(SCOPE.JD), 2);
+        planet.description = "DIST: " + String(ln_get_jupiter_earth_dist(SCOPE.JD), 2) + " AU";
         planet.size = String(ln_get_jupiter_equ_sdiam(SCOPE.JD), 2);
         if (ln_get_jupiter_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst) == 0)
         {
             getLocalDate(rst.rise, &rise);
             getLocalDate(rst.set, &set);
-            planet.description = "RISE: " + getTimeString(rise);
-            planet.description += " SET: " + getTimeString(set);
+            planet.constellation = "RISE: " + getTimeString(rise);
+            planet.type = "SET: " + getTimeString(set);
         }
         else
         {
-            planet.description = "BELOW HORIZON";
+            planet.constellation = "BELOW HORIZON";
         }
         break;
     case 6:
         planet.name = "Saturn";
         ln_get_saturn_equ_coords(SCOPE.JD, &planet.equPos);
-        planet.constellation = "DIST: " + String(ln_get_saturn_earth_dist(SCOPE.JD), 2) + " AU";
-        planet.type = "DISK: " + String(ln_get_saturn_disk(SCOPE.JD), 2);
-        planet.mag = String(ln_get_saturn_magnitude(SCOPE.JD), 2);
+        planet.description = "DIST: " + String(ln_get_saturn_earth_dist(SCOPE.JD), 2) + " AU";
         planet.size = String(ln_get_saturn_equ_sdiam(SCOPE.JD), 2);
         if (ln_get_saturn_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst) == 0)
         {
             getLocalDate(rst.rise, &rise);
             getLocalDate(rst.set, &set);
-            planet.description = "RISE: " + getTimeString(rise);
-            planet.description += " SET: " + getTimeString(set);
+            planet.constellation = "RISE: " + getTimeString(rise);
+            planet.type = "SET: " + getTimeString(set);
         }
         else
         {
-            planet.description = "BELOW HORIZON";
+            planet.constellation = "BELOW HORIZON";
         }
         break;
     case 7:
         planet.name = "Uranus";
         ln_get_uranus_equ_coords(SCOPE.JD, &planet.equPos);
-        planet.constellation = "DIST: " + String(ln_get_uranus_earth_dist(SCOPE.JD), 2) + " AU";
-        planet.type = "DISK: " + String(ln_get_uranus_disk(SCOPE.JD), 2);
+        planet.description = "DIST: " + String(ln_get_uranus_earth_dist(SCOPE.JD), 2) + " AU";
         planet.mag = String(ln_get_uranus_magnitude(SCOPE.JD), 2);
         planet.size = String(ln_get_uranus_sdiam(SCOPE.JD), 2);
         if (ln_get_uranus_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst) == 0)
         {
             getLocalDate(rst.rise, &rise);
             getLocalDate(rst.set, &set);
-            planet.description = "RISE: " + getTimeString(rise);
-            planet.description += " SET: " + getTimeString(set);
+            planet.constellation = "RISE: " + getTimeString(rise);
+            planet.type = "SET: " + getTimeString(set);
         }
         else
         {
-            planet.description = "BELOW HORIZON";
+            planet.constellation = "BELOW HORIZON";
         }
         break;
     case 8:
         planet.name = "Neptune";
         ln_get_neptune_equ_coords(SCOPE.JD, &planet.equPos);
-        planet.constellation = "DIST: " + String(ln_get_neptune_earth_dist(SCOPE.JD), 2) + " AU";
-        planet.type = "DISK: " + String(ln_get_neptune_disk(SCOPE.JD), 2);
+        planet.description = "DIST: " + String(ln_get_neptune_earth_dist(SCOPE.JD), 2) + " AU";
         planet.mag = String(ln_get_neptune_magnitude(SCOPE.JD), 2);
         planet.size = String(ln_get_neptune_sdiam(SCOPE.JD), 2);
         if (ln_get_neptune_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst) == 0)
         {
             getLocalDate(rst.rise, &rise);
             getLocalDate(rst.set, &set);
-            planet.description = "RISE: " + getTimeString(rise);
-            planet.description += " SET: " + getTimeString(set);
+            planet.constellation = "RISE: " + getTimeString(rise);
+            planet.type = "SET: " + getTimeString(set);
         }
         else
         {
-            planet.description = "BELOW HORIZON";
+            planet.constellation = "BELOW HORIZON";
         }
         break;
     case 9:
         planet.name = "Pluto";
         ln_get_pluto_equ_coords(SCOPE.JD, &planet.equPos);
-        planet.constellation = "DIST: " + String(ln_get_pluto_earth_dist(SCOPE.JD), 2) + " AU";
-        planet.type = "DISK: " + String(ln_get_pluto_disk(SCOPE.JD), 2);
+        planet.description = "DIST: " + String(ln_get_pluto_earth_dist(SCOPE.JD), 2) + " AU";
         planet.mag = String(ln_get_pluto_magnitude(SCOPE.JD), 2);
         planet.size = String(ln_get_pluto_sdiam(SCOPE.JD), 2);
         if (ln_get_pluto_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst) == 0)
         {
             getLocalDate(rst.rise, &rise);
             getLocalDate(rst.set, &set);
-            planet.description = "RISE: " + getTimeString(rise);
-            planet.description += " SET: " + getTimeString(set);
+            planet.constellation = "RISE: " + getTimeString(rise);
+            planet.type = "SET: " + getTimeString(set);
         }
         else
         {
-            planet.description = "BELOW HORIZON";
+            planet.constellation = "BELOW HORIZON";
         }
         break;
+    default:
+        break;
     }
+    // Correct for astronomical proper motion, aberration, precession and nutation
+    if (CORRECT_PRECESSION_ETC)
+    {
+        ln_get_apparent_posn(&planet.equPos, &planet.propMotion, SCOPE.JD, &planet.equPos);
+    }
+#ifdef SERIAL_DEBUG
+    Serial.print("Added Corrections - RA: ");
+    Serial.print(deg2hms(planet.equPos.ra, true, true));
+    Serial.print(" DEC: ");
+    Serial.print(deg2dms(planet.equPos.dec, true, false));
+    Serial.println("");
+#endif
 }
 
 void drawButton(int X, int Y, int Width, int Height, String Caption, int16_t BodyColor, int16_t BorderColor, int16_t TextColor, int tSize)
@@ -2756,8 +2765,8 @@ void drawAlignCorrectionsScreen()
     tft.fillScreen(BLACK);
     tft.setCursor(10, 10);
     tft.setTextColor(TITLE_TEXT, TITLE_TEXT_BG);
-    tft.setTextSize(2);
-    tft.print(" Corrections");
+    tft.setTextSize(3);
+    tft.print(" CORRECT");
 
     drawButton(165, 10, 65, 30, "BACK", BTN_L_BORDER, 0, BTN_BLK_TEXT, 3);
 
@@ -2800,8 +2809,8 @@ void drawSelectAlignment()
     tft.fillScreen(BLACK);
     tft.setCursor(10, 10);
     tft.setTextColor(TITLE_TEXT, TITLE_TEXT_BG);
-    tft.setTextSize(2);
-    tft.print(" Alignment");
+    tft.setTextSize(3);
+    tft.print(" ALIGN");
 
     drawButton(165, 10, 65, 30, "BACK", BTN_L_BORDER, 0, BTN_BLK_TEXT, 3);
 
@@ -2918,9 +2927,9 @@ void drawMainScreen()
             tft.setCursor(10, 185);
             tft.print(CURRENT_OBJECT.type);
             tft.setCursor(10, 195);
-            tft.print("Mag. ");
+            tft.print("MAG: ");
             tft.print(CURRENT_OBJECT.mag);
-            tft.print(" size ");
+            tft.print(" SIZE: ");
             tft.print(CURRENT_OBJECT.size);
         }
 
@@ -2951,7 +2960,7 @@ void drawMainScreen()
         tft.setTextSize(2);
         tft.setTextColor(L_TEXT);
         tft.setCursor(10, 155);
-        tft.println("No target selected!");
+        tft.println("NO TARGET SELECTED!");
     }
 
     drawButton(10, 270, 65, 40, "FIND", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
@@ -2981,7 +2990,7 @@ void drawCatalogueSummaryScreen()
     tft.fillScreen(BLACK);
     tft.setCursor(10, 10);
     tft.setTextColor(TITLE_TEXT, TITLE_TEXT_BG);
-    tft.setTextSize(2);
+    tft.setTextSize(3);
     tft.print(" CATALOGUE");
 
     if (LOAD_SELECTOR == 1)
@@ -3219,7 +3228,7 @@ void drawLoadObjects()
                 {
                     break;
                 }
-                drawButton(((j * 75) + 10), ((i * 40) + 90), 71, 35, M_NAME, BTN_L_BORDER, 0, BTN_BLK_TEXT, 1);
+                drawButton(((j * 75) + 10), ((i * 40) + 90), 71, 35, M_NAME, BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
                 ll += 1;
             }
         }
@@ -3262,7 +3271,7 @@ void drawObjectSummaryScreen()
     tft.setCursor(10, 10);
     tft.setTextColor(TITLE_TEXT, TITLE_TEXT_BG);
     tft.setTextSize(3);
-    tft.print(" Object");
+    tft.print(" OBJECT");
 
     if (CURRENT_OBJECT.name != "")
     {
@@ -3295,15 +3304,16 @@ void drawObjectSummaryScreen()
             tft.setCursor(10, 110);
             tft.setTextColor(L_TEXT);
             tft.print(CURRENT_OBJECT.constellation);
-            tft.setCursor(10, 130);
-            tft.print(CURRENT_OBJECT.type);
-            tft.setCursor(10, 150);
-            tft.print("Mag: ");
-            tft.print(CURRENT_OBJECT.mag);
-            tft.setCursor(10, 170);
-            tft.print("Size: ");
-            tft.print(CURRENT_OBJECT.size);
         }
+        tft.setCursor(10, 130);
+        tft.print(CURRENT_OBJECT.type);
+        tft.setCursor(10, 150);
+        tft.print("Mag: ");
+        tft.print(CURRENT_OBJECT.mag);
+        tft.setCursor(10, 170);
+        tft.print("Size: ");
+        tft.print(CURRENT_OBJECT.size);
+        
 
         tft.setTextSize(2);
         tft.setTextColor(L_TEXT);
@@ -3331,7 +3341,7 @@ void drawObjectSummaryScreen()
         tft.setTextSize(2);
         tft.setTextColor(L_TEXT);
         tft.setCursor(10, 50);
-        tft.println("No target selected!");
+        tft.println("NO TARGET SELECTED!");
     }
 
     drawButton(10, 270, 100, 40, "BACK", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
@@ -3345,7 +3355,7 @@ void drawOptionsScreen()
     tft.setCursor(10, 10);
     tft.setTextColor(TITLE_TEXT, TITLE_TEXT_BG);
     tft.setTextSize(3);
-    tft.print(" Options");
+    tft.print(" OPTIONS");
 
     drawButton(165, 10, 65, 30, "BACK", BTN_L_BORDER, 0, BTN_BLK_TEXT, 3);
 
@@ -3383,7 +3393,7 @@ void drawStarSelectScreen()
     tft.setCursor(10, 10);
     tft.setTextColor(TITLE_TEXT, TITLE_TEXT_BG);
     tft.setTextSize(3);
-    tft.print(" Align");
+    tft.print(" ALIGN");
 
     drawButton(165, 10, 65, 30, "EXIT", BTN_L_BORDER, 0, BTN_BLK_TEXT, 3);
 
@@ -3442,7 +3452,7 @@ void drawAlignScreen()
     tft.setCursor(10, 10);
     tft.setTextColor(TITLE_TEXT, TITLE_TEXT_BG);
     tft.setTextSize(3);
-    tft.print(" Align");
+    tft.print(" ALIGN");
 
     tft.setTextSize(2);
     tft.setTextColor(L_TEXT);
@@ -4169,7 +4179,7 @@ void considerTouchInput(int lx, int ly)
             else if (lx > 130 && lx < 230 && ly > 270 && ly < 310)
             {
                 // BTN "SELECT" pressed
-                drawButton(130, 270, 200, 40, "SELECT", 0, BTN_L_BORDER, L_TEXT, 2);
+                drawButton(130, 270, 100, 40, "SELECT", 0, BTN_L_BORDER, L_TEXT, 2);
                 delay(150);
                 drawMainScreen();
             }
