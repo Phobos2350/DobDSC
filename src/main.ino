@@ -2479,7 +2479,13 @@ void considerTimeUpdates()
             Serial.print(OBSERVATION_ALTITUDE);
             Serial.println("");
 #endif
-            drawClockScreen();
+            setTime(gps.time.hour(), gps.time.minute(), gps.time.second(), gps.date.day(), gps.date.month(), gps.date.year());
+            RtcDateTime gpsTime = RtcDateTime(gps.date.year(), gps.date.month(), gps.date.day(), gps.time.hour(), gps.time.minute(), gps.time.second());
+            rtc.SetDateTime(gpsTime);
+            SUMMER_TIME = isSummerTime();
+            calculateLST();
+            delay(150);
+            drawAlignCorrectionsScreen();
         }
         UPDATE_TIME = millis();
     }
@@ -3268,8 +3274,7 @@ void drawObjectSummaryScreen()
         if (CURRENT_OBJECT.description.length() > 19)
         {
             tft.print(CURRENT_OBJECT.description.substring(0, 19));
-            int spacing = 230 - ((CURRENT_OBJECT.description.length() - 19) * 11);
-            tft.setCursor(spacing, 90);
+            tft.setCursor(10, 90);
             tft.print("-" + CURRENT_OBJECT.description.substring(19, CURRENT_OBJECT.description.length() - 1));
         }
         else
@@ -3287,15 +3292,15 @@ void drawObjectSummaryScreen()
         else
         {
             tft.setTextSize(2);
-            tft.setCursor(10, 130);
+            tft.setCursor(10, 110);
             tft.setTextColor(L_TEXT);
             tft.print(CURRENT_OBJECT.constellation);
-            tft.setCursor(10, 150);
+            tft.setCursor(10, 130);
             tft.print(CURRENT_OBJECT.type);
-            tft.setCursor(10, 170);
+            tft.setCursor(10, 150);
             tft.print("Mag: ");
             tft.print(CURRENT_OBJECT.mag);
-            tft.setCursor(10, 190);
+            tft.setCursor(10, 170);
             tft.print("Size: ");
             tft.print(CURRENT_OBJECT.size);
         }
@@ -3303,22 +3308,22 @@ void drawObjectSummaryScreen()
         tft.setTextSize(2);
         tft.setTextColor(L_TEXT);
 
-        tft.setCursor(10, 210);
+        tft.setCursor(10, 190);
         tft.print("AZ: ");
-        tft.setCursor(70, 210);
+        tft.setCursor(70, 190);
         tft.print(deg2dms(CURRENT_OBJECT.hrzPos.az, true, true));
-        tft.setCursor(10, 230);
+        tft.setCursor(10, 210);
         tft.print("ALT: ");
-        tft.setCursor(70, 230);
+        tft.setCursor(70, 210);
         tft.print(deg2dms(CURRENT_OBJECT.hrzPos.alt, true, false));
 
-        tft.setCursor(10, 250);
+        tft.setCursor(10, 230);
         tft.print("RA: ");
-        tft.setCursor(70, 250);
+        tft.setCursor(70, 230);
         tft.print(deg2hms(CURRENT_OBJECT.equPos.ra, true, true));
-        tft.setCursor(10, 270);
+        tft.setCursor(10, 250);
         tft.print("DEC: ");
-        tft.setCursor(70, 270);
+        tft.setCursor(70, 250);
         tft.print(deg2dms(CURRENT_OBJECT.equPos.dec, true, false));
     }
     else
@@ -3701,7 +3706,6 @@ void considerTouchInput(int lx, int ly)
                 NOW = rtc.GetDateTime();
                 setTime(NOW.Hour(), NOW.Minute(), NOW.Second(), NOW.Day(), NOW.Month(), NOW.Year());
                 SUMMER_TIME = isSummerTime();
-                setScopeDateTime();
                 calculateLST();
                 delay(150);
                 drawAlignCorrectionsScreen();
@@ -3943,7 +3947,7 @@ void considerTouchInput(int lx, int ly)
                 // BTN Back pressed
                 drawButton(165, 10, 65, 30, "BACK", 0, BTN_L_BORDER, L_TEXT, 3);
                 delay(150);
-                drawMainScreen();
+                drawCatalogueScreen();
             }
             //////////////      Messier Screen //////////////
             if (lx > 130 && lx < 230 && ly > 270 && ly < 310)
@@ -4059,7 +4063,7 @@ void considerTouchInput(int lx, int ly)
                             // found button pressed.... now I need to get his ID and link to the ARRAY;
                             int zz = ((CALD_PAGER * 12) + (i * 3) + j);
                             String M_NAME = OBJECTS[zz].substring(0, OBJECTS[zz].indexOf(','));
-                            drawButton(((j * 75) + 10), ((i * 40) + 90), 71, 35, M_NAME, 0, BTN_L_BORDER, L_TEXT, 1);
+                            drawButton(((j * 75) + 10), ((i * 40) + 90), 71, 35, M_NAME, 0, BTN_L_BORDER, L_TEXT, 2);
                             if (OBJECTS[zz] != "")
                             //if (Treasure_Array[zz] != "")
                             {
