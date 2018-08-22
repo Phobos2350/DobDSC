@@ -73,7 +73,7 @@
 
 #define SERIAL_DEBUG // comment out to deactivate the serial debug mode
 #define PERFECT_ALIGN
-#define DEBUG_REFRACTION
+// #define DEBUG_REFRACTION
 #define DEBUG_MOUNT_ERRS
 
 #define GEAR_LARGE 60.0f
@@ -450,69 +450,12 @@ String rad2hms(double rad, boolean highPrecision, boolean withUnits)
     degs = ln_rad_to_deg(rad);
 
     return deg2hms(degs, highPrecision, withUnits);
-
-    // double validatedRad = validRev(rad);
-    // float hours = validatedRad * 12.0 / PI;
-    // float minutes = (hours - floor(hours)) * 60.0;
-    // float seconds = (minutes - floor(minutes)) * 60.0;
-
-    // if (highPrecision)
-    // {
-    //     if (withUnits)
-    //     {
-    //         return padding((String) int(floor(hours)), (uint8_t)2) + "h" +
-    //                padding((String) int(floor(minutes)), (uint8_t)2) + "m" +
-    //                padding((String) int(floor(seconds)), (uint8_t)2) + "s";
-    //     }
-    //     else
-    //     {
-    //         return padding((String) int(floor(hours)), (uint8_t)2) + ":" +
-    //                padding((String) int(floor(minutes)), (uint8_t)2) + ":" +
-    //                padding((String) int(floor(seconds)), (uint8_t)2);
-    //     }
-    // }
-    // else
-    // {
-    //     if (withUnits)
-    //     {
-    //         return padding((String) int(floor(hours)), (uint8_t)2) + "h" +
-    //                padding((String) int(floor(minutes)), (uint8_t)2) + "." +
-    //                (String) int(floor((minutes - floor(minutes)) * 10.0)) + "m";
-    //     }
-    //     return padding((String) int(floor(hours)), (uint8_t)2) + ":" +
-    //            padding((String) int(floor(minutes)), (uint8_t)2) + "." +
-    //            (String) int(floor((minutes - floor(minutes)) * 10.0));
-    // }
 }
 
 String rad2dms(double rad, boolean highPrecision, boolean asAzimuth)
 {
     double degs = ln_rad_to_deg(rad);
     return deg2dms(degs, highPrecision, asAzimuth);
-
-    // float degs = fabs(rad) * RAD_TO_DEG;
-    // float minutes = (degs - floor(degs)) * 60.0;
-    // float seconds = (minutes - floor(minutes)) * 60.0;
-    // String sign = "";
-
-    // if (!asAzimuth)
-    // {
-    //     sign = "+";
-    //     if (rad < 0)
-    //         sign = "-";
-    // }
-
-    // if (highPrecision)
-    // {
-    //     return sign + padding((String) int(floor(fabs(degs))), (uint8_t)2) + (char)247 +
-    //            padding((String) int(floor(minutes)), (uint8_t)2) + "'" +
-    //            padding((String) int(floor(seconds)), (uint8_t)2);
-    // }
-    // else
-    // {
-    //     return sign + padding((String) int(floor(fabs(degs))), (uint8_t)2) + "*" +
-    //            padding((String) int(floor(minutes)), (uint8_t)2);
-    // }
 }
 
 String deg2hms(double deg, boolean highPrecision, boolean withUnits)
@@ -553,9 +496,14 @@ String deg2dms(double deg, boolean highPrecision, boolean asAzimuth)
 {
     struct ln_dms lnDMS;
     ln_deg_to_dms(deg, &lnDMS);
-    char sign = '+';
-    if (lnDMS.neg == 1)
-        sign = '-';
+    String sign = "";
+    
+    if (!asAzimuth) 
+    {
+        sign = "+";
+        if (lnDMS.neg == 1)
+            sign = "-";
+    }
 
     if (highPrecision)
     {
@@ -1355,6 +1303,7 @@ void scopeToEquatorial(struct ln_hrz_posn *hor, struct ln_lnlat_posn *obs, doubl
     long double ha, sidereal, ra, dec, az, alt, lng;
 
     // Correct for atmospheric refraction before doing anything else
+    alt = hor->alt;
     if (CORRECT_REFRACTION)
     {
         double deltaAlt = ln_get_refraction_adj(alt, ATMO_PRESS, ATMO_TEMP);
@@ -1371,7 +1320,7 @@ void scopeToEquatorial(struct ln_hrz_posn *hor, struct ln_lnlat_posn *obs, doubl
     }
 
     az = ln_deg_to_rad(hor->az);
-    alt = ln_deg_to_rad(hor->alt);
+    alt = ln_deg_to_rad(alt);
     lng = ln_deg_to_rad(obs->lng);
 
     double pri = reverseRev(az);
@@ -2039,9 +1988,9 @@ void getPlanetPosition(int planetNum, Object &planet)
 
     switch (planetNum)
     {
-    // Mercury
+    // MERCURY
     case 1:
-        planet.name = "Mercury";
+        planet.name = "MERCURY";
         ln_get_mercury_equ_coords(SCOPE.JD, &planet.equPos);
         planet.description = "DIST: " + String(ln_get_mercury_earth_dist(SCOPE.JD), 2) + " AU";
         planet.mag = String(ln_get_mercury_magnitude(SCOPE.JD), 2);
@@ -2059,7 +2008,7 @@ void getPlanetPosition(int planetNum, Object &planet)
         }
         break;
     case 2:
-        planet.name = "Venus";
+        planet.name = "VENUS";
         ln_get_venus_equ_coords(SCOPE.JD, &planet.equPos);
         planet.description = "DIST: " + String(ln_get_venus_earth_dist(SCOPE.JD), 2) + " AU";
         planet.mag = String(ln_get_venus_magnitude(SCOPE.JD), 2);
@@ -2077,7 +2026,7 @@ void getPlanetPosition(int planetNum, Object &planet)
         }
         break;
     case 3:
-        planet.name = "Earth";
+        planet.name = "EARTH";
         planet.description = "";
         planet.mag = "";
         planet.size = "";
@@ -2085,7 +2034,7 @@ void getPlanetPosition(int planetNum, Object &planet)
         planet.type = "";
         break;
     case 4:
-        planet.name = "Mars";
+        planet.name = "MARS";
         ln_get_mars_equ_coords(SCOPE.JD, &planet.equPos);
         planet.description = "DIST: " + String(ln_get_mars_earth_dist(SCOPE.JD), 2) + " AU";
         planet.mag = String(ln_get_mars_magnitude(SCOPE.JD), 2);
@@ -2103,7 +2052,7 @@ void getPlanetPosition(int planetNum, Object &planet)
         }
         break;
     case 5:
-        planet.name = "Jupiter";
+        planet.name = "JUPITER";
         ln_get_jupiter_equ_coords(SCOPE.JD, &planet.equPos);
         planet.description = "DIST: " + String(ln_get_jupiter_earth_dist(SCOPE.JD), 2) + " AU";
         planet.size = String(ln_get_jupiter_equ_sdiam(SCOPE.JD), 2);
@@ -2120,7 +2069,7 @@ void getPlanetPosition(int planetNum, Object &planet)
         }
         break;
     case 6:
-        planet.name = "Saturn";
+        planet.name = "SATURN";
         ln_get_saturn_equ_coords(SCOPE.JD, &planet.equPos);
         planet.description = "DIST: " + String(ln_get_saturn_earth_dist(SCOPE.JD), 2) + " AU";
         planet.size = String(ln_get_saturn_equ_sdiam(SCOPE.JD), 2);
@@ -2137,7 +2086,7 @@ void getPlanetPosition(int planetNum, Object &planet)
         }
         break;
     case 7:
-        planet.name = "Uranus";
+        planet.name = "URANUS";
         ln_get_uranus_equ_coords(SCOPE.JD, &planet.equPos);
         planet.description = "DIST: " + String(ln_get_uranus_earth_dist(SCOPE.JD), 2) + " AU";
         planet.mag = String(ln_get_uranus_magnitude(SCOPE.JD), 2);
@@ -2155,7 +2104,7 @@ void getPlanetPosition(int planetNum, Object &planet)
         }
         break;
     case 8:
-        planet.name = "Neptune";
+        planet.name = "NEPTUNE";
         ln_get_neptune_equ_coords(SCOPE.JD, &planet.equPos);
         planet.description = "DIST: " + String(ln_get_neptune_earth_dist(SCOPE.JD), 2) + " AU";
         planet.mag = String(ln_get_neptune_magnitude(SCOPE.JD), 2);
@@ -2173,7 +2122,7 @@ void getPlanetPosition(int planetNum, Object &planet)
         }
         break;
     case 9:
-        planet.name = "Pluto";
+        planet.name = "PLUTO";
         ln_get_pluto_equ_coords(SCOPE.JD, &planet.equPos);
         planet.description = "DIST: " + String(ln_get_pluto_earth_dist(SCOPE.JD), 2) + " AU";
         planet.mag = String(ln_get_pluto_magnitude(SCOPE.JD), 2);
@@ -2771,14 +2720,14 @@ void drawAlignCorrectionsScreen()
         drawButton(20, 170, 200, 40, "MOUNT ERRORS", 0, BTN_L_BORDER, L_TEXT, 2);
 
     tft.setTextColor(L_TEXT);
-    tft.setCursor(10, 230);
+    tft.setCursor(20, 230);
     tft.setTextSize(1);
     tft.print("Z1 Error: ");
     tft.print(rad2dms(Z1_ERR, true, false));
-    tft.setCursor(10, 240);
+    tft.setCursor(20, 240);
     tft.print("Z2 Error: ");
     tft.print(rad2dms(Z2_ERR, true, false));
-    tft.setCursor(10, 250);
+    tft.setCursor(20, 250);
     tft.print("Z3 Error: ");
     tft.print(rad2dms(Z3_ERR, true, false));
 
@@ -2917,7 +2866,8 @@ void drawMainScreen()
             tft.setCursor(10, 195);
             tft.print("MAG: ");
             tft.print(CURRENT_OBJECT.mag);
-            tft.print(" SIZE: ");
+            tft.setCursor(120, 195);
+            tft.print("SIZE: ");
             tft.print(CURRENT_OBJECT.size);
         }
 
@@ -3298,9 +3248,11 @@ void drawObjectSummaryScreen()
         tft.print(CURRENT_OBJECT.type);
         tft.setCursor(10, 150);
         tft.print("MAG: ");
+        tft.setCursor(70, 150);
         tft.print(CURRENT_OBJECT.mag);
         tft.setCursor(10, 170);
         tft.print("SIZE: ");
+        tft.setCursor(70, 170);
         tft.print(CURRENT_OBJECT.size);
         
 
@@ -4455,8 +4407,8 @@ void considerTouchInput(int lx, int ly)
             }
             if (lx > 10 && lx < 110 && ly > 50 && ly < 90)
             {
-                // BTN Mercury pressed
-                drawButton(10, 50, 100, 40, "Mercury", 0, BTN_L_BORDER, L_TEXT, 2);
+                // BTN MERCURY pressed
+                drawButton(10, 50, 100, 40, "MERCURY", 0, BTN_L_BORDER, L_TEXT, 2);
                 getPlanetPosition(1, CURRENT_OBJECT);
                 objectAltAz();
                 delay(150);
@@ -4464,8 +4416,8 @@ void considerTouchInput(int lx, int ly)
             }
             if (lx > 130 && lx < 230 && ly > 50 && ly < 90)
             {
-                // BTN Mercury pressed
-                drawButton(130, 50, 100, 40, "Venus", 0, BTN_L_BORDER, L_TEXT, 2);
+                // BTN VENUS pressed
+                drawButton(130, 50, 100, 40, "VENUS", 0, BTN_L_BORDER, L_TEXT, 2);
                 getPlanetPosition(2, CURRENT_OBJECT);
                 objectAltAz();
                 delay(150);
@@ -4473,8 +4425,8 @@ void considerTouchInput(int lx, int ly)
             }
             if (lx > 10 && lx < 110 && ly > 110 && ly < 150)
             {
-                // BTN Mercury pressed
-                drawButton(10, 110, 100, 40, "Mars", 0, BTN_L_BORDER, L_TEXT, 2);
+                // BTN MARS pressed
+                drawButton(10, 110, 100, 40, "MARS", 0, BTN_L_BORDER, L_TEXT, 2);
                 getPlanetPosition(4, CURRENT_OBJECT);
                 objectAltAz();
                 delay(150);
@@ -4482,8 +4434,8 @@ void considerTouchInput(int lx, int ly)
             }
             if (lx > 130 && lx < 230 && ly > 110 && ly < 150)
             {
-                // BTN Mercury pressed
-                drawButton(130, 110, 100, 40, "Jupiter", 0, BTN_L_BORDER, L_TEXT, 2);
+                // BTN JUPITER pressed
+                drawButton(130, 110, 100, 40, "JUPITER", 0, BTN_L_BORDER, L_TEXT, 2);
                 getPlanetPosition(5, CURRENT_OBJECT);
                 objectAltAz();
                 delay(150);
@@ -4491,8 +4443,8 @@ void considerTouchInput(int lx, int ly)
             }
             if (lx > 10 && lx < 110 && ly > 170 && ly < 210)
             {
-                // BTN Mercury pressed
-                drawButton(10, 170, 100, 40, "Saturn", 0, BTN_L_BORDER, L_TEXT, 2);
+                // BTN SATURN pressed
+                drawButton(10, 170, 100, 40, "SATURN", 0, BTN_L_BORDER, L_TEXT, 2);
                 getPlanetPosition(6, CURRENT_OBJECT);
                 objectAltAz();
                 delay(150);
@@ -4500,8 +4452,8 @@ void considerTouchInput(int lx, int ly)
             }
             if (lx > 130 && lx < 230 && ly > 170 && ly < 210)
             {
-                // BTN Mercury pressed
-                drawButton(130, 170, 100, 40, "Uranus", 0, BTN_L_BORDER, L_TEXT, 2);
+                // BTN URANUS pressed
+                drawButton(130, 170, 100, 40, "URANUS", 0, BTN_L_BORDER, L_TEXT, 2);
                 getPlanetPosition(7, CURRENT_OBJECT);
                 objectAltAz();
                 delay(150);
@@ -4509,8 +4461,8 @@ void considerTouchInput(int lx, int ly)
             }
             if (lx > 10 && lx < 110 && ly > 230 && ly < 270)
             {
-                // BTN Mercury pressed
-                drawButton(10, 230, 100, 40, "Neptune", 0, BTN_L_BORDER, L_TEXT, 2);
+                // BTN NEPTUNE pressed
+                drawButton(10, 230, 100, 40, "NEPTUNE", 0, BTN_L_BORDER, L_TEXT, 2);
                 getPlanetPosition(8, CURRENT_OBJECT);
                 objectAltAz();
                 delay(150);
@@ -4518,8 +4470,8 @@ void considerTouchInput(int lx, int ly)
             }
             if (lx > 130 && lx < 230 && ly > 230 && ly < 270)
             {
-                // BTN Mercury pressed
-                drawButton(130, 230, 100, 40, "Pluto", 0, BTN_L_BORDER, L_TEXT, 2);
+                // BTN PLUTO pressed
+                drawButton(130, 230, 100, 40, "PLUTO", 0, BTN_L_BORDER, L_TEXT, 2);
                 getPlanetPosition(9, CURRENT_OBJECT);
                 objectAltAz();
                 delay(150);
