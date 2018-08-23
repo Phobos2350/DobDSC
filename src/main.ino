@@ -2215,14 +2215,14 @@ void getPlanetPosition(int planetNum, Object &planet)
     planet.name = name;
     planet.description = "DIST: " + String(dist, 2) + " AU";
     planet.mag = String(mag, 2);
-    planet.size = String(size * 2.0, 2);  // Multiply semidiameter by 2.0 to get apparent diameter/size
-    planet.type = "ILLUM. DISK: " + String(illum * 100.0, 2) + '%';
+    planet.size = String(size * 2.0, 2) + '"';  // Multiply semidiameter by 2.0 to get apparent diameter/size
+    planet.type = "ILUM: " + String(illum * 100.0, 2) + '%';
     if (rstStatus == 0)
     {
         getLocalDate(rst.rise, &rise);
         getLocalDate(rst.set, &set);
         planet.constellation = "RISE: " + getTimeString(rise);
-        planet.constellation += "     SET:" + getTimeString(set);
+        planet.constellation += "       SET:" + getTimeString(set);
     }
     else
     {
@@ -2950,7 +2950,7 @@ void drawMainScreen()
             tft.setCursor(10, 185);
             tft.print(CURRENT_OBJECT.type);
             tft.setCursor(10, 195);
-            tft.print("MAG: ");
+            tft.print("MAG:  ");
             tft.print(CURRENT_OBJECT.mag);
             tft.setCursor(120, 195);
             tft.print("SIZE: ");
