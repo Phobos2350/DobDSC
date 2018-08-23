@@ -1897,8 +1897,8 @@ double calcAltOffsetDirectly(AlignmentStar &a, AlignmentStar &z)
 
 #ifdef DEBUG_MOUNT_ERRS
     // Add an error to the altitude to help debug mount error routines
-    aAlt += ln_deg_to_rad(12.5);
-    zAlt += ln_deg_to_rad(12.5);
+    aAlt += ln_deg_to_rad(3.5);
+    zAlt += ln_deg_to_rad(3.5);
 #endif
 
     double n = cos(aAz - zAz);
@@ -2124,13 +2124,14 @@ void getPlanetPosition(int planetNum, Object &planet)
         ln_get_mercury_equ_coords(SCOPE.JD, &planet.equPos);
         planet.description = "DIST: " + String(ln_get_mercury_earth_dist(SCOPE.JD), 2) + " AU";
         planet.mag = String(ln_get_mercury_magnitude(SCOPE.JD), 2);
-        planet.size = String(ln_get_mercury_sdiam(SCOPE.JD), 2);
+        planet.size = String(ln_get_mercury_sdiam(SCOPE.JD) * 2.0, 2);  // Multiply semidiameter by 2.0 to get apparent diameter/size
+        planet.type = "ILLUM. DISK: " + String(ln_get_mercury_disk(SCOPE.JD) * 100.0, 2) + '%';
         if (ln_get_mercury_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst) == 0)
         {
             getLocalDate(rst.rise, &rise);
             getLocalDate(rst.set, &set);
             planet.constellation = "RISE: " + getTimeString(rise);
-            planet.type = "SET: " + getTimeString(set);
+            planet.constellation += "     SET:" + getTimeString(set);
         }
         else
         {
@@ -2142,13 +2143,14 @@ void getPlanetPosition(int planetNum, Object &planet)
         ln_get_venus_equ_coords(SCOPE.JD, &planet.equPos);
         planet.description = "DIST: " + String(ln_get_venus_earth_dist(SCOPE.JD), 2) + " AU";
         planet.mag = String(ln_get_venus_magnitude(SCOPE.JD), 2);
-        planet.size = String(ln_get_venus_sdiam(SCOPE.JD), 2);
+        planet.size = String(ln_get_venus_sdiam(SCOPE.JD) * 2.0, 2);
+        planet.type = "ILLUM. DISK: " + String(ln_get_venus_disk(SCOPE.JD) * 100.0, 2) + '%';
         if (ln_get_venus_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst) == 0)
         {
             getLocalDate(rst.rise, &rise);
             getLocalDate(rst.set, &set);
             planet.constellation = "RISE: " + getTimeString(rise);
-            planet.type+= "SET: " + getTimeString(set);
+            planet.constellation += "     SET:" + getTimeString(set);
         }
         else
         {
@@ -2168,13 +2170,14 @@ void getPlanetPosition(int planetNum, Object &planet)
         ln_get_mars_equ_coords(SCOPE.JD, &planet.equPos);
         planet.description = "DIST: " + String(ln_get_mars_earth_dist(SCOPE.JD), 2) + " AU";
         planet.mag = String(ln_get_mars_magnitude(SCOPE.JD), 2);
-        planet.size = String(ln_get_mars_sdiam(SCOPE.JD), 2);
+        planet.size = String(ln_get_mars_sdiam(SCOPE.JD) * 2.0, 2);
+        planet.type = "ILLUM. DISK: " + String(ln_get_mars_disk(SCOPE.JD) * 100.0, 2) + '%';
         if (ln_get_mars_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst) == 0)
         {
             getLocalDate(rst.rise, &rise);
             getLocalDate(rst.set, &set);
             planet.constellation = "RISE: " + getTimeString(rise);
-            planet.type = "SET: " + getTimeString(set);
+            planet.constellation += "     SET:" + getTimeString(set);
         }
         else
         {
@@ -2185,13 +2188,14 @@ void getPlanetPosition(int planetNum, Object &planet)
         planet.name = "JUPITER";
         ln_get_jupiter_equ_coords(SCOPE.JD, &planet.equPos);
         planet.description = "DIST: " + String(ln_get_jupiter_earth_dist(SCOPE.JD), 2) + " AU";
-        planet.size = String(ln_get_jupiter_equ_sdiam(SCOPE.JD), 2);
+        planet.size = String(ln_get_jupiter_equ_sdiam(SCOPE.JD) * 2.0, 2);
+        planet.type = "ILLUM. DISK: " + String(ln_get_jupiter_disk(SCOPE.JD) * 100.0, 2) + '%';
         if (ln_get_jupiter_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst) == 0)
         {
             getLocalDate(rst.rise, &rise);
             getLocalDate(rst.set, &set);
             planet.constellation = "RISE: " + getTimeString(rise);
-            planet.type = "SET: " + getTimeString(set);
+            planet.constellation += "     SET:" + getTimeString(set);
         }
         else
         {
@@ -2202,13 +2206,14 @@ void getPlanetPosition(int planetNum, Object &planet)
         planet.name = "SATURN";
         ln_get_saturn_equ_coords(SCOPE.JD, &planet.equPos);
         planet.description = "DIST: " + String(ln_get_saturn_earth_dist(SCOPE.JD), 2) + " AU";
-        planet.size = String(ln_get_saturn_equ_sdiam(SCOPE.JD), 2);
+        planet.size = String(ln_get_saturn_equ_sdiam(SCOPE.JD) * 2.0, 2);
+        planet.type = "ILLUM. DISK: " + String(ln_get_saturn_disk(SCOPE.JD) * 100.0, 2) + '%';
         if (ln_get_saturn_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst) == 0)
         {
             getLocalDate(rst.rise, &rise);
             getLocalDate(rst.set, &set);
             planet.constellation = "RISE: " + getTimeString(rise);
-            planet.type = "SET: " + getTimeString(set);
+            planet.constellation += "     SET:" + getTimeString(set);
         }
         else
         {
@@ -2220,13 +2225,14 @@ void getPlanetPosition(int planetNum, Object &planet)
         ln_get_uranus_equ_coords(SCOPE.JD, &planet.equPos);
         planet.description = "DIST: " + String(ln_get_uranus_earth_dist(SCOPE.JD), 2) + " AU";
         planet.mag = String(ln_get_uranus_magnitude(SCOPE.JD), 2);
-        planet.size = String(ln_get_uranus_sdiam(SCOPE.JD), 2);
+        planet.size = String(ln_get_uranus_sdiam(SCOPE.JD) * 2.0, 2);
+        planet.type = "ILLUM. DISK: " + String(ln_get_uranus_disk(SCOPE.JD) * 100.0, 2) + '%';
         if (ln_get_uranus_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst) == 0)
         {
             getLocalDate(rst.rise, &rise);
             getLocalDate(rst.set, &set);
             planet.constellation = "RISE: " + getTimeString(rise);
-            planet.type = "SET: " + getTimeString(set);
+            planet.constellation += "     SET:" + getTimeString(set);
         }
         else
         {
@@ -2238,13 +2244,14 @@ void getPlanetPosition(int planetNum, Object &planet)
         ln_get_neptune_equ_coords(SCOPE.JD, &planet.equPos);
         planet.description = "DIST: " + String(ln_get_neptune_earth_dist(SCOPE.JD), 2) + " AU";
         planet.mag = String(ln_get_neptune_magnitude(SCOPE.JD), 2);
-        planet.size = String(ln_get_neptune_sdiam(SCOPE.JD), 2);
+        planet.size = String(ln_get_neptune_sdiam(SCOPE.JD) * 2.0, 2);
+        planet.type = "ILLUM. DISK: " + String(ln_get_neptune_disk(SCOPE.JD) * 100.0, 2) + '%';
         if (ln_get_neptune_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst) == 0)
         {
             getLocalDate(rst.rise, &rise);
             getLocalDate(rst.set, &set);
             planet.constellation = "RISE: " + getTimeString(rise);
-            planet.type = "SET: " + getTimeString(set);
+            planet.constellation += "     SET:" + getTimeString(set);
         }
         else
         {
@@ -2256,13 +2263,14 @@ void getPlanetPosition(int planetNum, Object &planet)
         ln_get_pluto_equ_coords(SCOPE.JD, &planet.equPos);
         planet.description = "DIST: " + String(ln_get_pluto_earth_dist(SCOPE.JD), 2) + " AU";
         planet.mag = String(ln_get_pluto_magnitude(SCOPE.JD), 2);
-        planet.size = String(ln_get_pluto_sdiam(SCOPE.JD), 2);
+        planet.size = String(ln_get_pluto_sdiam(SCOPE.JD) * 2.0, 2);
+        planet.type = "ILLUM. DISK: " + String(ln_get_pluto_disk(SCOPE.JD) * 100.0, 2) + '%';
         if (ln_get_pluto_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst) == 0)
         {
             getLocalDate(rst.rise, &rise);
             getLocalDate(rst.set, &set);
             planet.constellation = "RISE: " + getTimeString(rise);
-            planet.type = "SET: " + getTimeString(set);
+            planet.constellation += "     SET:" + getTimeString(set);
         }
         else
         {
