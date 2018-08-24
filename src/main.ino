@@ -260,7 +260,7 @@ const double STEPS_TO_RAD = STEPS_IN_FULL_CIRCLE / ONE_REV;
 
 uint8_t ALIGN_STEP = 1;   // Using this variable to count the allignment steps - 1: Synchronize, 2: Allign and centre, 3:....
 uint8_t ALIGN_TYPE = 0;   // Variable to store the alignment type (0-Skip Alignment, 1-1 Star alignment, 2-2 Star alignment
-uint8_t LOADED_STARS = 0; // What Objects are loaded from SPIFFS 1 == alignment, 2 == messier, 3 == treasure
+uint8_t LOADED_OBJECTS = 0; // What Objects are loaded from SPIFFS 1 == alignment, 2 == messier, 3 == treasure
 uint8_t LOCAL_TIME_H_OFFSET = 0;
 uint8_t LOCAL_TIME_D_OFFSET = 0;
 uint8_t GPS_ITERATIONS = 0;
@@ -742,10 +742,10 @@ void selectObject(int index, int objects)
     if (objects == 0)
     {
         // Selected Star Object
-        if (LOADED_STARS != 1)
+        if (LOADED_OBJECTS != 1)
         {
             loadStarsFromSPIFFS("/alignment.csv");
-            LOADED_STARS = 1;
+            LOADED_OBJECTS = 1;
         }
         processObject(index, CURRENT_OBJECT);
         objectAltAz();
@@ -753,20 +753,20 @@ void selectObject(int index, int objects)
     else if (objects == 1)
     {
         // I've selected a Messier Object
-        if (LOADED_STARS != 2)
+        if (LOADED_OBJECTS != 2)
         {
             loadStarsFromSPIFFS("/messier.csv");
-            LOADED_STARS = 2;
+            LOADED_OBJECTS = 2;
         }
         processObject(index, CURRENT_OBJECT);
         objectAltAz();
     }
     else if (objects == 1)
     {
-        if (LOADED_STARS != 3)
+        if (LOADED_OBJECTS != 3)
         {
             loadStarsFromSPIFFS("/caldwell.csv");
-            LOADED_STARS = 3;
+            LOADED_OBJECTS = 3;
         }
         processObject(index, CURRENT_OBJECT);
         objectAltAz();
@@ -774,10 +774,10 @@ void selectObject(int index, int objects)
     else if (objects == 2)
     {
         // I've selected a Treasure Object
-        if (LOADED_STARS != 4)
+        if (LOADED_OBJECTS != 4)
         {
             loadStarsFromSPIFFS("/treasure.csv");
-            LOADED_STARS = 4;
+            LOADED_OBJECTS = 4;
         }
         processObject(index, CURRENT_OBJECT);
         objectAltAz();
@@ -1095,10 +1095,10 @@ void autoSelectAlignmentStars()
     Serial.println("autoSelectAlignmentStars()");
 #endif
     // Alignment star counter.
-    if (LOADED_STARS != 1)
+    if (LOADED_OBJECTS != 1)
     {
         loadStarsFromSPIFFS("/alignment.csv");
-        LOADED_STARS = 1;
+        LOADED_OBJECTS = 1;
     }
 
     // Load each star from the alignment.csv database into the CURRENT_ALIGN_STAR object
@@ -1265,7 +1265,10 @@ void processObject(int index, Object &object)
     object.type = OBJECTS[index].substring(i4 + 1, i5);
     object.mag = OBJECTS[index].substring(i5 + 1, i6);
     object.size = OBJECTS[index].substring(i6 + 1, i7);
-    object.description = OBJECTS[index].substring(i7 + 1, OBJECTS[index].length() - 1);
+    if (LOADED_OBJECTS == 1)
+        object.description = OBJECTS[index].substring(i7 + 1, OBJECTS[index].indexOf(',', i7 + 1));
+    else
+        object.description = OBJECTS[index].substring(i7 + 1, OBJECTS[index].length() - 1);
 
     unsigned short ra_h = ra.substring(0, ra.indexOf('h')).toFloat();
     unsigned short ra_m = ra.substring(ra.indexOf('h') + 1, ra.indexOf('m')).toFloat();
@@ -2929,10 +2932,10 @@ void drawStarSelectScreen()
 
 void drawLoadAlignStars()
 {
-    if (LOADED_STARS != 1)
+    if (LOADED_OBJECTS != 1)
     {
         loadStarsFromSPIFFS("/alignment.csv");
-        LOADED_STARS = 1;
+        LOADED_OBJECTS = 1;
     }
     // First ensure the old objects are gone
     tft.fillRect(0, 90, 240, 170, BLACK);
@@ -3090,8 +3093,10 @@ void drawMainScreen()
             tft.print("MAG:  ");
             tft.print(CURRENT_OBJECT.mag);
             tft.setCursor(120, 195);
-            tft.print("SIZE: ");
-            tft.print(CURRENT_OBJECT.size);
+            if (LOADED_OBJECTS == 1)
+                tft.print("DIST: " + CURRENT_OBJECT.size);
+            else
+                tft.print("SIZE: " + CURRENT_OBJECT.size);
         }
 
         tft.setTextSize(2);
@@ -3352,20 +3357,20 @@ void drawLoadObjects()
     // Brightest Stars Screen
     if (LOAD_SELECTOR == 0)
     {
-        if (LOADED_STARS != 1)
+        if (LOADED_OBJECTS != 1)
         {
             loadStarsFromSPIFFS("/alignment.csv");
-            LOADED_STARS = 1;
+            LOADED_OBJECTS = 1;
         }
         drawLoadAlignStars();
     }
     /////// Messier Screen /////////////
     else if (LOAD_SELECTOR == 1)
     {
-        if (LOADED_STARS != 2)
+        if (LOADED_OBJECTS != 2)
         {
             loadStarsFromSPIFFS("/messier.csv");
-            LOADED_STARS = 2;
+            LOADED_OBJECTS = 2;
         }
         tft.setTextSize(2);
         tft.setTextColor(L_TEXT);
@@ -3391,10 +3396,10 @@ void drawLoadObjects()
     ///////     Caldwell Screen  /////////////
     else if (LOAD_SELECTOR == 2)
     {
-        if (LOADED_STARS != 3)
+        if (LOADED_OBJECTS != 3)
         {
             loadStarsFromSPIFFS("/caldwell.csv");
-            LOADED_STARS = 3;
+            LOADED_OBJECTS = 3;
         }
         tft.setTextSize(2);
         tft.setTextColor(L_TEXT);
@@ -3420,10 +3425,10 @@ void drawLoadObjects()
     ///////     Treasures Screen /////////////
     else if (LOAD_SELECTOR == 3)
     {
-        if (LOADED_STARS != 4)
+        if (LOADED_OBJECTS != 4)
         {
             loadStarsFromSPIFFS("/treasure.csv");
-            LOADED_STARS = 4;
+            LOADED_OBJECTS = 4;
         }
         tft.setTextSize(2);
         tft.setTextColor(L_TEXT);
@@ -3474,7 +3479,10 @@ void drawObjectSummaryScreen()
         tft.setCursor(10, 100);
         tft.print("MAG: " + CURRENT_OBJECT.mag);
         tft.setCursor(120, 100);
-        tft.print("SIZE: " + CURRENT_OBJECT.size);
+        if (LOADED_OBJECTS == 1)
+            tft.print("DIST: " + CURRENT_OBJECT.size);
+        else
+            tft.print("SIZE: " + CURRENT_OBJECT.size);
         tft.setCursor(10, 110);
         tft.print(CURRENT_OBJECT.riseSetStr);
 
@@ -4123,10 +4131,10 @@ void considerTouchInput(int lx, int ly)
             ///////     Bright Star Screen /////////////
             if (LOAD_SELECTOR == 0)
             {
-                if (LOADED_STARS != 1)
+                if (LOADED_OBJECTS != 1)
                 {
                     loadStarsFromSPIFFS("/alignment.csv");
-                    LOADED_STARS = 1;
+                    LOADED_OBJECTS = 1;
                 }
                 tft.setTextColor(L_TEXT);
                 tft.setTextSize(1);
@@ -4170,10 +4178,10 @@ void considerTouchInput(int lx, int ly)
             ///////     Messier Screen /////////////
             else if (LOAD_SELECTOR == 1)
             {
-                if (LOADED_STARS != 2)
+                if (LOADED_OBJECTS != 2)
                 {
                     loadStarsFromSPIFFS("/messier.csv");
-                    LOADED_STARS = 2;
+                    LOADED_OBJECTS = 2;
                 }
                 for (int i = 0; i < 4; i++)
                 {
@@ -4197,10 +4205,10 @@ void considerTouchInput(int lx, int ly)
             ///////     Caldwell Screen /////////////
             else if (LOAD_SELECTOR == 2)
             {
-                if (LOADED_STARS != 3)
+                if (LOADED_OBJECTS != 3)
                 {
                     loadStarsFromSPIFFS("/caldwell.csv");
-                    LOADED_STARS = 3;
+                    LOADED_OBJECTS = 3;
                 }
                 for (int i = 0; i < 4; i++)
                 {
@@ -4225,10 +4233,10 @@ void considerTouchInput(int lx, int ly)
             else if (LOAD_SELECTOR == 3)
             {
                 // I'm in TREASURES selector and need to check which Treasure object is pressed
-                if (LOADED_STARS != 4)
+                if (LOADED_OBJECTS != 4)
                 {
                     loadStarsFromSPIFFS("/treasure.csv");
-                    LOADED_STARS = 4;
+                    LOADED_OBJECTS = 4;
                 }
                 for (int i = 0; i < 4; i++)
                 {
