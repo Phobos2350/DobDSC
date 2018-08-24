@@ -9,38 +9,38 @@ Rigel,05h14m32,-08°12'14,ORION,B8 Bl Supegiant + B9 Bl MS + B9 Bl MS,0.13,860 l
 Procyon,07h39m18,+05°13'29,CANIS MINOR,F5 Yellow-White MS + DQZ White Dwarf,0.34,11.46 ly,Alpha Canis Minoris,-714.590,-1036.80
 Achernar,01h37m42,-57°14'12,ERIDANUS,B6 Blue-White MS + A1 White MS,0.46,139 ly,Alpha Eridani,+87.00,-38.24
 Betelgeuse,05h55m10,+07°24'25,ORION,M1 Red Supergiant,0.50,724 ly,Alpha Orionis,+26.42,+9.60
-Hadar,14h03m49,-60°22'22,CENTAURUS,B1 Bl-Wht GT+B1 Bl-Wht GT+B1 Bl-Wht MS,0.61,390 ly,Beta Centauri,–33.27,–23.16
+Hadar,14h03m49,-60°22'22,CENTAURUS,B1 Bl-Wht GT+B1 Bl-Wht GT+B1 Bl-Wht MS,0.61,390 ly,Beta Centauri,-33.27,-23.16
 Altair,19h50m47,+08°52'05,AQUILA,A7 White Main Seq,0.76,17.73 ly,Alpha Aquilae,+536.23,+385.29
 Acrux,12h26m36,-63°05'56,CRUX,B0.5 Bl-Wht Subgiant + B1 Bl-Wht MS,0.76,320 ly,Alpha Crucis,-35.83,-14.86
 Aldebaran,04h35m55,+16°30'33,TAURUS,K5 Orange Giant,0.86,65.3 ly,Alpha Tauri,+63.45,-189.94
 Antares,16h29m24,-26°25'55,SCORPIUS,M1 Red Supergiant + B2.5 Bl-Wht MS,0.96,550 ly,Alpha Scorpii,-12.11,-23.30
 Spica,13h25m11,-11°09'40,VIRGO,B1 Bl-Wht Subgiant + B2 Bl-Wht MS,0.97,250 ly,Alpha Virginis,-42.35,-30.67
-Pollux,07h45m18,+28°01'34,GEMINI,K0 Orange Giant,1.14,33.78 ly,Beta Geminorum,–626.55,–45.80
+Pollux,07h45m18,+28°01'34,GEMINI,K0 Orange Giant,1.14,33.78 ly,Beta Geminorum,-626.55,-45.80
 Fomalhaut,22h57m39,-29°37'20,PISCIS AUSTRINUS,A3 White MS + K5 Orange MS + M4 Red MS,1.16,25.13 ly,Alpha Piscis Austrini,+328.95,-164.67
-Mimosa,12h47m42,-59°41'19,CRUX,B0.5 Bl-Wht Giant + B2 Bl-Wht MS,1.25,280 ly,Beta Crucis,–42.97,–16.18
+Mimosa,12h47m42,-59°41'19,CRUX,B0.5 Bl-Wht Giant + B2 Bl-Wht MS,1.25,280 ly,Beta Crucis,-42.97,-16.18
 Deneb,20h41m26,+45°16'49,CYGNUS,A2 White Supergiant,1.25,2615 ly,Alpha Cygni,+1.99,+1.95
 Regulus,10h8m22,+11°58'02,LEO,B7 B-W MS + W Dwf + K2 Or MS + M4 R MS,1.40,79.3 ly,Alpha Leonis,-248.73,+5.59
 Adhara,06h58m37,-28°58'19,CANIS MAJOR,B2 Blue-White Bright Giant,1.50,405 ly,Epsilon Canis Majoris,+2.63,+2.29
-Castor,07h34m36,+31°53'17,GEMINI,A1 Wht MS + Am Wht MS + 4x M1 Red Dwf,1.58,51 ly,Alpha Geminorum,–191.45,–145.19
+Castor,07h34m36,+31°53'17,GEMINI,A1 Wht MS + Am Wht MS + 4x M1 Red Dwf,1.58,51 ly,Alpha Geminorum,-191.45,-145.19
 Shaula,17h33m36,-37°06'14,SCORPIUS,B2 Bl-Wht Subgiant + DA8 Wht Protostar,1.62,570 ly,Lambda Scorpii,-8.90,-29.95
 Gacrux,12h31m10,-57°06'47,CRUX,M3.5 Red Giant,1.64,88.6 ly,Gamma Crucis,+28.23,-265.08
-Bellatrix,05h25m08,+06°20'59,ORION,B2 Blue-White Giant,1.64,250 ly,Gamma Orionis,–8.11,–12.88
+Bellatrix,05h25m08,+06°20'59,ORION,B2 Blue-White Giant,1.64,250 ly,Gamma Orionis,-8.11,-12.88
 Elnath,05h26m17,+28°36'27,TAURUS,B7 Blue-White Giant,1.65,134 ly,Beta Tauri,+22.76,-173.58
 Miaplacidus,09h13m12,-69°43'02,CARINA,A1 White Giant,1.69,113 ly,Beta Carinae,-156.47,+108.95
 Alnilam,05h36m13,-01°12'07,ORION,B0 Blue-White Supergiant,1.69,2000 ly,Epsilon Orionis,+1.49,-1.06
-Regor,08h09m32,-47°20'12,VELA,WC8 Wolf-Rayet + O7.5 Blue Giant,1.72,1095 ly,Gamma Velorum,–6.07,+10.43
+Regor,08h09m32,-47°20'12,VELA,WC8 Wolf-Rayet + O7.5 Blue Giant,1.72,1095 ly,Gamma Velorum,-6.07,+10.43
 Alnair,22h8m14,-46°57'39,GRUS,B6 Blue-White Main Seq,1.74,101 ly,Alpha Gruis,+126.69,-147.47
 Alioth,12h54m02,+55°57'35,URSA MAJOR,A1 White Giant,1.77,82.6 ly,Epsilon Ursae Majoris,+111.91,-8.24
 Alnitak,05h40m45,-01°56'34,ORION,O9 Bl SpGT + B1 Bl-Wt SbGT + B0 B-W GT,1.77,1260 ly,Zeta Orionis,+3.19,+2.03
-Dubhe,11h03m43,+61°45'03,URSA MAJOR,K0 Orange Giant + F0 Yellow-White MS,1.79,123 ly,Alpha Ursae Majoris,–134.11,–34.70
+Dubhe,11h03m43,+61°45'03,URSA MAJOR,K0 Orange Giant + F0 Yellow-White MS,1.79,123 ly,Alpha Ursae Majoris,-134.11,-34.70
 Mirfak,03h24m19,+49°51'40,PERSEUS,F5 Yellow-White Supergiant,1.80,510 ly,Alpha Persei,+23.75,-26.23
-Wezen,07h08m23,-26°23'35,CANIS MAJOR,F8 Yellow-White Supergiant,1.82,1600 ly,Delta Canis Majoris,–3.12,+3.31
-Sargas,17h37m19,-42°59'52,SCORPIUS,F0 Yellow-White Giant,1.84,300 ly,Theta Scorpii,+5.54,–3.12
-Kaus Australis,18h24m10,-34°23'05,SAGITTARIUS,B9.5 Blue-White Giant,1.85,143 ly,Epsilon Sagittarii,–39.42,–124.20
-Avior,08h22m31,-59°30'34,CARINA,K3 Orange Giant + B2 Blue-White MS,1.86,610 ly,Epsilon Carinae,–25.52,+22.72
-Alkaid,13h47m32s,+49°18'47,URSA MAJOR,B3 Blue-White Main Seq,1.86,104 ly,Eta Ursae Majoris,–121.17,–14.91
-Menkalinan,05h59m32,+44°56'51,AURIGA,A1 White Subgiant + A1 White Subgiant,1.90,81.1 ly,Beta Aurigae,–56.44,–0.95
-Atria,16h48m39,-69°01'40,TRIANGULUM AUSTRALE,K2 Orange Giant,1.91,391 ly,Alpha Trianguli Australis,+17.99,–31.58
+Wezen,07h08m23,-26°23'35,CANIS MAJOR,F8 Yellow-White Supergiant,1.82,1600 ly,Delta Canis Majoris,-3.12,+3.31
+Sargas,17h37m19,-42°59'52,SCORPIUS,F0 Yellow-White Giant,1.84,300 ly,Theta Scorpii,+5.54,-3.12
+Kaus Australis,18h24m10,-34°23'05,SAGITTARIUS,B9.5 Blue-White Giant,1.85,143 ly,Epsilon Sagittarii,-39.42,-124.20
+Avior,08h22m31,-59°30'34,CARINA,K3 Orange Giant + B2 Blue-White MS,1.86,610 ly,Epsilon Carinae,-25.52,+22.72
+Alkaid,13h47m32s,+49°18'47,URSA MAJOR,B3 Blue-White Main Seq,1.86,104 ly,Eta Ursae Majoris,-121.17,-14.91
+Menkalinan,05h59m32,+44°56'51,AURIGA,A1 White Subgiant + A1 White Subgiant,1.90,81.1 ly,Beta Aurigae,-56.44,-0.95
+Atria,16h48m39,-69°01'40,TRIANGULUM AUSTRALE,K2 Orange Giant,1.91,391 ly,Alpha Trianguli Australis,+17.99,-31.58
 Alhena,06h37m43,+16°23'57,GEMINI,A1.5 White Subgiant,1.92,109 ly,Gamma Geminorum,+13.81,-54.96
 Peacock,20h25m39,-56°44'05,PAVO,B3 Blue-White Main Seq,1.94,179 ly,Alpha Pavonis,+6.90,-86.02
 Polaris,02h31m49,+89°15'51,URSA MINOR,F7 Yl-Wh SupGT+F6 Yl-Wh MS+F3 Yl-Wh MS,1.98,323 ly,Alpha Ursae Minoris,+44.48,-11.85
@@ -50,21 +50,21 @@ Alphard,09h27m35,-08°39'31,HYDRA,K3 Orange Giant,2.00,177 ly,Alpha Hydrae,-14.4
 Diphda,00h43m35,-17°59'12,CETUS,K0 Orange Giant,2.02,96.3 ly,Beta Ceti,+232.55,+31.99
 Mizar,13h23m55,+54°55'31,URSA MAJOR,A2 Wht MS + A2 Wht MS + 2x A1m Wht MS,2.04,82.9 ly,Zeta Ursae Majoris,+119.01,-25.97
 Mirach,01h09m44,+35°37'14,ANDROMEDA,M0 Red Giant,2.05,197 ly,Beta Andromedae,+175.90,-112.20
-Nunki,18h55m16,-26°17'48,SAGITTARIUS,B2.5 Blue-White Main Seq,2.05,228 ly,Sigma Sagittarii,+15.14,–53.43
+Nunki,18h55m16,-26°17'48,SAGITTARIUS,B2.5 Blue-White Main Seq,2.05,228 ly,Sigma Sagittarii,+15.14,-53.43
 Alpheratz,00h08m23,+29°05'25,ANDROMEDA,B8 Blue-White Subgiant + A3 Wht MS,2.06,97 ly,Alpha Andromedae,+135.68,-162.95
-Menkent,14h06m41,-36°22'12,CENTAURUS,K0 Orange Giant,2.06,55.8 ly,Theta Centauri,–520.5,–518.06
+Menkent,14h06m41,-36°22'12,CENTAURUS,K0 Orange Giant,2.06,55.8 ly,Theta Centauri,-520.5,-518.06
 Rasalhague,17h34m56,+12°33'36,OPHIUCHUS,A5 Wht Giant + K5 Orange MS,2.07,48.6 ly,Alpha Ophiuchi,+108.07,-221.57
-Algieba,10h19m58,+19°50'29,LEO,K0 Orange Giant + G7 Yellow Giant,2.08,130 ly,Gamma Leonis,+304.30,–154.28
+Algieba,10h19m58,+19°50'29,LEO,K0 Orange Giant + G7 Yellow Giant,2.08,130 ly,Gamma Leonis,+304.30,-154.28
 Kochab,14h50m42,+74°09'20,URSA MINOR,K4 Orange Giant,2.08,131 ly,Beta Ursae Minoris,-32.61,+11.42
-Saiph,05h47m45,-09°40'10,ORION,B0.5 Blue-White Supergiant,2.09,650 ly,Kappa Orionis,+1.46,–1.28
-Denebola,11h49m04,+14°34'19,LEO,A3 White Main Seq,2.11,35.9 ly,Beta Leonis,–497.68,–114.67
+Saiph,05h47m45,-09°40'10,ORION,B0.5 Blue-White Supergiant,2.09,650 ly,Kappa Orionis,+1.46,-1.28
+Denebola,11h49m04,+14°34'19,LEO,A3 White Main Seq,2.11,35.9 ly,Beta Leonis,-497.68,-114.67
 Algol,03h08m10,+40°57'20,PERSEUS,B8 Bl-Wht MS + K0 Or SubGT + A7 Wht MS,2.12,90 ly,Beta Persei,+2.99,-1.66
 Muhlifain,12h41m31,-48°57'35,CENTAURUS,A1 2x White Subgiant,2.17,130 ly,Gamma Centauri,-185.72,+5.79
-Aspidiske,09h17m05,-59°16'30,CARINA,A9 White Supergiant,2.21,690 ly,Iota Carinae,–19.03,+13.11
+Aspidiske,09h17m05,-59°16'30,CARINA,A9 White Supergiant,2.21,690 ly,Iota Carinae,-19.03,+13.11
 Suhail,09h07m59s,-43°25'57,VELA,K4 Orange Supergiant,2.21,545 ly,Lambda Velorum,-24.01,+13.52
 Alphecca,15h34m41,+26°42'53,CORONA BOREALIS,A0 White MS + G5 Yellow MS,2.23,75 ly,Alpha Coronae Boeralis,+120.27,-89.58
 Sadr,20h22m14,+40°15'24,CYGNUS,F8 Yellow-White Supergiant,2.23,1800 ly,Gamma Cygni,+2.39,-0.91
-Eltanin,17h56m36,+51°29'20,DRACO,K5 Orange Giant,2.23,154.3 ly,Gamma Draconis,–8.48,–22.79
+Eltanin,17h56m36,+51°29'20,DRACO,K5 Orange Giant,2.23,154.3 ly,Gamma Draconis,-8.48,-22.79
 Mintaka,05h32m00,-00°17'57,ORION,O9 Bl BrtGT+B1 Bl-Wh MS+B0 BlWh SubGT,2.23,1200 ly,Delta Orionis,+0.64,-0.69
 Schedar,00h40m30,+56°32'14,CASSIOPEIA,K0 Orange Giant,2.24,228 ly,Alpha Cassiopeiae,+50.36,-32.17
 Naos,08h03m35,-40°00'12,PUPPIS,O4 Blue Supergiant,2.25,1080 ly,Zeta Puppis,-27.91,+16.68
@@ -73,7 +73,7 @@ Caph,00h09m11,+59°08'59,CASSIOPEIA,F2 Yellow-White Giant,2.28,54.7 ly,Beta Cass
 Dschubba,16h00m20,-22°37'18,SCORPIUS,B0.3 Bl-Wht SubGT + B1 Bl-Wht MS,2.31,443 ly,Delta Scorpii,-10.21,-35.41
 Izar,14h45m59,+27°04'27,BOOTES,K0 Orange Bright Giant + A2 White MS,2.37,203 ly,Epsilon Bootis,-50.95,+21.07
 Merak,11h01m50,+56°22'57,URSA MAJOR,A1 White Subgiant,2.37,79.7 ly,Beta Ursae Majoris,+81.43,+33.49
-Ankaa,00h26m17,-42°18'21,PHOENIX,K0.5 Orange Giant,2.38,85 ly,Alpha Phoenicis,+233.05,–356.30
+Ankaa,00h26m17,-42°18'21,PHOENIX,K0.5 Orange Giant,2.38,85 ly,Alpha Phoenicis,+233.05,-356.30
 Enif,21h44m11,+09°52'30,PEGASUS,K2 Orange Supergiant,2.40,690 ly,Epsilon Pegasi,+26.92,+0.4
 Scheat,23h03m46,+28°04'58,PEGASUS,M2.5 Red Giant,2.42,196 ly,Beta Pegasi,+187.65,+136.93
 Sabik,17h10m23,-15°43'30,OPHIUCHUS,A1 2x White Subgiant,2.43,88 ly,Eta Ophiuchi,+40.13,+99.17
@@ -81,21 +81,21 @@ Phecda,11h53m50,+53°41'41,URSA MAJOR,A0 White MS + K2 Orange MS,2.44,83.2 ly,Ga
 Aludra,07h24m05,-29°18'11,CANIS MAJOR,B5 Blue-White Supergiant,2.45,2000 ly,Eta Canis Majoris,-4.14,+5.81
 Markab,23h04m46,+15°12'19,PEGASUS,A0 White Subgiant,2.48,133 ly,Alpha Pegasi,+60.40,-41.30
 Gienah,20h46m13,+33°58'13,CYGNUS,K0 Orange Giant,2.48,72.7 ly,Epsilon Cygni,+355.66,+330.60
-Graffias,16h05m26,-19°48'20,SCORPIUS,B1 Bl-Wh MS+B1 Bl-Wh MS+B0 Bl-Wh SubGT,2.50,400 ly,Beta Scorpii,–5.20,–24.04
+Graffias,16h05m26,-19°48'20,SCORPIUS,B1 Bl-Wh MS+B1 Bl-Wh MS+B0 Bl-Wh SubGT,2.50,400 ly,Beta Scorpii,-5.20,-24.04
 Alderamin,21h18m35,+62°35'08,CEPHEUS,A8 White Main Seq,2.51,49.05 ly,Alpha Cephei,+150.55,+49.09
 Menkar,03h02m17,+04°05'23,CETUS,M1.5 Red Giant,2.53,249 ly,Alpha Ceti,-10.41,-76.85
 Alnair al Kent,13h55m32,-47°17'18,CENTAURUS,B2.5 Blue-White Subgiant,2.55,382 ly,Zeta Centauri,-57.37,-44.55
 Zosma,11h14m06,+20°31'25,LEO,A4 White Main Seq,2.56,58.4 ly,Delta Leonis,+143.42,-129.88
 Han,16h37m09,-10°34'01,OPHIUCHUS,O9.5 Blue Main Seq,2.57,366 ly,Zeta Ophiuchi,+15.26,+24.79
 Arneb,05h32m44,-17°49'20,LEPUS,F0 Yellow-White Supergiant,2.59,2200 ly,Alpha Leporis,+3.56,+1.18
-Gienah Ghurab,12h15m48,-17°32'31,CORVUS,B8 Blue-White Giant + K5 Orange MS,2.59,154 ly,Gamma Corvi,–158.61,+21.86
+Gienah Ghurab,12h15m48,-17°32'31,CORVUS,B8 Blue-White Giant + K5 Orange MS,2.59,154 ly,Gamma Corvi,-158.61,+21.86
 Ascella,19h02m37,-29°52'48,SAGITTARIUS,A2.5 White Main Seq,2.50,88 ly,Zeta Sagittarii,+10.79,+21.11
 Zubeneschamali,15h17m00,-09°22'59,LIBRA,B8 Blue-White Main Seq,2.61,185 ly,Beta Librae,-98.10,19.65
 Unukalhai,15h44m16,+06°25'32,SERPENS,K2 Orange Giant,2.63,74 ly,Alpha Serpentis,+133.84,+44.81
 Phact,05h39m39,-34°04'27,COLUMBA,B7 Blue-White Subgiant,2.64,261 ly,Alpha Columbae,-1.58,-24.82
 Sheratan,01h54m38,+20°48'29,ARIES,A5 White Main Seq,2.65,59.6 ly,Beta Arietis,+98.74,-110.41
 Kraz,12h34m23,-23°23'48,CORVUS,G5 Yellow Bright-Giant,2.66,146 ly,Beta Corvi,+1.11,-56.56
-Ruchbah,01h25m49,+60°14'07,CASSIOPEIA,A5 White Subgiant,2.68,99.4 ly,Delta Cassiopeiae,+296.57,–49.22
+Ruchbah,01h25m49,+60°14'07,CASSIOPEIA,A5 White Subgiant,2.68,99.4 ly,Delta Cassiopeiae,+296.57,-49.22
 Muphrid,13h54m41,+18°23'52,BOOTES,G0 Yellow Subgiant,2.68,37.2 ly,Eta Bootis,-60.95,-356.29
 Kekouan,14h58m32,-43°08'02,LUPUS,B2 Blue-White Giant,2.68,383 ly,Beta Lupi,-35.78,-39.83
-Zubenelgenubi,14h50m41,-15°59'53,LIBRA,F3 Yl-Wht MS + A2 Wht Subgiant,2.74,74.9 ly,Alpha Librae,–136.27,–59.04
+Zubenelgenubi,14h50m41,-15°59'53,LIBRA,F3 Yl-Wht MS + A2 Wht Subgiant,2.74,74.9 ly,Alpha Librae,-136.27,-59.04

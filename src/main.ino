@@ -71,10 +71,10 @@
 
 #include <libnova_main.h>
 
-#define SERIAL_DEBUG // comment out to deactivate the serial debug mode
-#define PERFECT_ALIGN
+// #define SERIAL_DEBUG // comment out to deactivate the serial debug mode
+// #define PERFECT_ALIGN
 // #define DEBUG_REFRACTION
-#define DEBUG_MOUNT_ERRS
+// #define DEBUG_MOUNT_ERRS
 
 #define GEAR_LARGE 60.0f
 #define GEAR_SMALL 18.0f
@@ -739,7 +739,7 @@ void getEquatTrig(struct ln_hrz_posn *object, struct ln_lnlat_posn *observer, do
 
 void selectObject(int index, int objects)
 {
-    if (objects == 0)
+    if (objects == 1)
     {
         // Selected Star Object
         if (LOADED_OBJECTS != 1)
@@ -750,7 +750,7 @@ void selectObject(int index, int objects)
         processObject(index, CURRENT_OBJECT);
         objectAltAz();
     }
-    else if (objects == 1)
+    else if (objects == 2)
     {
         // I've selected a Messier Object
         if (LOADED_OBJECTS != 2)
@@ -761,7 +761,7 @@ void selectObject(int index, int objects)
         processObject(index, CURRENT_OBJECT);
         objectAltAz();
     }
-    else if (objects == 1)
+    else if (objects == 3)
     {
         if (LOADED_OBJECTS != 3)
         {
@@ -771,7 +771,7 @@ void selectObject(int index, int objects)
         processObject(index, CURRENT_OBJECT);
         objectAltAz();
     }
-    else if (objects == 2)
+    else if (objects == 4)
     {
         // I've selected a Treasure Object
         if (LOADED_OBJECTS != 4)
@@ -2954,7 +2954,8 @@ void drawLoadAlignStars()
         for (int j = 0; j < 3; j++)
         {
             String S_NAME = OBJECTS[kk].substring(0, OBJECTS[kk].indexOf(','));
-            if (S_NAME == "")
+            // There are 100 Objects in the Alignment Star Catalogue
+            if (S_NAME == "" || kk > 100)
             {
                 break;
             }
@@ -3049,23 +3050,21 @@ void drawMainScreen()
     tft.setCursor(70, 120);
     tft.print(deg2dms(SCOPE.equPos.dec, true, false));
 
-    tft.setTextSize(2);
-    tft.setTextColor(TITLE_TEXT, TITLE_TEXT_BG);
-    tft.setCursor(10, 135);
-    tft.print("TARGET");
-
     if (CURRENT_OBJECT.name != "")
     {
-        tft.setTextColor(L_TEXT);
-        tft.print(" - " + CURRENT_OBJECT.name);
-        tft.setCursor(10, 155);
         tft.setTextSize(2);
-        if (CURRENT_OBJECT.description.length() > 19)
+        tft.setTextColor(TITLE_TEXT, TITLE_TEXT_BG);
+        tft.setCursor(10, 135);
+        tft.print(CURRENT_OBJECT.name);
+
+        tft.setTextColor(L_TEXT);
+        tft.setCursor(10, 155);
+        if (CURRENT_OBJECT.description.length() > 20)
         {
             tft.print(CURRENT_OBJECT.description.substring(0, 19));
             int spacing = 230 - ((CURRENT_OBJECT.description.length() - 19) * 11);
             tft.setCursor(spacing, 170);
-            tft.print("-" + CURRENT_OBJECT.description.substring(19, CURRENT_OBJECT.description.length() - 1));
+            tft.print("-" + CURRENT_OBJECT.description.substring(19, CURRENT_OBJECT.description.length()));
         }
         else
         {
@@ -3073,7 +3072,6 @@ void drawMainScreen()
         }
 
         tft.setTextSize(1);
-        tft.setTextColor(L_TEXT);
         tft.setCursor(10, 175);
         tft.print(CURRENT_OBJECT.constellation);
         tft.setCursor(10, 185);
@@ -3125,8 +3123,8 @@ void drawMainScreen()
     else
     {
         tft.setTextSize(2);
-        tft.setTextColor(L_TEXT);
-        tft.setCursor(10, 155);
+        tft.setTextColor(TITLE_TEXT, TITLE_TEXT_BG);
+        tft.setCursor(10, 135);
         tft.println("NO TARGET SELECTED!");
     }
 
@@ -3385,7 +3383,8 @@ void drawLoadObjects()
             for (int j = 0; j < 3; j++)
             {
                 String M_NAME = OBJECTS[kk].substring(0, OBJECTS[kk].indexOf(','));
-                if (M_NAME == "")
+                // There are 110 Objects in the Messier Catalogue
+                if (M_NAME == "" || kk > 110)
                 {
                     break;
                 }
@@ -3414,7 +3413,8 @@ void drawLoadObjects()
             for (int j = 0; j < 3; j++)
             {
                 String M_NAME = OBJECTS[ll].substring(0, OBJECTS[ll].indexOf(','));
-                if (M_NAME == "")
+                // There are 109 Objects in the Caldwell Catalogue
+                if (M_NAME == "" || ll > 109)
                 {
                     break;
                 }
@@ -3443,7 +3443,8 @@ void drawLoadObjects()
             for (int j = 0; j < 3; j++)
             {
                 String M_NAME = OBJECTS[mm].substring(0, OBJECTS[mm].indexOf(','));
-                if (M_NAME == "")
+                // There are 128 Objects in the Hidden Treasures Catalogue
+                if (M_NAME == "" || mm > 128)
                 {
                     break;
                 }
@@ -3469,28 +3470,37 @@ void drawObjectSummaryScreen()
         tft.setCursor(10, 50);
         tft.setTextColor(L_TEXT);
         tft.print(CURRENT_OBJECT.name);
-
-        tft.setTextSize(1);
+        
         tft.setCursor(10, 70);
-        tft.print(CURRENT_OBJECT.description);
-        tft.setCursor(10, 80);
+        if (CURRENT_OBJECT.description.length() > 20)
+        {
+            tft.print(CURRENT_OBJECT.description.substring(0, 19));
+            tft.setCursor(10, 90);
+            tft.print("-" + CURRENT_OBJECT.description.substring(19, CURRENT_OBJECT.description.length()));
+        }
+        else
+        {
+            tft.print(CURRENT_OBJECT.description);
+        }
+        tft.setTextSize(1);
+        tft.setCursor(10, 110);
         tft.print(CURRENT_OBJECT.constellation);
-        tft.setCursor(10, 90);
+        tft.setCursor(10, 120);
         tft.print(CURRENT_OBJECT.type);
-        tft.setCursor(10, 100);
+        tft.setCursor(10, 130);
         tft.print("MAG: " + CURRENT_OBJECT.mag);
-        tft.setCursor(120, 100);
+        tft.setCursor(120, 130);
         if (LOADED_OBJECTS == 1)
             tft.print("DIST: " + CURRENT_OBJECT.size);
         else
             tft.print("SIZE: " + CURRENT_OBJECT.size);
-        tft.setCursor(10, 110);
+        tft.setCursor(10, 140);
         tft.print(CURRENT_OBJECT.riseSetStr);
 
         tft.setTextSize(2);
         if (CURRENT_OBJECT.hrzPos.alt < 0)
         {
-            tft.setCursor(10, 140);
+            tft.setCursor(10, 150);
             tft.setTextColor(TITLE_TEXT, TITLE_TEXT_BG);
             tft.println("OBJECT NOT VISIBLE!");
             tft.setTextColor(L_TEXT);
@@ -3694,20 +3704,17 @@ void drawPlanetScreen()
 
 void OnScreenMsg(int Msg)
 {
-    String m1, m2, m3;
     tft.fillRect(40, 110, 160, 100, MSG_BOX_BG);
     tft.drawRect(40, 110, 160, 100, MSG_BOX_TEXT);
     tft.setTextColor(MSG_BOX_TEXT);
     if (Msg == 1)
     {
-        m1 = "ERROR!";
-        m2 = "Not Visible";
-        tft.setCursor(80, 140);
+        tft.setCursor(70, 140);
         tft.setTextSize(3);
-        tft.println(m1);
-        tft.setCursor(60, 160);
+        tft.print("ERROR!");
+        tft.setCursor(55, 170);
         tft.setTextSize(2);
-        tft.print(m2);
+        tft.print("Not Visible");
     }
 }
 
@@ -4167,7 +4174,7 @@ void considerTouchInput(int lx, int ly)
                             }
                             if (OBJECTS[zz] != "")
                             {
-                                selectObject(zz, 0);
+                                selectObject(zz, 1);
                                 delay(150);
                                 drawObjectSummaryScreen();
                             }
@@ -4194,7 +4201,7 @@ void considerTouchInput(int lx, int ly)
                             drawButton(((j * 75) + 10), ((i * 40) + 90), 71, 35, M_NAME, 0, BTN_L_BORDER, L_TEXT, 2);
                             if (OBJECTS[zz] != "")
                             {
-                                selectObject(zz, 1);
+                                selectObject(zz, 2);
                                 delay(150);
                                 drawObjectSummaryScreen();
                             }
@@ -4221,7 +4228,7 @@ void considerTouchInput(int lx, int ly)
                             drawButton(((j * 75) + 10), ((i * 40) + 90), 71, 35, M_NAME, 0, BTN_L_BORDER, L_TEXT, 2);
                             if (OBJECTS[zz] != "")
                             {
-                                selectObject(zz, 2);
+                                selectObject(zz, 3);
                                 delay(150);
                                 drawObjectSummaryScreen();
                             }
@@ -4249,7 +4256,7 @@ void considerTouchInput(int lx, int ly)
                             drawButton(((j * 75) + 10), ((i * 40) + 90), 71, 35, M_NAME, 0, BTN_L_BORDER, L_TEXT, 1);
                             if (OBJECTS[zz] != "")
                             {
-                                selectObject(zz, 3);
+                                selectObject(zz, 4);
                                 delay(150);
                                 drawObjectSummaryScreen();
                             }
