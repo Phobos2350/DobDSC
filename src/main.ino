@@ -2855,6 +2855,9 @@ void drawAlignCorrectionsScreen()
 {
     CURRENT_SCREEN = 11;
 
+    // Load in Alignment Stars
+    LOAD_SELECTOR = 1;
+
     tft.fillScreen(BLACK);
     tft.setCursor(10, 10);
     tft.setTextColor(TITLE_TEXT, TITLE_TEXT_BG);
@@ -2927,7 +2930,7 @@ void drawStarSelectScreen()
     drawButton(10, 270, 100, 40, "< PREV", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
     drawButton(130, 270, 100, 40, "NEXT >", BTN_L_BORDER, 0, BTN_BLK_TEXT, 2);
 
-    drawLoadAlignStars();
+    drawLoadObjects();
 }
 
 void drawLoadAlignStars()
@@ -2937,8 +2940,6 @@ void drawLoadAlignStars()
         loadStarsFromSPIFFS("/alignment.csv");
         LOADED_OBJECTS = 1;
     }
-    // First ensure the old objects are gone
-    tft.fillRect(0, 90, 240, 170, BLACK);
 
     tft.setTextSize(2);
     tft.setTextColor(L_TEXT);
@@ -3160,7 +3161,7 @@ void drawCatalogueSummaryScreen()
     tft.setTextSize(3);
     tft.print(" CATALOGUE");
 
-    if (LOAD_SELECTOR == 0)
+    if (LOAD_SELECTOR == 1)
     {
         tft.setTextColor(L_TEXT);
         tft.setCursor(10, 40);
@@ -3173,7 +3174,7 @@ void drawCatalogueSummaryScreen()
         tft.setCursor(10, 70);
         tft.print("in the sky");
     }
-    else if (LOAD_SELECTOR == 1)
+    else if (LOAD_SELECTOR == 2)
     {
         tft.setTextColor(L_TEXT);
         tft.setCursor(10, 40);
@@ -3232,7 +3233,7 @@ void drawCatalogueSummaryScreen()
         tft.setCursor(210, 250);
         tft.print("1");
     }
-    else if (LOAD_SELECTOR == 2)
+    else if (LOAD_SELECTOR == 3)
     {
         tft.setTextColor(L_TEXT);
         tft.setCursor(10, 40);
@@ -3281,7 +3282,7 @@ void drawCatalogueSummaryScreen()
         tft.setCursor(210, 210);
         tft.print("2");
     }
-    else if (LOAD_SELECTOR == 3)
+    else if (LOAD_SELECTOR == 4)
     {
         tft.setTextColor(L_TEXT);
         tft.setCursor(10, 40);
@@ -3355,7 +3356,7 @@ void drawLoadObjects()
 {
     tft.fillRect(0, 90, 240, 170, BLACK);
     // Brightest Stars Screen
-    if (LOAD_SELECTOR == 0)
+    if (LOAD_SELECTOR == 1)
     {
         if (LOADED_OBJECTS != 1)
         {
@@ -3365,7 +3366,7 @@ void drawLoadObjects()
         drawLoadAlignStars();
     }
     /////// Messier Screen /////////////
-    else if (LOAD_SELECTOR == 1)
+    else if (LOAD_SELECTOR == 2)
     {
         if (LOADED_OBJECTS != 2)
         {
@@ -3394,7 +3395,7 @@ void drawLoadObjects()
         }
     }
     ///////     Caldwell Screen  /////////////
-    else if (LOAD_SELECTOR == 2)
+    else if (LOAD_SELECTOR == 3)
     {
         if (LOADED_OBJECTS != 3)
         {
@@ -3423,7 +3424,7 @@ void drawLoadObjects()
         }
     }
     ///////     Treasures Screen /////////////
-    else if (LOAD_SELECTOR == 3)
+    else if (LOAD_SELECTOR == 4)
     {
         if (LOADED_OBJECTS != 4)
         {
@@ -3805,6 +3806,7 @@ void considerTouchInput(int lx, int ly)
                 SUMMER_TIME = isSummerTime();
                 calculateLST();
                 delay(150);
+                // Load Alignment Stars
                 drawAlignCorrectionsScreen();
 #ifdef SERIAL_DEBUG
                 Serial.print("Date/Time: ");
@@ -4051,7 +4053,7 @@ void considerTouchInput(int lx, int ly)
                 // BTN next> pressed
                 LAST_BUTTON = 1;
                 drawButton(130, 270, 100, 40, "NEXT >", 0, BTN_L_BORDER, L_TEXT, 2);
-                if (LOAD_SELECTOR == 0)
+                if (LOAD_SELECTOR == 1)
                 {
                     STARS_PAGER += 1;
                     if (STARS_PAGER >= 10)
@@ -4059,7 +4061,7 @@ void considerTouchInput(int lx, int ly)
                         STARS_PAGER = 9;
                     }
                 }
-                else if (LOAD_SELECTOR == 1)
+                else if (LOAD_SELECTOR == 2)
                 {
                     MESS_PAGER += 1;
                     if (MESS_PAGER >= 10)
@@ -4067,7 +4069,7 @@ void considerTouchInput(int lx, int ly)
                         MESS_PAGER = 9;
                     }
                 }
-                else if (LOAD_SELECTOR == 2)
+                else if (LOAD_SELECTOR == 3)
                 {
                     CALD_PAGER += 1;
                     if (CALD_PAGER >= 10)
@@ -4075,7 +4077,7 @@ void considerTouchInput(int lx, int ly)
                         CALD_PAGER = 9;
                     }
                 }
-                else if (LOAD_SELECTOR == 3)
+                else if (LOAD_SELECTOR == 4)
                 {
                     TREAS_PAGER += 1;
                     if (TREAS_PAGER >= 11)
@@ -4091,17 +4093,15 @@ void considerTouchInput(int lx, int ly)
                 // BTN <prev pressed
                 LAST_BUTTON = 2;
                 drawButton(10, 270, 100, 40, "< PREV", 0, BTN_L_BORDER, L_TEXT, 2);
-                if (LOAD_SELECTOR == 0)
+                if (LOAD_SELECTOR == 1)
                 {
                     STARS_PAGER -= 1;
                     if (STARS_PAGER < 0)
                     {
                         STARS_PAGER = 0;
                     }
-                    delay(150);
-                    drawLoadAlignStars();
                 }
-                else if (LOAD_SELECTOR == 1)
+                else if (LOAD_SELECTOR == 2)
                 {
                     MESS_PAGER -= 1;
                     if (MESS_PAGER < 0)
@@ -4109,7 +4109,7 @@ void considerTouchInput(int lx, int ly)
                         MESS_PAGER = 0;
                     }
                 }
-                else if (LOAD_SELECTOR == 2)
+                else if (LOAD_SELECTOR == 3)
                 {
                     CALD_PAGER -= 1;
                     if (CALD_PAGER < 0)
@@ -4117,7 +4117,7 @@ void considerTouchInput(int lx, int ly)
                         CALD_PAGER = 0;
                     }
                 }
-                else if (LOAD_SELECTOR == 3)
+                else if (LOAD_SELECTOR == 4)
                 {
                     TREAS_PAGER -= 1;
                     if (TREAS_PAGER < 0)
@@ -4129,7 +4129,7 @@ void considerTouchInput(int lx, int ly)
                 drawLoadObjects();
             }
             ///////     Bright Star Screen /////////////
-            if (LOAD_SELECTOR == 0)
+            if (LOAD_SELECTOR == 1)
             {
                 if (LOADED_OBJECTS != 1)
                 {
@@ -4176,7 +4176,7 @@ void considerTouchInput(int lx, int ly)
                 }
             }
             ///////     Messier Screen /////////////
-            else if (LOAD_SELECTOR == 1)
+            else if (LOAD_SELECTOR == 2)
             {
                 if (LOADED_OBJECTS != 2)
                 {
@@ -4203,7 +4203,7 @@ void considerTouchInput(int lx, int ly)
                 }
             }
             ///////     Caldwell Screen /////////////
-            else if (LOAD_SELECTOR == 2)
+            else if (LOAD_SELECTOR == 3)
             {
                 if (LOADED_OBJECTS != 3)
                 {
@@ -4230,7 +4230,7 @@ void considerTouchInput(int lx, int ly)
                 }
             }
             ///////     Treasures Screen /////////////
-            else if (LOAD_SELECTOR == 3)
+            else if (LOAD_SELECTOR == 4)
             {
                 // I'm in TREASURES selector and need to check which Treasure object is pressed
                 if (LOADED_OBJECTS != 4)
@@ -4269,28 +4269,28 @@ void considerTouchInput(int lx, int ly)
             }
             if (lx > 20 && lx < 220 && ly > 50 && ly < 90)
             {
-                LOAD_SELECTOR = 1;
+                LOAD_SELECTOR = 2;
                 drawButton(20, 50, 200, 40, "MESSIER", 0, BTN_L_BORDER, L_TEXT, 2);
                 delay(150);
                 drawCatalogueSummaryScreen();
             }
             else if (lx > 20 && lx < 220 && ly > 110 && ly < 150)
             {
-                LOAD_SELECTOR = 2;
+                LOAD_SELECTOR = 3;
                 drawButton(20, 110, 200, 40, "CALDWELL", 0, BTN_L_BORDER, L_TEXT, 2);
                 delay(150);
                 drawCatalogueSummaryScreen();
             }
             else if (lx > 20 && lx < 220 && ly > 170 && ly < 210)
             {
-                LOAD_SELECTOR = 3;
+                LOAD_SELECTOR = 4;
                 drawButton(20, 170, 200, 40, "TREASURES", 0, BTN_L_BORDER, L_TEXT, 2);
                 delay(150);
                 drawCatalogueSummaryScreen();
             }
             else if (lx > 20 && lx < 220 && ly > 230 && ly < 270)
             {
-                LOAD_SELECTOR = 0;
+                LOAD_SELECTOR = 1;
                 drawButton(20, 230, 200, 40, "BRIGHT STARS", 0, BTN_L_BORDER, L_TEXT, 2);
                 delay(150);
                 drawCatalogueSummaryScreen();
@@ -4406,7 +4406,7 @@ void considerTouchInput(int lx, int ly)
                     STARS_PAGER = 9;
                 }
                 delay(150);
-                drawLoadAlignStars();
+                drawLoadObjects();
             }
             if (lx > 10 && lx < 110 && ly > 270 && ly < 310)
             {
@@ -4419,7 +4419,7 @@ void considerTouchInput(int lx, int ly)
                     STARS_PAGER = 0;
                 }
                 delay(150);
-                drawLoadAlignStars();
+                drawLoadObjects();
             }
             tft.setTextColor(L_TEXT);
             tft.setTextSize(1);
@@ -5052,7 +5052,7 @@ void setup(void)
     ALT_MULTIPLIER = ONE_REV / (float)STEPS_IN_FULL_CIRCLE;
     AZ_MULTIPLIER = ONE_REV / (float)STEPS_IN_FULL_CIRCLE;
 
-    LOAD_SELECTOR = 1; // Load Messier by default
+    LOAD_SELECTOR = 1; // Load Alignment Stars by default
 
     L_TEXT = RED;
     D_TEXT = MAROON;
