@@ -212,6 +212,8 @@ struct Object
     struct ln_equ_posn equPos;
     struct ln_equ_posn propMotion;
     struct ln_hrz_posn hrzPos;
+    struct ln_rst_time rstTime;
+    struct ln_zonedate rise, set;
 
     String name;
     String type;
@@ -219,17 +221,7 @@ struct Object
     String description;
     String size;
     String mag;
-};
-
-struct AlignmentStar
-{
-    struct ln_equ_posn equPos;
-    struct ln_equ_posn propMotion;
-    struct ln_hrz_posn hrzPos;
-
-    String name;
-    String constellation;
-    String mag;
+    String riseSetStr;
 };
 //
 
@@ -284,8 +276,8 @@ boolean IS_IN_OPERATION = false; // This variable becomes True when Main screen 
 float OBSERVATION_LONGITUDE = -0.01365997; // (-0.01365997* - Home)
 float OBSERVATION_LATTITUDE = 51.18078754; // (51.18078754* - Home)
 float OBSERVATION_ALTITUDE = 52.00;        // Lingfield, UK
-double ATMO_PRESS = 1010; // Default 1010 mBar atmospheric pressure
-double ATMO_TEMP = 10;    // Default 10C air temperature
+double ATMO_PRESS = 1010;                  // Default 1010 mBar atmospheric pressure
+double ATMO_TEMP = 10;                     // Default 10C air temperature
 
 unsigned int AZ_STEPS, ALT_STEPS; // Current position of the decoders in Steps! - when movement occures, values are changed accordingly
 
@@ -317,8 +309,8 @@ int BT_COMMAND_STR;
 boolean BT_PRECISION = true;
 
 Scope SCOPE;
-AlignmentStar CURRENT_ALIGN_STAR;
-AlignmentStar ALIGNMENT_STARS[3];
+Object CURRENT_ALIGN_STAR;
+Object ALIGNMENT_STARS[3];
 Object CURRENT_OBJECT;
 
 RtcDateTime NOW;
@@ -504,8 +496,8 @@ String deg2dms(double deg, boolean highPrecision, boolean asAzimuth)
     struct ln_dms lnDMS;
     ln_deg_to_dms(deg, &lnDMS);
     String sign = "";
-    
-    if (!asAzimuth) 
+
+    if (!asAzimuth)
     {
         sign = "+";
         if (lnDMS.neg == 1)
@@ -538,7 +530,7 @@ void getLocalDate(double jd, struct ln_zonedate *zonedate)
     int timeZone = round(SCOPE.lnLatPos.lng * 4.0 / 60.0);
 
     gmtoff += (timeZone * 3600);
-    
+
     if (SUMMER_TIME)
         gmtoff += 3600;
 
@@ -610,7 +602,7 @@ void calculateLST()
     SCOPE.JD = ln_get_julian_day(&SCOPE.date);
     SCOPE.GMST = ln_get_mean_sidereal_time(SCOPE.JD);
     SCOPE.GAST = ln_get_apparent_sidereal_time(SCOPE.JD);
-    SCOPE.LST = SCOPE.GAST + (SCOPE.lnLatPos.lng / 15.0);   // Convert Longitude degrees to hours
+    SCOPE.LST = SCOPE.GAST + (SCOPE.lnLatPos.lng / 15.0); // Convert Longitude degrees to hours
 #ifdef SERIAL_DEBUG
     Serial.print("calculateLST() - TIME: ");
     Serial.printf("%i/%i/%i - %i:%i:%2.0f", SCOPE.date.years, SCOPE.date.months, SCOPE.date.days, SCOPE.date.hours, SCOPE.date.minutes, SCOPE.date.seconds);
@@ -651,10 +643,10 @@ double convertSecondaryAxis(double fromPri, double fromSec, double lat)
 void getAltAzTrig(struct ln_equ_posn *object, struct ln_lnlat_posn *observer, double sidereal, struct ln_hrz_posn *position)
 {
     long double ra, dec, ha, absLat, lat, lng, alt, az;
-    
+
     // Change sidereal from hours to radians
     sidereal *= HOUR_TO_RAD;
-    
+
     lat = ln_deg_to_rad(observer->lat);
     lng = ln_deg_to_rad(observer->lng);
     absLat = fabs(lat);
@@ -939,10 +931,10 @@ void loadGPSFromSPIFFS()
     File dataFile = SPIFFS.open("/GPSData", "r");
     if (dataFile)
     {
-        #ifdef SERIAL_DEBUG
-            Serial.print("Read GPS data from file...");
-            Serial.println("");
-        #endif
+#ifdef SERIAL_DEBUG
+        Serial.print("Read GPS data from file...");
+        Serial.println("");
+#endif
         while (dataFile.available())
         {
             in_char = dataFile.read();
@@ -952,34 +944,34 @@ void loadGPSFromSPIFFS()
                 if (i == 0)
                 {
                     OBSERVATION_LATTITUDE = items.toFloat();
-                    #ifdef SERIAL_DEBUG
-                        Serial.print("Lat: ");
-                        Serial.print(OBSERVATION_LATTITUDE);
-                    #endif
-                } 
+#ifdef SERIAL_DEBUG
+                    Serial.print("Lat: ");
+                    Serial.print(OBSERVATION_LATTITUDE);
+#endif
+                }
                 else if (i == 1)
                 {
                     OBSERVATION_LONGITUDE = items.toFloat();
-                    #ifdef SERIAL_DEBUG
-                        Serial.print(" Lon: ");
-                        Serial.print(OBSERVATION_LONGITUDE);
-                    #endif
+#ifdef SERIAL_DEBUG
+                    Serial.print(" Lon: ");
+                    Serial.print(OBSERVATION_LONGITUDE);
+#endif
                 }
                 else if (i == 2)
                 {
                     OBSERVATION_ALTITUDE = items.toFloat();
-                    #ifdef SERIAL_DEBUG
-                        Serial.print(" Alt: ");
-                        Serial.print(OBSERVATION_ALTITUDE);
-                    #endif
+#ifdef SERIAL_DEBUG
+                    Serial.print(" Alt: ");
+                    Serial.print(OBSERVATION_ALTITUDE);
+#endif
                 }
                 i += 1;
                 items = "";
             }
         }
-        #ifdef SERIAL_DEBUG
-            Serial.println("");
-        #endif
+#ifdef SERIAL_DEBUG
+        Serial.println("");
+#endif
     }
 }
 
@@ -1004,8 +996,7 @@ void loadStarsFromSPIFFS(String filename)
 {
     char in_char;
     String items = "";
-    int j = 0;
-    int k = 0;
+    int j = 0, k = 0;
     File dataFile = SPIFFS.open(filename);
     if (dataFile)
     {
@@ -1019,12 +1010,21 @@ void loadStarsFromSPIFFS(String filename)
         {
             in_char = dataFile.read();
             items += in_char;
-            k += 1;
             if (in_char == '\n')
             {
-                OBJECTS[j] = items;
-                j += 1;
-                items = "";
+                // Skip Header Row
+                if (k == 0)
+                {
+                    k++;
+                    items = "";
+                }
+                else
+                {
+                    k++;
+                    OBJECTS[j] = items;
+                    j++;
+                    items = "";
+                } 
             }
         }
     }
@@ -1125,34 +1125,54 @@ void autoSelectAlignmentStars()
     }
 }
 
-void processAlignmentStar(int index, AlignmentStar &star)
+void processAlignmentStar(int index, Object &star)
 {
     int i1 = OBJECTS[index].indexOf(',');
     int i2 = OBJECTS[index].indexOf(',', i1 + 1);
     int i3 = OBJECTS[index].indexOf(',', i2 + 1);
     int i4 = OBJECTS[index].indexOf(',', i3 + 1);
+    int i5 = OBJECTS[index].indexOf(',', i4 + 1);
+    int i6 = OBJECTS[index].indexOf(',', i5 + 1);
+    int i7 = OBJECTS[index].indexOf(',', i6 + 1);
+    int i8 = OBJECTS[index].indexOf(',', i7 + 1);
+    int i9 = OBJECTS[index].indexOf(',', i8 + 1);
 
-    String starName = OBJECTS[index].substring(0, i1);
-    String ra = OBJECTS[index].substring(i1, i2);
-    String dec = OBJECTS[index].substring(i2, i3);
-    String starConst = OBJECTS[index].substring(i3 + 1, i4);
-    String starMag = OBJECTS[index].substring(i4 + 1, OBJECTS[index].length() - 1);
+    star.name = OBJECTS[index].substring(0, i1);
 
-    unsigned short ra_h = ra.substring(1, ra.indexOf('h')).toFloat();
+    String ra = OBJECTS[index].substring(i1 + 1, i2);
+    String dec = OBJECTS[index].substring(i2 + 1, i3);
+
+    star.constellation = OBJECTS[index].substring(i3 + 1, i4);
+    star.type = OBJECTS[index].substring(i4 + 1, i5);
+    star.mag = OBJECTS[index].substring(i5 + 1, i6);
+    star.size = OBJECTS[index].substring(i6 + 1, i7);
+    star.description = OBJECTS[index].substring(i7 + 1, i8);
+
+    String pmRa = OBJECTS[index].substring(i8 + 1, i9);
+    String pmDec = OBJECTS[index].substring(i9 + 1, OBJECTS[index].length() - 1);
+
+    char pmRaSign = pmRa[0];
+    char pmDecSign = pmDec[0];
+    long double pmRaDeg = pmRa.substring(1, pmRa.length() - 1).toFloat();
+    long double pmDecDeg = pmDec.substring(1, pmDec.length() - 1).toFloat();
+    pmRaSign == '+' ? pmRaDeg *= 1.0 : pmRaDeg *= -1.0;
+    pmDecSign == '+' ? pmDecDeg *= 1.0 : pmDecDeg *= -1.0;
+    pmRaDeg /= 1000.0;
+    pmDecDeg /= 1000.0;
+
+    star.propMotion.ra = pmRaDeg;
+    star.propMotion.dec = pmDecDeg;
+
+    unsigned short ra_h = ra.substring(0, ra.indexOf('h')).toFloat();
     unsigned short ra_m = ra.substring(ra.indexOf('h') + 1, ra.indexOf('m')).toFloat();
     unsigned short ra_s = ra.substring(ra.indexOf('m') + 1, ra.length()).toFloat();
 
-    char sign = dec[1];
-    unsigned short dec_d = dec.substring(2, dec.indexOf('°')).toFloat();
+    char sign = dec[0];
+    unsigned short dec_d = dec.substring(1, dec.indexOf('°')).toFloat();
     unsigned short dec_m = dec.substring(dec.indexOf('°') + 1, dec.indexOf('\'')).toFloat();
     unsigned short dec_s = dec.substring(dec.indexOf('\'') + 1, dec.length()).toFloat();
 
-    star.name = starName;
-    star.constellation = starConst;
-    star.mag = starMag;
-
     unsigned short dec_neg = (sign == '+' ? 0 : 1);
-
     struct lnh_equ_posn hEquPos;
 
     hEquPos.ra.hours = ra_h;
@@ -1162,51 +1182,55 @@ void processAlignmentStar(int index, AlignmentStar &star)
     hEquPos.dec.degrees = dec_d;
     hEquPos.dec.minutes = dec_m;
     hEquPos.dec.seconds = dec_s;
+
     ln_hequ_to_equ(&hEquPos, &star.equPos);
 
 #ifdef SERIAL_DEBUG
     Serial.print("processAlignmentStar() ");
     Serial.print(star.name);
-    Serial.print(" - MAG: ");
-    Serial.print(starMag);
-    Serial.print(" RA_H: ");
-    Serial.print(ra_h);
-    Serial.print(" RA_M: ");
-    Serial.print(ra_m);
-    Serial.print(" RA_S: ");
-    Serial.print(ra_s);
-    Serial.print(" DEC_SIGN: ");
-    Serial.print(sign);
-    Serial.print(" DEC_D: ");
-    Serial.print(dec_d);
-    Serial.print(" DEC_M: ");
-    Serial.print(dec_m);
-    Serial.print(" DEC_S: ");
-    Serial.print(dec_s);
-    Serial.println("");
     Serial.print(" RA: ");
     Serial.print(deg2hms(star.equPos.ra, true, true));
     Serial.print(" DEC: ");
     Serial.print(deg2dms(star.equPos.dec, true, false));
     Serial.println("");
 #endif
+
     // Correct for astronomical proper motion, aberration, precession and nutation
     if (CORRECT_PRECESSION_ETC)
     {
         ln_get_apparent_posn(&star.equPos, &star.propMotion, SCOPE.JD, &star.equPos);
-    }
 #ifdef SERIAL_DEBUG
-    Serial.print("Added Corrections - RA: ");
-    Serial.print(deg2hms(star.equPos.ra, true, true));
-    Serial.print(" DEC: ");
-    Serial.print(deg2dms(star.equPos.dec, true, false));
-    Serial.println("");
+        Serial.print("Added Corrections - RA: ");
+        Serial.print(deg2hms(star.equPos.ra, true, true));
+        Serial.print(" DEC: ");
+        Serial.print(deg2dms(star.equPos.dec, true, false));
+        Serial.println("");
 #endif
-    // ln_get_hrz_from_equ(&star.equPos, &SCOPE.lnLatPos, SCOPE.JD, &star.hrzPos);
-    getAltAzTrig(&star.equPos, &SCOPE.lnLatPos, SCOPE.LST, &star.hrzPos);
-    // double azTmp = ln_deg_to_rad(star.hrzPos.az);
-    // azTmp = reverseRev(validRev(azTmp));
-    // star.hrzPos.az = ln_rad_to_deg(azTmp);
+    }
+
+    // Calculate Rise/Set times
+    int rstStatus = ln_get_object_rst(SCOPE.JD, &SCOPE.lnLatPos, &star.equPos, &star.rstTime);
+    if (rstStatus == 0)
+    {
+        getLocalDate(star.rstTime.rise, &star.rise);
+        getLocalDate(star.rstTime.set, &star.set);
+        star.riseSetStr = "RISE: " + getTimeString(star.rise);
+        star.riseSetStr += "       SET: " + getTimeString(star.set);
+    }
+    else if (rstStatus == 1)
+    {
+        star.riseSetStr = "ALWAYS VISIBLE";
+    }
+    else
+    {
+        star.riseSetStr = "ALWAYS BELOW HORIZON";
+    }
+
+    ln_get_hrz_from_equ(&star.equPos, &SCOPE.lnLatPos, SCOPE.JD, &star.hrzPos);
+    // getAltAzTrig(&star.equPos, &SCOPE.lnLatPos, SCOPE.LST, &star.hrzPos);
+    double azTmp = ln_deg_to_rad(star.hrzPos.az);
+    azTmp = validRev(azTmp + HALF_REV);
+    star.hrzPos.az = ln_rad_to_deg(azTmp);
 }
 
 void processObject(int index, Object &object)
@@ -1219,28 +1243,27 @@ void processObject(int index, Object &object)
     int i6 = OBJECTS[index].indexOf(',', i5 + 1);
     int i7 = OBJECTS[index].indexOf(',', i6 + 1);
 
-    String objName = OBJECTS[index].substring(0, i1);
-    String ra = OBJECTS[index].substring(i1, i2);
-    String dec = OBJECTS[index].substring(i2, i3);
+    object.name = OBJECTS[index].substring(0, i1);
 
-    unsigned short ra_h = ra.substring(1, ra.indexOf('h')).toFloat();
-    unsigned short ra_m = ra.substring(ra.indexOf('h') + 1, ra.indexOf('m')).toFloat();
-    unsigned short ra_s = ra.substring(ra.indexOf('m') + 1, ra.length()).toFloat();
+    String ra = OBJECTS[index].substring(i1 + 1, i2);
+    String dec = OBJECTS[index].substring(i2 + 1, i3);
 
-    char sign = dec[1];
-    unsigned short dec_d = dec.substring(2, dec.indexOf('°')).toFloat();
-    unsigned short dec_m = dec.substring(dec.indexOf('°') + 1, dec.indexOf('\'')).toFloat();
-    unsigned short dec_s = dec.substring(dec.indexOf('\'') + 1, dec.length()).toFloat();
-
-    object.name = objName;
     object.constellation = OBJECTS[index].substring(i3 + 1, i4);
     object.type = OBJECTS[index].substring(i4 + 1, i5);
     object.mag = OBJECTS[index].substring(i5 + 1, i6);
     object.size = OBJECTS[index].substring(i6 + 1, i7);
     object.description = OBJECTS[index].substring(i7 + 1, OBJECTS[index].length() - 1);
 
-    unsigned short dec_neg = (sign == '+' ? 0 : 1);
+    unsigned short ra_h = ra.substring(0, ra.indexOf('h')).toFloat();
+    unsigned short ra_m = ra.substring(ra.indexOf('h') + 1, ra.indexOf('m')).toFloat();
+    unsigned short ra_s = ra.substring(ra.indexOf('m') + 1, ra.length()).toFloat();
 
+    char sign = dec[0];
+    unsigned short dec_d = dec.substring(1, dec.indexOf('°')).toFloat();
+    unsigned short dec_m = dec.substring(dec.indexOf('°') + 1, dec.indexOf('\'')).toFloat();
+    unsigned short dec_s = dec.substring(dec.indexOf('\'') + 1, dec.length()).toFloat();
+
+    unsigned short dec_neg = (sign == '+' ? 0 : 1);
     struct lnh_equ_posn hEquPos;
 
     hEquPos.ra.hours = ra_h;
@@ -1250,7 +1273,7 @@ void processObject(int index, Object &object)
     hEquPos.dec.degrees = dec_d;
     hEquPos.dec.minutes = dec_m;
     hEquPos.dec.seconds = dec_s;
-    
+
     ln_hequ_to_equ(&hEquPos, &object.equPos);
 
 #ifdef SERIAL_DEBUG
@@ -1266,14 +1289,32 @@ void processObject(int index, Object &object)
     if (CORRECT_PRECESSION_ETC)
     {
         ln_get_apparent_posn(&object.equPos, &object.propMotion, SCOPE.JD, &object.equPos);
-    }
 #ifdef SERIAL_DEBUG
-    Serial.print("Added Corrections - RA: ");
-    Serial.print(deg2hms(object.equPos.ra, true, true));
-    Serial.print(" DEC: ");
-    Serial.print(deg2dms(object.equPos.dec, true, false));
-    Serial.println("");
+        Serial.print("Added Corrections - RA: ");
+        Serial.print(deg2hms(object.equPos.ra, true, true));
+        Serial.print(" DEC: ");
+        Serial.print(deg2dms(object.equPos.dec, true, false));
+        Serial.println("");
 #endif
+    }
+
+    // Calculate Rise/Set times
+    int rstStatus = ln_get_object_rst(SCOPE.JD, &SCOPE.lnLatPos, &object.equPos, &object.rstTime);
+    if (rstStatus == 0)
+    {
+        getLocalDate(object.rstTime.rise, &object.rise);
+        getLocalDate(object.rstTime.set, &object.set);
+        object.riseSetStr = "RISE: " + getTimeString(object.rise);
+        object.riseSetStr += "       SET: " + getTimeString(object.set);
+    }
+    else if (rstStatus == 1)
+    {
+        object.riseSetStr = "ALWAYS VISIBLE";
+    }
+    else
+    {
+        object.riseSetStr = "ALWAYS BELOW HORIZON";
+    }
 }
 
 void zeroArrays()
@@ -1423,7 +1464,7 @@ void equatorialToScope(struct ln_equ_posn *pos, struct ln_lnlat_posn *obs, doubl
     hor->az = ln_rad_to_deg(reverseRev(validRev(az)));
 }
 
-void addStar(int starNum, int totalAlignStars, double JD, struct ln_lnlat_posn *obs, AlignmentStar *star)
+void addStar(int starNum, int totalAlignStars, double JD, struct ln_lnlat_posn *obs, Object *star)
 {
     long double ha, ra, dec, az, alt;
     double sidereal = ln_get_mean_sidereal_time(JD);
@@ -1783,11 +1824,11 @@ void calcScopeOffsets(struct ln_equ_posn *equat, struct ln_hrz_posn *horiz, long
     equatorialToScope(&equPole, &SCOPE.lnLatPos, SCOPE.JD, &hrzOffset);
     (*azOffset) = ln_rad_to_deg(validHalfRev(ln_deg_to_rad(hrzOffset.az)));
 
-    // Next calculate the telescope's offset from AltAz Pole 
+    // Next calculate the telescope's offset from AltAz Pole
     hrzPole.alt = 90 - ln_rad_to_deg(Z3_ERR);
     hrzPole.az = 0;
     scopeToEquatorial(&hrzPole, &SCOPE.lnLatPos, SCOPE.JD, &equOffset);
-    (*raOffset) = ln_rad_to_deg(validHalfRev(ln_deg_to_rad(equOffset.ra))); 
+    (*raOffset) = ln_rad_to_deg(validHalfRev(ln_deg_to_rad(equOffset.ra)));
 }
 
 // BEST Z1/Z2
@@ -1821,7 +1862,7 @@ void bestZ12(int n, double range, double resolution)
             {
                 double alt1 = ALIGNMENT_STARS[i].hrzPos.alt;
                 double az1 = ALIGNMENT_STARS[i].hrzPos.az + azOffset;
-                
+
 #ifdef DEBUG_MOUNT_ERRS
                 // Add an error to the altitude to help debug mount error routines
                 az1 += ln_deg_to_rad(3.5);
@@ -1865,7 +1906,7 @@ void bestZ12(int n, double range, double resolution)
 #endif
 }
 
-double calcAngSepHaversine(AlignmentStar *a, AlignmentStar *z, boolean equatorial)
+double calcAngSepHaversine(Object *a, Object *z, boolean equatorial)
 {
     double aAlt = ln_deg_to_rad(a->hrzPos.alt);
     double zAlt = ln_deg_to_rad(z->hrzPos.alt);
@@ -1882,12 +1923,12 @@ double calcAngSepHaversine(AlignmentStar *a, AlignmentStar *z, boolean equatoria
         return (2 * asin(sqrt(hav(zAlt - aAlt) + cos(aAlt) * cos(zAlt) * hav(zAz - aAz))));
 }
 
-double calcAngSepDiff(AlignmentStar *a, AlignmentStar *z)
+double calcAngSepDiff(Object *a, Object *z)
 {
     return fabs(fabs(calcAngSepHaversine(a, z, true)) - fabs(calcAngSepHaversine(a, z, false)));
 }
 
-double calcAltOffsetDirectly(AlignmentStar &a, AlignmentStar &z)
+double calcAltOffsetDirectly(Object &a, Object &z)
 {
     double altOffset;
     double aAlt = ln_deg_to_rad(a.hrzPos.alt);
@@ -1915,7 +1956,7 @@ double calcAltOffsetDirectly(AlignmentStar &a, AlignmentStar &z)
     return altOffset;
 }
 
-double calcAltOffsetIteratively(AlignmentStar &a, AlignmentStar &z)
+double calcAltOffsetIteratively(Object &a, Object &z)
 {
     double aAlt, zAlt, diff, lastDiff, bestDiff;
     int searchRangeDeg = 45;
@@ -1978,7 +2019,7 @@ double calcAltOffsetIteratively(AlignmentStar &a, AlignmentStar &z)
     return bestAltOff;
 }
 
-double getAltOffset(AlignmentStar &a, AlignmentStar &z)
+double getAltOffset(Object &a, Object &z)
 {
     try
     {
@@ -2215,18 +2256,22 @@ void getPlanetPosition(int planetNum, Object &planet)
     planet.name = name;
     planet.description = "DIST: " + String(dist, 2) + " AU";
     planet.mag = String(mag, 2);
-    planet.size = String(size * 2.0, 2) + '"';  // Multiply semidiameter by 2.0 to get apparent diameter/size
+    planet.size = String(size * 2.0, 2) + '"'; // Multiply semidiameter by 2.0 to get apparent diameter/size
     planet.type = "ILUM: " + String(illum * 100.0, 2) + '%';
     if (rstStatus == 0)
     {
         getLocalDate(rst.rise, &rise);
         getLocalDate(rst.set, &set);
         planet.constellation = "RISE: " + getTimeString(rise);
-        planet.constellation += "       SET:" + getTimeString(set);
+        planet.constellation += "       SET: " + getTimeString(set);
+    }
+    else if (rstStatus == 1)
+    {
+        planet.constellation = "ALWAYS VISIBLE";
     }
     else
     {
-        planet.constellation = "BELOW HORIZON";
+        planet.constellation = "ALWAYS BELOW HORIZON";
     }
     // Correct for astronomical proper motion, aberration, precession and nutation
     if (CORRECT_PRECESSION_ETC)
@@ -2713,7 +2758,7 @@ void drawClockScreen()
     tft.setTextColor(TITLE_TEXT, TITLE_TEXT_BG);
     tft.setTextSize(3);
     tft.print(" GMT/UTC");
-    
+
     tft.setTextSize(2);
     tft.setTextColor(L_TEXT);
     tft.setCursor(70, 50);
@@ -2933,22 +2978,24 @@ void drawMainScreen()
             tft.print(CURRENT_OBJECT.description);
         }
 
+        tft.setTextSize(1);
+        tft.setTextColor(L_TEXT);
+        tft.setCursor(10, 175);
+        tft.print(CURRENT_OBJECT.constellation);
+        tft.setCursor(10, 185);
+        tft.print(CURRENT_OBJECT.type);
+
         if (CURRENT_OBJECT.hrzPos.alt < 0)
         {
-            tft.setTextSize(2);
-            tft.setCursor(10, 185);
+            tft.setTextSize(1);
             tft.setTextColor(TITLE_TEXT, TITLE_TEXT_BG);
+            tft.setCursor(10, 195);
             tft.println("OBJECT NOT VISIBLE!");
-            tft.setTextColor(L_TEXT);
         }
         else
         {
             tft.setTextSize(1);
-            tft.setCursor(10, 175);
             tft.setTextColor(L_TEXT);
-            tft.print(CURRENT_OBJECT.constellation);
-            tft.setCursor(10, 185);
-            tft.print(CURRENT_OBJECT.type);
             tft.setCursor(10, 195);
             tft.print("MAG:  ");
             tft.print(CURRENT_OBJECT.mag);
@@ -3303,64 +3350,49 @@ void drawObjectSummaryScreen()
         tft.setCursor(10, 50);
         tft.setTextColor(L_TEXT);
         tft.print(CURRENT_OBJECT.name);
-        tft.setCursor(10, 70);
-        if (CURRENT_OBJECT.description.length() > 19)
-        {
-            tft.print(CURRENT_OBJECT.description.substring(0, 19));
-            tft.setCursor(10, 90);
-            tft.print("-" + CURRENT_OBJECT.description.substring(19, CURRENT_OBJECT.description.length() - 1));
-        }
-        else
-        {
-            tft.print(CURRENT_OBJECT.description);
-        }
 
+        tft.setTextSize(1);
+        tft.setCursor(10, 70);
+        tft.print(CURRENT_OBJECT.description);
+
+        tft.setCursor(10, 90);
         if (CURRENT_OBJECT.hrzPos.alt < 0)
         {
-            tft.setTextSize(2);
-            tft.setCursor(10, 110);
+            
             tft.setTextColor(TITLE_TEXT, TITLE_TEXT_BG);
             tft.println("OBJECT NOT VISIBLE!");
             tft.setTextColor(L_TEXT);
         }
         else
         {
-            tft.setTextSize(2);
-            tft.setCursor(10, 110);
-            tft.setTextColor(L_TEXT);
             tft.print(CURRENT_OBJECT.constellation);
         }
-        tft.setCursor(10, 130);
+        tft.setCursor(10, 110);
         tft.print(CURRENT_OBJECT.type);
+        tft.setCursor(10, 130);
+        tft.print("MAG: " + CURRENT_OBJECT.mag);
+        tft.setCursor(120, 130);
+        tft.print("SIZE: " + CURRENT_OBJECT.size);
         tft.setCursor(10, 150);
-        tft.print("MAG: ");
-        tft.setCursor(70, 150);
-        tft.print(CURRENT_OBJECT.mag);
-        tft.setCursor(10, 170);
-        tft.print("SIZE: ");
-        tft.setCursor(70, 170);
-        tft.print(CURRENT_OBJECT.size);
-        
+        tft.print(CURRENT_OBJECT.riseSetStr);
 
         tft.setTextSize(2);
-        tft.setTextColor(L_TEXT);
-
-        tft.setCursor(10, 190);
+        tft.setCursor(10, 170);
         tft.print("AZ: ");
-        tft.setCursor(70, 190);
+        tft.setCursor(70, 170);
         tft.print(deg2dms(CURRENT_OBJECT.hrzPos.az, true, true));
-        tft.setCursor(10, 210);
+        tft.setCursor(10, 190);
         tft.print("ALT: ");
-        tft.setCursor(70, 210);
+        tft.setCursor(70, 190);
         tft.print(deg2dms(CURRENT_OBJECT.hrzPos.alt, true, false));
 
-        tft.setCursor(10, 230);
+        tft.setCursor(10, 210);
         tft.print("RA: ");
-        tft.setCursor(70, 230);
+        tft.setCursor(70, 210);
         tft.print(deg2hms(CURRENT_OBJECT.equPos.ra, true, true));
-        tft.setCursor(10, 250);
+        tft.setCursor(10, 230);
         tft.print("DEC: ");
-        tft.setCursor(70, 250);
+        tft.setCursor(70, 230);
         tft.print(deg2dms(CURRENT_OBJECT.equPos.dec, true, false));
     }
     else
@@ -3484,34 +3516,39 @@ void drawAlignScreen()
     tft.setTextSize(2);
     tft.setTextColor(L_TEXT);
     tft.setCursor(10, 50);
-    tft.print("Selected Star");
-
-    tft.setCursor(10, 70);
     tft.print(ALIGNMENT_STARS[starNum].name);
 
     tft.setTextSize(1);
+    tft.setCursor(10, 70);
+    tft.print(ALIGNMENT_STARS[starNum].description);
     tft.setCursor(10, 90);
-    tft.print("Constellation: " + ALIGNMENT_STARS[starNum].constellation);
-    tft.setCursor(10, 100);
-    tft.print("Magnitude: " + (String)ALIGNMENT_STARS[starNum].mag);
+    tft.print(ALIGNMENT_STARS[starNum].constellation);
+    tft.setCursor(10, 110);
+    tft.print(ALIGNMENT_STARS[starNum].type);
+    tft.setCursor(10, 130);
+    tft.print("MAG: " + ALIGNMENT_STARS[starNum].mag);
+    tft.setCursor(120, 130);
+    tft.print("DIST: " + ALIGNMENT_STARS[starNum].size);
+    tft.setCursor(10, 150);
+    tft.print(ALIGNMENT_STARS[starNum].riseSetStr);
 
     tft.setTextSize(2);
-    tft.setCursor(10, 120);
+    tft.setCursor(10, 170);
     tft.print("RA: ");
-    tft.setCursor(70, 120);
+    tft.setCursor(70, 170);
     tft.print(deg2hms(ALIGNMENT_STARS[starNum].equPos.ra, true, true));
-    tft.setCursor(10, 140);
+    tft.setCursor(10, 190);
     tft.print("DEC: ");
-    tft.setCursor(70, 140);
+    tft.setCursor(70, 190);
     tft.print(deg2dms(ALIGNMENT_STARS[starNum].equPos.dec, true, false));
 
-    tft.setCursor(10, 170);
+    tft.setCursor(10, 210);
     tft.print("AZ: ");
-    tft.setCursor(70, 170);
+    tft.setCursor(70, 210);
     tft.print(deg2dms(ALIGNMENT_STARS[starNum].hrzPos.az, true, true));
-    tft.setCursor(10, 190);
+    tft.setCursor(10, 230);
     tft.print("ALT: ");
-    tft.setCursor(70, 190);
+    tft.setCursor(70, 230);
     tft.print(deg2dms(ALIGNMENT_STARS[starNum].hrzPos.alt, true, false));
 
     if (ALIGN_TYPE == 2)
@@ -3739,7 +3776,7 @@ void considerTouchInput(int lx, int ly)
                     int yy = (W_DATE_TIME[4] * 1000) + (W_DATE_TIME[5] * 100) + (W_DATE_TIME[6] * 10) + W_DATE_TIME[7];
                     rtc.SetDateTime(RtcDateTime(yy, mo, dd, hh, mm, 00));
                 }
-                
+
                 NOW = rtc.GetDateTime();
                 setTime(NOW.Hour(), NOW.Minute(), NOW.Second(), NOW.Day(), NOW.Month(), NOW.Year());
                 SUMMER_TIME = isSummerTime();
@@ -4402,14 +4439,14 @@ void considerTouchInput(int lx, int ly)
                     double deltaAlt = ln_get_refraction_adj(CURRENT_ALIGN_STAR.hrzPos.alt, ATMO_PRESS, ATMO_TEMP);
                     CURRENT_ALIGN_STAR.hrzPos.alt -= deltaAlt;
 
-            #ifdef SERIAL_DEBUG
-            #ifdef DEBUG_REFRACTION
+#ifdef SERIAL_DEBUG
+#ifdef DEBUG_REFRACTION
                     Serial.print("calREFRACTIONFromApparent - ");
                     Serial.print(" Refract Amount(ARCMIN): ");
                     Serial.print(deltaAlt);
                     Serial.println("");
-            #endif
-            #endif
+#endif
+#endif
                 }
 
                 ALIGNMENT_STARS[starNum] = CURRENT_ALIGN_STAR;
