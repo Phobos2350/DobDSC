@@ -1829,89 +1829,92 @@ double getApparentAlt(double sinSec, double cosZ1, double cosZ2, double sinZ1, d
     return asin(v1);
 }
 
-void calcScopeOffsets(struct ln_equ_posn *equat, struct ln_hrz_posn *horiz, long double *azOffset, long double *raOffset)
+void calcScopeOffsets(struct ln_equ_posn *equat, struct ln_hrz_posn *horiz, long double *azOffset)
 {
     // Calculate the telescope's offset from Equatorial Pole and 'True' AltAz
-    struct ln_equ_posn equPole, equOffset;
-    struct ln_hrz_posn hrzPole, hrzOffset;
-    equPole.ra = 0.0;
-    // 90deg if North Hemisphere, -90 if Southern
-    equPole.dec = SCOPE.lnLatPos.lng < 0.0 ? 90.0 : -90.0;
-    equatorialToScope(&equPole, &SCOPE.lnLatPos, SCOPE.JD, &hrzOffset);
-    (*azOffset) = ln_rad_to_deg(validHalfRev(ln_deg_to_rad(hrzOffset.az)));
+    struct ln_equ_posn equPos;
+    struct ln_hrz_posn hrzPos;
 
-    // Next calculate the telescope's offset from AltAz Pole
-    hrzPole.alt = 90 - ln_rad_to_deg(Z3_ERR);
-    hrzPole.az = 0;
-    scopeToEquatorial(&hrzPole, &SCOPE.lnLatPos, SCOPE.JD, &equOffset);
-    (*raOffset) = ln_rad_to_deg(validHalfRev(ln_deg_to_rad(equOffset.ra)));
+    equPos.ra = 0.0;
+    // 90deg if North Hemisphere, -90 if Southern
+    equPos.dec = SCOPE.lnLatPos.lng < 0.0 ? 90.0 : -90.0;
+    equatorialToScope(&equPos, &SCOPE.lnLatPos, SCOPE.JD, &hrzPos);
+    (*azOffset) = ln_rad_to_deg(validHalfRev(ln_deg_to_rad(hrzPos.az)));
 }
 
 // BEST Z1/Z2
 // nRange to range is search area in radians
 // incr is increment +/- radians
-void bestZ12(int n, double range, double resolution)
+void bestZ12(int n)
 {
-    double z1Err, z2Err;
-    double bestZ1 = HALF_REV;
-    double bestZ2 = HALF_REV;
-    double bestPointingErrorRMS = HALF_REV;
+    double startZ1 = 0.0, startZ2 = 0.0;
+    double z12Range = 25200.0 * ARCSEC_TO_RAD;
+    double z12Resolution = 1800.0 * ARCSEC_TO_RAD;
+    double minResolution = 3.6 * ARCSEC_TO_RAD;
+    double bestZ1 = LONG_MAX;
+    double bestZ2 = LONG_MAX;
+    double bestPointingErrorRMS = LONG_MAX;
     double pointingErrorRMS, pointingErrorRMSTotal, altError, azError;
     pointingErrorRMSTotal = 0;
 
-    long double azOffset, raOffset;
-    calcScopeOffsets(&ALIGNMENT_STARS[0].equPos, &ALIGNMENT_STARS[1].hrzPos, &azOffset, &raOffset);
+    long double azOffset;
+    calcScopeOffsets(&ALIGNMENT_STARS[0].equPos, &ALIGNMENT_STARS[1].hrzPos, &azOffset);
 #ifdef SERIAL_DEBUG
     Serial.print("bestZ12 - ");
     Serial.print("azOffset: ");
     Serial.print((double)azOffset);
-    Serial.print(" haOffset:");
-    Serial.print((double)raOffset);
     Serial.println("");
 #endif
-    for (z1Err = 0; z1Err < range; z1Err += resolution)
-    {
-        for (z2Err = 0; z2Err < range; z2Err += resolution)
+    do {
+        for (Z1_ERR = startZ1; Z1_ERR < z12Range; Z1_ERR += z12Resolution)
         {
-            pointingErrorRMSTotal = 0;
-            for (int i = 0; i < n; i++)
+            for (Z2_ERR = startZ1; Z2_ERR < z12Range; Z2_ERR += z12Resolution)
             {
-                double alt1 = ALIGNMENT_STARS[i].hrzPos.alt;
-                double az1 = ALIGNMENT_STARS[i].hrzPos.az + azOffset;
+                pointingErrorRMSTotal = 0.0;
+                for (int i = 0; i < n; i++)
+                {
+                    double alt1 = ln_deg_to_rad(ALIGNMENT_STARS[i].hrzPos.alt);
+                    double az1 = ln_deg_to_rad(ALIGNMENT_STARS[i].hrzPos.az + azOffset);
 
-#ifdef DEBUG_MOUNT_ERRS
-                // Add an error to the altitude to help debug mount error routines
-                az1 += ln_deg_to_rad(3.5);
-                alt1 += ln_deg_to_rad(1.5);
-#endif
-                equatorialToScope(&ALIGNMENT_STARS[i].equPos, &SCOPE.lnLatPos, SCOPE.JD, &ALIGNMENT_STARS[i].hrzPos);
-                double alt2 = ALIGNMENT_STARS[i].hrzPos.alt;
-                double az2 = ALIGNMENT_STARS[i].hrzPos.az;
-                altError = alt1 - alt2;
-                azError = (az1 - az2) * cos(alt1);
-                pointingErrorRMS = sqrt(sq(altError) + sq(azError));
-                pointingErrorRMSTotal += pointingErrorRMS;
-            }
-            pointingErrorRMSTotal /= n;
-            if (pointingErrorRMSTotal < bestPointingErrorRMS - (1.0 / 3600.0))
-            {
-                bestPointingErrorRMS = pointingErrorRMSTotal;
-                bestZ1 = z1Err;
-                bestZ2 = z2Err;
-#ifdef SERIAL_DEBUG
-                Serial.print("new bestPointingErrorRMS: ");
-                Serial.print(bestPointingErrorRMS);
-                Serial.print(" Z1 Error: ");
-                Serial.print(bestZ1);
-                Serial.print(" Z2 Error: ");
-                Serial.print(bestZ2);
-                Serial.println("");
-#endif
+    #ifdef DEBUG_MOUNT_ERRS
+                    // Add an error to the altitude to help debug mount error routines
+                    az1 += ln_deg_to_rad(3.5);
+                    alt1 += ln_deg_to_rad(1.5);
+    #endif
+                    equatorialToScope(&ALIGNMENT_STARS[i].equPos, &SCOPE.lnLatPos, SCOPE.JD, &ALIGNMENT_STARS[i].hrzPos);
+                    double alt2 = ln_deg_to_rad(ALIGNMENT_STARS[i].hrzPos.alt);
+                    double az2 = ln_deg_to_rad(ALIGNMENT_STARS[i].hrzPos.az);
+                    altError = alt1 - alt2;
+                    azError = (az1 - az2) * cos(alt1);
+                    pointingErrorRMS = sqrt(sq(altError) + sq(azError));
+                    pointingErrorRMSTotal += pointingErrorRMS;
+                }
+                pointingErrorRMSTotal /= n;
+                if (pointingErrorRMSTotal < bestPointingErrorRMS)
+                {
+                    bestPointingErrorRMS = pointingErrorRMSTotal;
+                    bestZ1 = Z1_ERR;
+                    bestZ2 = Z2_ERR;
+    #ifdef SERIAL_DEBUG
+                    Serial.print("new bestPointingErrorRMS: ");
+                    Serial.print(bestPointingErrorRMS);
+                    Serial.print(" Z1 Error: ");
+                    Serial.print(bestZ1);
+                    Serial.print(" Z2 Error: ");
+                    Serial.print(bestZ2);
+                    Serial.println("");
+    #endif
+                }
             }
         }
-    }
-    Z1_ERR = ln_deg_to_rad(bestZ1);
-    Z2_ERR = ln_deg_to_rad(bestZ2);
+        startZ1 = bestZ1;
+        startZ2 = bestZ2;
+        z12Range /= 10.0;
+        z12Resolution /= 10.0;
+    } while (z12Resolution >= minResolution);
+
+    Z1_ERR = bestZ1;
+    Z2_ERR = bestZ2;
 #ifdef SERIAL_DEBUG
     Serial.print("Best Z1/2 Found: ");
     Serial.print(" Z1 Error: ");
@@ -2061,7 +2064,7 @@ void bestZ3(int n)
         accumAltOffset += getAltOffset(ALIGNMENT_STARS[1], ALIGNMENT_STARS[2]);
         count++;
     }
-    Z3_ERR = accumAltOffset / n;
+    Z3_ERR = accumAltOffset / (double)count;
 #ifdef SERIAL_DEBUG
     Serial.print("bestZ3 - ");
     Serial.print(ln_rad_to_deg(Z3_ERR));
@@ -2069,65 +2072,10 @@ void bestZ3(int n)
 #endif
 }
 
-// void bestZ3(int n, double startRange, double endRange, double resolution)
-// {
-//     struct ln_equ_posn starI, starJ;
-//     double z3Err;
-//     double bestZ3 = 180.0;
-//     double bestDist = 180.0;
-
-//     // Search defined Z3 Error range
-//     for (z3Err = startRange; z3Err <= endRange; z3Err += resolution)
-//     {
-//         // Iterate over each Alignment Star
-//         for (int i = 0; i < n; i++)
-//         {
-// #ifdef DEBUG_MOUNT_ERRS
-//             // Add an error of 10 Degrees to the altitude to help debug mount error routines
-//             ALIGNMENT_STARS[i].hrzPos.alt += 2.5;
-// #endif
-//             scopeToEquatorial(&ALIGNMENT_STARS[i].hrzPos, &SCOPE.lnLatPos, SCOPE.JD, &starI);
-//             double dist = 0;
-//             // Now Iterate over every other Alignment Star
-//             for (int j = 0; j < n; j++)
-//             {
-// #ifdef DEBUG_MOUNT_ERRS
-//                 // Add an error of 10 Degrees to the altitude to help debug mount error routines
-//                 ALIGNMENT_STARS[i].hrzPos.alt += 2.5;
-// #endif
-//                 // Don't compare a Star to itself!
-//                 if (i != j)
-//                 {
-//                     // Catalogue Angular Sep
-//                     double dist1 = ln_get_angular_separation(&ALIGNMENT_STARS[i].equPos, &ALIGNMENT_STARS[j].equPos);
-
-//                     // Aligned Angular Sep
-//                     scopeToEquatorial(&ALIGNMENT_STARS[j].hrzPos, &SCOPE.lnLatPos, SCOPE.JD, &starJ);
-//                     double dist2 = ln_get_angular_separation(&starI, &starJ);
-
-//                     dist += fabs(dist1 - dist2);
-//                 }
-//             }
-//             dist = dist / n;
-//             if (dist < bestDist)
-//             {
-//                 bestZ3 = z3Err;
-//                 bestDist = dist;
-//             }
-//         }
-//     }
-//     Z3_ERR = ln_deg_to_rad(bestZ3);
-// #ifdef SERIAL_DEBUG
-//     Serial.print("bestZ3(deg) - ");
-//     Serial.print(bestZ3);
-//     Serial.println("");
-// #endif
-// }
-
 void calcBestZ12()
 {
     // handles searching for Z1/2 up to +/- 1 degree
-    bestZ12(3, DEG_TO_RAD, ARCMIN_TO_RAD); // 10 iterations
+    bestZ12(3); // 10 iterations
 }
 
 void calcBestZ3()
