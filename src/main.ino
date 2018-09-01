@@ -73,6 +73,7 @@
 
 // #define SERIAL_DEBUG // comment out to deactivate the serial debug mode
 // #define PERFECT_ALIGN
+// #define ALIGN_OFFSET
 // #define DEBUG_REFRACTION
 // #define DEBUG_MOUNT_ERRS
 
@@ -241,9 +242,9 @@ const String FirmwareTime = "21:00:00";
 //
 
 const long double ONE_REV = PI * 2.0;
-const long double THREE_QRT_REV = PI * 3.0 / 2.0;
+const long double THREE_QTR_REV = PI * 3.0 / 2.0;
 const long double HALF_REV = PI;
-const long double QRT_REV = PI / 2.0;
+const long double QTR_REV = PI / 2.0;
 const long double HOUR_TO_RAD = PI / 12.0;
 const long double MINUTE_TO_RAD = PI / 720.0;
 const long double SEC_TO_RAD = PI / 43200;
@@ -386,9 +387,9 @@ double validDec(double rad)
 {
     double correctedRad, validatedRad;
     validatedRad = validHalfRev(rad);
-    if (validatedRad > QRT_REV)
+    if (validatedRad > QTR_REV)
         correctedRad = HALF_REV - validatedRad; // > 90 degrees: reverse scale
-    else if (validatedRad >= -QRT_REV)
+    else if (validatedRad >= -QTR_REV)
         correctedRad = validatedRad; // between -90 and 90 degrees: don't change
     else
         correctedRad = -HALF_REV - validatedRad; // < -90 degrees: reverse negative scale
@@ -402,7 +403,7 @@ double reverseRev(double rad)
 
 double calcDecIsFlipped(double rad)
 {
-    return rad > QRT_REV || rad < -QRT_REV;
+    return rad > QTR_REV || rad < -QTR_REV;
 }
 
 double flipRA(double rad)
@@ -620,7 +621,7 @@ void calculateLST()
 
 double convertPrimaryAxis(double fromPri, double fromSec, double toSec, double lat)
 {
-    if (lat == QRT_REV)
+    if (lat == QTR_REV)
         return validRev(fromPri + HALF_REV);
 
     double cosToPri = (sin(fromSec) - sin(lat) * sin(toSec)) / (cos(lat) * cos(toSec));
@@ -657,10 +658,10 @@ void getAltAzTrig(struct ln_equ_posn *object, struct ln_lnlat_posn *observer, do
     // Flip for Southern Hemisphere
     if (lat < 0)
         dec = -dec;
-    if (dec > QRT_REV || dec < -QRT_REV)
+    if (dec > QTR_REV || dec < -QTR_REV)
     {
         dec = HALF_REV - dec;
-        ra = validRev(ra + HALF_REV);
+        ra = flipRA(ra);
     }
 
     // Calculate Hour Angle from LST - RA
@@ -705,10 +706,10 @@ void getEquatTrig(struct ln_hrz_posn *object, struct ln_lnlat_posn *observer, do
     alt = ln_deg_to_rad(object->alt);
 
     // Flip for Southern Hemisphere
-    if (alt > QRT_REV || alt < -QRT_REV)
+    if (alt > QTR_REV || alt < -QTR_REV)
     {
         alt = HALF_REV - alt;
-        az = validRev(az + HALF_REV);
+        az = flipRA(az);
     }
     if (lat < 0)
         az = reverseRev(az);
@@ -1242,7 +1243,8 @@ void processAlignmentStar(int index, Object &star)
     ln_get_hrz_from_equ(&star.equPos, &SCOPE.lnLatPos, SCOPE.JD, &star.hrzPos);
     // getAltAzTrig(&star.equPos, &SCOPE.lnLatPos, SCOPE.LST, &star.hrzPos);
     double azTmp = ln_deg_to_rad(star.hrzPos.az);
-    azTmp = validRev(azTmp + HALF_REV);
+    // azTmp = validRev(azTmp + HALF_REV);
+    azTmp = flipRA(azTmp);
     star.hrzPos.az = ln_rad_to_deg(azTmp);
 }
 
@@ -1387,7 +1389,8 @@ void scopeToEquatorial(struct ln_hrz_posn *hor, struct ln_lnlat_posn *obs, doubl
     alt = ln_deg_to_rad(alt);
     lng = ln_deg_to_rad(obs->lng);
 
-    double pri = reverseRev(az);
+    // double pri = reverseRev(az);
+    double pri = flipRA(az);
     double sec = alt + Z3_ERR;
     subroutine_1(pri, sec);
     X[1][1] = Y[1][0];
@@ -1462,22 +1465,23 @@ void equatorialToScope(struct ln_equ_posn *pos, struct ln_lnlat_posn *obs, doubl
     // Bring alt back into degrees before adding refraction or mount error corrections
     alt = ln_rad_to_deg(alt);
 
-    if (CORRECT_REFRACTION)
-    {
-        double deltaAlt = ln_get_refraction_adj(alt, ATMO_PRESS, ATMO_TEMP);
-        alt += deltaAlt;
-#ifdef SERIAL_DEBUG
-#ifdef DEBUG_REFRACTION
-        Serial.print("calREFRACTIONFromTrue - ");
-        Serial.print(" Refract Amount(ARCMIN): ");
-        Serial.print(deltaAlt);
-        Serial.println("");
-#endif
-#endif
-    }
+//     if (CORRECT_REFRACTION)
+//     {
+//         double deltaAlt = ln_get_refraction_adj(alt, ATMO_PRESS, ATMO_TEMP);
+//         alt += deltaAlt;
+// #ifdef SERIAL_DEBUG
+// #ifdef DEBUG_REFRACTION
+//         Serial.print("calREFRACTIONFromTrue - ");
+//         Serial.print(" Refract Amount(ARCMIN): ");
+//         Serial.print(deltaAlt);
+//         Serial.println("");
+// #endif
+// #endif
+//     }
 
     hor->alt = alt - ln_rad_to_deg(Z3_ERR);
-    hor->az = ln_rad_to_deg(reverseRev(validRev(az)));
+    // hor->az = ln_rad_to_deg(reverseRev(validRev(az)));
+    hor->az = ln_rad_to_deg(flipRA(az));
 }
 
 void addStar(int starNum, int totalAlignStars, double JD, struct ln_lnlat_posn *obs, Object *star)
@@ -1516,7 +1520,8 @@ void addStar(int starNum, int totalAlignStars, double JD, struct ln_lnlat_posn *
     X[2][starNum] = cosDec * sinHA;
     X[3][starNum] = sinDec;
 
-    double pri = reverseRev(az);
+    // double pri = reverseRev(az);
+    double pri = flipRA(az);
     double sec = alt + Z3_ERR;
     subroutine_1(pri, sec);
     Y[1][starNum] = Y[1][0];
@@ -1986,8 +1991,8 @@ double calcAltOffsetIteratively(Object &a, Object &z)
 
     aAlt = ln_deg_to_rad(a.hrzPos.alt);
     zAlt = ln_deg_to_rad(z.hrzPos.alt);
-    bestDiff = QRT_REV;
-    lastDiff = QRT_REV;
+    bestDiff = QTR_REV;
+    lastDiff = QTR_REV;
 
     while (i < iMax)
     {
@@ -4477,6 +4482,10 @@ void considerTouchInput(int lx, int ly)
                 // Debug with proper trig values
                 CURRENT_ALIGN_STAR.hrzPos.alt = ALIGNMENT_STARS[starNum].hrzPos.alt;
                 CURRENT_ALIGN_STAR.hrzPos.az = ALIGNMENT_STARS[starNum].hrzPos.az;
+#ifdef ALIGN_OFFSET
+                // Add a 90 degree mis-alignment of azimuth in the mount to compensate for
+                CURRENT_ALIGN_STAR.hrzPos.az += 90.0;
+#endif
 #endif
                 // Correct for atmospheric refraction before doing anything else
                 if (CORRECT_REFRACTION)
