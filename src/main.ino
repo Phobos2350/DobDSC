@@ -1834,19 +1834,6 @@ double getApparentAlt(double sinSec, double cosZ1, double cosZ2, double sinZ1, d
     return asin(v1);
 }
 
-void calcScopeOffsets(struct ln_equ_posn *equat, struct ln_hrz_posn *horiz, long double *azOffset)
-{
-    // Calculate the telescope's offset from Equatorial Pole and 'True' AltAz
-    struct ln_equ_posn equPos;
-    struct ln_hrz_posn hrzPos;
-
-    equPos.ra = 0.0;
-    // 90deg if North Hemisphere, -90 if Southern
-    equPos.dec = SCOPE.lnLatPos.lng < 0.0 ? 90.0 : -90.0;
-    equatorialToScope(&equPos, &SCOPE.lnLatPos, SCOPE.JD, &hrzPos);
-    (*azOffset) = ln_rad_to_deg(validHalfRev(ln_deg_to_rad(hrzPos.az)));
-}
-
 // BEST Z1/Z2
 // nRange to range is search area in radians
 // incr is increment +/- radians
@@ -1856,20 +1843,12 @@ void bestZ12(int n)
     double z12Range = 25200.0 * ARCSEC_TO_RAD;
     double z12Resolution = 1800.0 * ARCSEC_TO_RAD;
     double minResolution = 3.6 * ARCSEC_TO_RAD;
-    double bestZ1 = LONG_MAX;
-    double bestZ2 = LONG_MAX;
+    double bestZ1 = 0;
+    double bestZ2 = 0;
     double bestPointingErrorRMS = LONG_MAX;
     double pointingErrorRMS, pointingErrorRMSTotal, altError, azError;
     pointingErrorRMSTotal = 0;
 
-    long double azOffset;
-    calcScopeOffsets(&ALIGNMENT_STARS[0].equPos, &ALIGNMENT_STARS[1].hrzPos, &azOffset);
-#ifdef SERIAL_DEBUG
-    Serial.print("bestZ12 - ");
-    Serial.print("azOffset: ");
-    Serial.print((double)azOffset);
-    Serial.println("");
-#endif
     do {
         for (Z1_ERR = startZ1; Z1_ERR < z12Range; Z1_ERR += z12Resolution)
         {
@@ -1879,7 +1858,7 @@ void bestZ12(int n)
                 for (int i = 0; i < n; i++)
                 {
                     double alt1 = ln_deg_to_rad(ALIGNMENT_STARS[i].hrzPos.alt);
-                    double az1 = ln_deg_to_rad(ALIGNMENT_STARS[i].hrzPos.az + azOffset);
+                    double az1 = ln_deg_to_rad(ALIGNMENT_STARS[i].hrzPos.az);
 
     #ifdef DEBUG_MOUNT_ERRS
                     // Add an error to the altitude to help debug mount error routines
