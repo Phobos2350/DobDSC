@@ -1106,7 +1106,8 @@ void autoSelectAlignmentStars()
     int n = 0;
     for (int i = 0; i < NUM_ALIGN_STARS; i++)
     {
-        processAlignmentStar(i, CURRENT_ALIGN_STAR);
+        // processAlignmentStar(i, CURRENT_ALIGN_STAR);
+        processObject(i, CURRENT_ALIGN_STAR);
         // If catalogue star is higher than 25 degrees above the horizon.
         if (CURRENT_ALIGN_STAR.hrzPos.alt > 25.0)
         {
@@ -1134,6 +1135,84 @@ void autoSelectAlignmentStars()
                 return;
             }
         }
+    }
+}
+
+String getTimeString(struct ln_zonedate date)
+{
+    String toStr;
+    if (date.hours < 10)
+        toStr = '0' + String(date.hours);
+    else
+        toStr = String(date.hours);
+
+    toStr += ':';
+
+    if (date.minutes < 10)
+        toStr += '0' + String(date.minutes);
+    else
+        toStr += String(date.minutes);
+    return toStr;
+}
+
+void getRaDecFromString(lnh_equ_posn &pos, String ra, String dec)
+{
+    unsigned short ra_h = ra.substring(0, ra.indexOf('h')).toFloat();
+    unsigned short ra_m = ra.substring(ra.indexOf('h') + 1, ra.indexOf('m')).toFloat();
+    unsigned short ra_s = ra.substring(ra.indexOf('m') + 1, ra.length()).toFloat();
+
+    char sign = dec[0];
+    unsigned short dec_d = dec.substring(1, dec.indexOf('°')).toFloat();
+    unsigned short dec_m = dec.substring(dec.indexOf('°') + 1, dec.indexOf('\'')).toFloat();
+    unsigned short dec_s = dec.substring(dec.indexOf('\'') + 1, dec.length()).toFloat();
+
+    unsigned short dec_neg = (sign == '+' ? 0 : 1);
+
+    pos.ra.hours = ra_h;
+    pos.ra.minutes = ra_m;
+    pos.ra.seconds = ra_s;
+    pos.dec.neg = dec_neg;
+    pos.dec.degrees = dec_d;
+    pos.dec.minutes = dec_m;
+    pos.dec.seconds = dec_s;
+}
+
+void getRiseSetTimes(Object &object, boolean isPlanet, int rstStatus)
+{
+    // Calculate Rise/Set times
+    if (!isPlanet)
+        rstStatus = ln_get_object_rst(SCOPE.JD, &SCOPE.lnLatPos, &object.equPos, &object.rstTime);
+    
+    if (rstStatus == 0)
+    {
+        getLocalDate(object.rstTime.rise, &object.rise);
+        getLocalDate(object.rstTime.set, &object.set);
+        object.riseSetStr = "RISE: " + getTimeString(object.rise);
+        object.riseSetStr += "       SET: " + getTimeString(object.set);
+    }
+    else if (rstStatus == 1)
+    {
+        object.riseSetStr = "ALWAYS VISIBLE";
+    }
+    else
+    {
+        object.riseSetStr = "ALWAYS BELOW HORIZON";
+    }
+}
+
+void getCorrections(Object &object)
+{
+    // Correct for astronomical proper motion, aberration, precession and nutation
+    if (CORRECT_PRECESSION_ETC)
+    {
+        ln_get_apparent_posn(&object.equPos, &object.propMotion, SCOPE.JD, &object.equPos);
+#ifdef SERIAL_DEBUG
+        Serial.print("Added Corrections - RA: ");
+        Serial.print(deg2hms(object.equPos.ra, true, true));
+        Serial.print(" DEC: ");
+        Serial.print(deg2dms(object.equPos.dec, true, false));
+        Serial.println("");
+#endif
     }
 }
 
@@ -1177,25 +1256,28 @@ void processAlignmentStar(int index, Object &star)
     star.propMotion.ra = pmRaDeg;
     star.propMotion.dec = pmDecDeg;
 
-    unsigned short ra_h = ra.substring(0, ra.indexOf('h')).toFloat();
-    unsigned short ra_m = ra.substring(ra.indexOf('h') + 1, ra.indexOf('m')).toFloat();
-    unsigned short ra_s = ra.substring(ra.indexOf('m') + 1, ra.length()).toFloat();
+    // unsigned short ra_h = ra.substring(0, ra.indexOf('h')).toFloat();
+    // unsigned short ra_m = ra.substring(ra.indexOf('h') + 1, ra.indexOf('m')).toFloat();
+    // unsigned short ra_s = ra.substring(ra.indexOf('m') + 1, ra.length()).toFloat();
 
-    char sign = dec[0];
-    unsigned short dec_d = dec.substring(1, dec.indexOf('°')).toFloat();
-    unsigned short dec_m = dec.substring(dec.indexOf('°') + 1, dec.indexOf('\'')).toFloat();
-    unsigned short dec_s = dec.substring(dec.indexOf('\'') + 1, dec.length()).toFloat();
+    // char sign = dec[0];
+    // unsigned short dec_d = dec.substring(1, dec.indexOf('°')).toFloat();
+    // unsigned short dec_m = dec.substring(dec.indexOf('°') + 1, dec.indexOf('\'')).toFloat();
+    // unsigned short dec_s = dec.substring(dec.indexOf('\'') + 1, dec.length()).toFloat();
 
-    unsigned short dec_neg = (sign == '+' ? 0 : 1);
+    // unsigned short dec_neg = (sign == '+' ? 0 : 1);
+    // struct lnh_equ_posn hEquPos;
+
+    // hEquPos.ra.hours = ra_h;
+    // hEquPos.ra.minutes = ra_m;
+    // hEquPos.ra.seconds = ra_s;
+    // hEquPos.dec.neg = dec_neg;
+    // hEquPos.dec.degrees = dec_d;
+    // hEquPos.dec.minutes = dec_m;
+    // hEquPos.dec.seconds = dec_s;
+
     struct lnh_equ_posn hEquPos;
-
-    hEquPos.ra.hours = ra_h;
-    hEquPos.ra.minutes = ra_m;
-    hEquPos.ra.seconds = ra_s;
-    hEquPos.dec.neg = dec_neg;
-    hEquPos.dec.degrees = dec_d;
-    hEquPos.dec.minutes = dec_m;
-    hEquPos.dec.seconds = dec_s;
+    getRaDecFromString(hEquPos, ra, dec);
 
     ln_hequ_to_equ(&hEquPos, &star.equPos);
 
@@ -1209,36 +1291,40 @@ void processAlignmentStar(int index, Object &star)
     Serial.println("");
 #endif
 
-    // Correct for astronomical proper motion, aberration, precession and nutation
-    if (CORRECT_PRECESSION_ETC)
-    {
-        ln_get_apparent_posn(&star.equPos, &star.propMotion, SCOPE.JD, &star.equPos);
-#ifdef SERIAL_DEBUG
-        Serial.print("Added Corrections - RA: ");
-        Serial.print(deg2hms(star.equPos.ra, true, true));
-        Serial.print(" DEC: ");
-        Serial.print(deg2dms(star.equPos.dec, true, false));
-        Serial.println("");
-#endif
-    }
+//     // Correct for astronomical proper motion, aberration, precession and nutation
+//     if (CORRECT_PRECESSION_ETC)
+//     {
+//         ln_get_apparent_posn(&star.equPos, &star.propMotion, SCOPE.JD, &star.equPos);
+// #ifdef SERIAL_DEBUG
+//         Serial.print("Added Corrections - RA: ");
+//         Serial.print(deg2hms(star.equPos.ra, true, true));
+//         Serial.print(" DEC: ");
+//         Serial.print(deg2dms(star.equPos.dec, true, false));
+//         Serial.println("");
+// #endif
+//     }
 
-    // Calculate Rise/Set times
-    int rstStatus = ln_get_object_rst(SCOPE.JD, &SCOPE.lnLatPos, &star.equPos, &star.rstTime);
-    if (rstStatus == 0)
-    {
-        getLocalDate(star.rstTime.rise, &star.rise);
-        getLocalDate(star.rstTime.set, &star.set);
-        star.riseSetStr = "RISE: " + getTimeString(star.rise);
-        star.riseSetStr += "       SET: " + getTimeString(star.set);
-    }
-    else if (rstStatus == 1)
-    {
-        star.riseSetStr = "ALWAYS VISIBLE";
-    }
-    else
-    {
-        star.riseSetStr = "ALWAYS BELOW HORIZON";
-    }
+    getCorrections(star);
+
+    // // Calculate Rise/Set times
+    // int rstStatus = ln_get_object_rst(SCOPE.JD, &SCOPE.lnLatPos, &star.equPos, &star.rstTime);
+    // if (rstStatus == 0)
+    // {
+    //     getLocalDate(star.rstTime.rise, &star.rise);
+    //     getLocalDate(star.rstTime.set, &star.set);
+    //     star.riseSetStr = "RISE: " + getTimeString(star.rise);
+    //     star.riseSetStr += "       SET: " + getTimeString(star.set);
+    // }
+    // else if (rstStatus == 1)
+    // {
+    //     star.riseSetStr = "ALWAYS VISIBLE";
+    // }
+    // else
+    // {
+    //     star.riseSetStr = "ALWAYS BELOW HORIZON";
+    // }
+
+    getRiseSetTimes(star);
 
     ln_get_hrz_from_equ(&star.equPos, &SCOPE.lnLatPos, SCOPE.JD, &star.hrzPos);
     // getAltAzTrig(&star.equPos, &SCOPE.lnLatPos, SCOPE.LST, &star.hrzPos);
@@ -1257,6 +1343,13 @@ void processObject(int index, Object &object)
     int i5 = OBJECTS[index].indexOf(',', i4 + 1);
     int i6 = OBJECTS[index].indexOf(',', i5 + 1);
     int i7 = OBJECTS[index].indexOf(',', i6 + 1);
+    int i8 = 0;
+    int i9 = 0;
+    if (LOADED_OBJECTS == 1)
+    {
+        i8 = OBJECTS[index].indexOf(',', i7 + 1);
+        i9 = OBJECTS[index].indexOf(',', i8 + 1);
+    }
 
     object.name = OBJECTS[index].substring(0, i1);
 
@@ -1268,29 +1361,51 @@ void processObject(int index, Object &object)
     object.mag = OBJECTS[index].substring(i5 + 1, i6);
     object.size = OBJECTS[index].substring(i6 + 1, i7);
     if (LOADED_OBJECTS == 1)
+    {
         object.description = OBJECTS[index].substring(i7 + 1, OBJECTS[index].indexOf(',', i7 + 1));
+
+        String pmRa = OBJECTS[index].substring(i8 + 1, i9);
+        String pmDec = OBJECTS[index].substring(i9 + 1, OBJECTS[index].length() - 1);
+
+        char pmRaSign = pmRa[0];
+        char pmDecSign = pmDec[0];
+        long double pmRaDeg = pmRa.substring(1, pmRa.length() - 1).toFloat();
+        long double pmDecDeg = pmDec.substring(1, pmDec.length() - 1).toFloat();
+        // Check sign of proper motion corrections, multiply accordingly
+        pmRaSign == '+' ? pmRaDeg *= 1.0 : pmRaDeg *= -1.0;
+        pmDecSign == '+' ? pmDecDeg *= 1.0 : pmDecDeg *= -1.0;
+        // Convert milliarcseconds into degrees (1000 millis in 1", 3600" in 1deg)
+        pmRaDeg /= (1000.0 * 3600.0);
+        pmDecDeg /= (1000.0 * 3600.0);
+
+        object.propMotion.ra = pmRaDeg;
+        object.propMotion.dec = pmDecDeg;
+    }
     else
         object.description = OBJECTS[index].substring(i7 + 1, OBJECTS[index].length() - 1);
 
-    unsigned short ra_h = ra.substring(0, ra.indexOf('h')).toFloat();
-    unsigned short ra_m = ra.substring(ra.indexOf('h') + 1, ra.indexOf('m')).toFloat();
-    unsigned short ra_s = ra.substring(ra.indexOf('m') + 1, ra.length()).toFloat();
+    // unsigned short ra_h = ra.substring(0, ra.indexOf('h')).toFloat();
+    // unsigned short ra_m = ra.substring(ra.indexOf('h') + 1, ra.indexOf('m')).toFloat();
+    // unsigned short ra_s = ra.substring(ra.indexOf('m') + 1, ra.length()).toFloat();
 
-    char sign = dec[0];
-    unsigned short dec_d = dec.substring(1, dec.indexOf('°')).toFloat();
-    unsigned short dec_m = dec.substring(dec.indexOf('°') + 1, dec.indexOf('\'')).toFloat();
-    unsigned short dec_s = dec.substring(dec.indexOf('\'') + 1, dec.length()).toFloat();
+    // char sign = dec[0];
+    // unsigned short dec_d = dec.substring(1, dec.indexOf('°')).toFloat();
+    // unsigned short dec_m = dec.substring(dec.indexOf('°') + 1, dec.indexOf('\'')).toFloat();
+    // unsigned short dec_s = dec.substring(dec.indexOf('\'') + 1, dec.length()).toFloat();
 
-    unsigned short dec_neg = (sign == '+' ? 0 : 1);
+    // unsigned short dec_neg = (sign == '+' ? 0 : 1);
+    // struct lnh_equ_posn hEquPos;
+
+    // hEquPos.ra.hours = ra_h;
+    // hEquPos.ra.minutes = ra_m;
+    // hEquPos.ra.seconds = ra_s;
+    // hEquPos.dec.neg = dec_neg;
+    // hEquPos.dec.degrees = dec_d;
+    // hEquPos.dec.minutes = dec_m;
+    // hEquPos.dec.seconds = dec_s;
+
     struct lnh_equ_posn hEquPos;
-
-    hEquPos.ra.hours = ra_h;
-    hEquPos.ra.minutes = ra_m;
-    hEquPos.ra.seconds = ra_s;
-    hEquPos.dec.neg = dec_neg;
-    hEquPos.dec.degrees = dec_d;
-    hEquPos.dec.minutes = dec_m;
-    hEquPos.dec.seconds = dec_s;
+    getRaDecFromString(hEquPos, ra, dec);
 
     ln_hequ_to_equ(&hEquPos, &object.equPos);
 
@@ -1303,57 +1418,68 @@ void processObject(int index, Object &object)
     Serial.print(deg2dms(object.equPos.dec, true, false));
     Serial.println("");
 #endif
-    // Correct for astronomical proper motion, aberration, precession and nutation
-    if (CORRECT_PRECESSION_ETC)
+//     // Correct for astronomical proper motion, aberration, precession and nutation
+//     if (CORRECT_PRECESSION_ETC)
+//     {
+//         ln_get_apparent_posn(&object.equPos, &object.propMotion, SCOPE.JD, &object.equPos);
+// #ifdef SERIAL_DEBUG
+//         Serial.print("Added Corrections - RA: ");
+//         Serial.print(deg2hms(object.equPos.ra, true, true));
+//         Serial.print(" DEC: ");
+//         Serial.print(deg2dms(object.equPos.dec, true, false));
+//         Serial.println("");
+// #endif
+//     }
+
+    getCorrections(object);
+
+    // // Calculate Rise/Set times
+    // int rstStatus = ln_get_object_rst(SCOPE.JD, &SCOPE.lnLatPos, &object.equPos, &object.rstTime);
+    // if (rstStatus == 0)
+    // {
+    //     getLocalDate(object.rstTime.rise, &object.rise);
+    //     getLocalDate(object.rstTime.set, &object.set);
+    //     object.riseSetStr = "RISE: " + getTimeString(object.rise);
+    //     object.riseSetStr += "       SET: " + getTimeString(object.set);
+    // }
+    // else if (rstStatus == 1)
+    // {
+    //     object.riseSetStr = "ALWAYS VISIBLE";
+    // }
+    // else
+    // {
+    //     object.riseSetStr = "ALWAYS BELOW HORIZON";
+    // }
+
+    getRiseSetTimes(object, false, -1);
+
+    ln_get_hrz_from_equ(&object.equPos, &SCOPE.lnLatPos, SCOPE.JD, &object.hrzPos);
+    // getAltAzTrig(&star.equPos, &SCOPE.lnLatPos, SCOPE.LST, &star.hrzPos);
+    
+    if (CORRECT_REFRACTION)
     {
-        ln_get_apparent_posn(&object.equPos, &object.propMotion, SCOPE.JD, &object.equPos);
+        double altTmp = object.hrzPos.alt;
+        double deltaAlt = ln_get_refraction_adj(altTmp, ATMO_PRESS, ATMO_TEMP);
+        altTmp += deltaAlt;
+        object.hrzPos.alt = altTmp;
 #ifdef SERIAL_DEBUG
-        Serial.print("Added Corrections - RA: ");
-        Serial.print(deg2hms(object.equPos.ra, true, true));
-        Serial.print(" DEC: ");
-        Serial.print(deg2dms(object.equPos.dec, true, false));
+#ifdef DEBUG_REFRACTION
+        Serial.print("calREFRACTIONFromTrue - ");
+        Serial.print(" Refract Amount(ARCMIN): ");
+        Serial.print(deltaAlt);
         Serial.println("");
 #endif
+#endif
     }
-
-    // Calculate Rise/Set times
-    int rstStatus = ln_get_object_rst(SCOPE.JD, &SCOPE.lnLatPos, &object.equPos, &object.rstTime);
-    if (rstStatus == 0)
-    {
-        getLocalDate(object.rstTime.rise, &object.rise);
-        getLocalDate(object.rstTime.set, &object.set);
-        object.riseSetStr = "RISE: " + getTimeString(object.rise);
-        object.riseSetStr += "       SET: " + getTimeString(object.set);
-    }
-    else if (rstStatus == 1)
-    {
-        object.riseSetStr = "ALWAYS VISIBLE";
-    }
-    else
-    {
-        object.riseSetStr = "ALWAYS BELOW HORIZON";
-    }
+    
+    double azTmp = ln_deg_to_rad(object.hrzPos.az);
+    // azTmp = validRev(azTmp + HALF_REV);
+    azTmp = flipRA(azTmp);
+    object.hrzPos.az = ln_rad_to_deg(azTmp);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 // Calculate Planet Positions
-
-String getTimeString(struct ln_zonedate date)
-{
-    String toStr;
-    if (date.hours < 10)
-        toStr = '0' + String(date.hours);
-    else
-        toStr = String(date.hours);
-
-    toStr += ':';
-
-    if (date.minutes < 10)
-        toStr += '0' + String(date.minutes);
-    else
-        toStr += String(date.minutes);
-    return toStr;
-}
 
 void processPlanetPosition(int planetNum, Object &planet)
 {
@@ -1461,33 +1587,39 @@ void processPlanetPosition(int planetNum, Object &planet)
     planet.mag = String(mag, 2);
     planet.size = String(size * 2.0, 2) + '"'; // Multiply semidiameter by 2.0 to get apparent diameter/size
     planet.type = "ILUM: " + String(illum * 100.0, 2) + '%';
-    if (rstStatus == 0)
-    {
-        getLocalDate(rst.rise, &rise);
-        getLocalDate(rst.set, &set);
-        planet.constellation = "RISE: " + getTimeString(rise);
-        planet.constellation += "       SET: " + getTimeString(set);
-    }
-    else if (rstStatus == 1)
-    {
-        planet.constellation = "ALWAYS VISIBLE";
-    }
-    else
-    {
-        planet.constellation = "ALWAYS BELOW HORIZON";
-    }
-    // Correct for astronomical proper motion, aberration, precession and nutation
-    if (CORRECT_PRECESSION_ETC)
-    {
-        ln_get_apparent_posn(&planet.equPos, &planet.propMotion, SCOPE.JD, &planet.equPos);
-    }
-#ifdef SERIAL_DEBUG
-    Serial.print("Added Corrections - RA: ");
-    Serial.print(deg2hms(planet.equPos.ra, true, true));
-    Serial.print(" DEC: ");
-    Serial.print(deg2dms(planet.equPos.dec, true, false));
-    Serial.println("");
-#endif
+
+//     // Correct for astronomical proper motion, aberration, precession and nutation
+//     if (CORRECT_PRECESSION_ETC)
+//     {
+//         ln_get_apparent_posn(&planet.equPos, &planet.propMotion, SCOPE.JD, &planet.equPos);
+//     }
+// #ifdef SERIAL_DEBUG
+//     Serial.print("Added Corrections - RA: ");
+//     Serial.print(deg2hms(planet.equPos.ra, true, true));
+//     Serial.print(" DEC: ");
+//     Serial.print(deg2dms(planet.equPos.dec, true, false));
+//     Serial.println("");
+// #endif
+
+    getCorrections(planet);
+    
+    // if (rstStatus == 0)
+    // {
+    //     getLocalDate(rst.rise, &rise);
+    //     getLocalDate(rst.set, &set);
+    //     planet.constellation = "RISE: " + getTimeString(rise);
+    //     planet.constellation += "       SET: " + getTimeString(set);
+    // }
+    // else if (rstStatus == 1)
+    // {
+    //     planet.constellation = "ALWAYS VISIBLE";
+    // }
+    // else
+    // {
+    //     planet.constellation = "ALWAYS BELOW HORIZON";
+    // }
+
+    getRiseSetTimes(planet, true, rstStatus);
 }
 
 void zeroArrays()
@@ -1525,20 +1657,20 @@ void scopeToEquatorial(struct ln_hrz_posn *hor, struct ln_lnlat_posn *obs, doubl
 
     // Correct for atmospheric refraction before doing anything else
     alt = hor->alt;
-    if (CORRECT_REFRACTION)
-    {
-        double deltaAlt = ln_get_refraction_adj(alt, ATMO_PRESS, ATMO_TEMP);
-        alt -= deltaAlt;
+//     if (CORRECT_REFRACTION)
+//     {
+//         double deltaAlt = ln_get_refraction_adj(alt, ATMO_PRESS, ATMO_TEMP);
+//         alt -= deltaAlt;
 
-#ifdef SERIAL_DEBUG
-#ifdef DEBUG_REFRACTION
-        Serial.print("calREFRACTIONFromApparent - ");
-        Serial.print(" Refract Amount(ARCMIN): ");
-        Serial.print(deltaAlt);
-        Serial.println("");
-#endif
-#endif
-    }
+// #ifdef SERIAL_DEBUG
+// #ifdef DEBUG_REFRACTION
+//         Serial.print("calREFRACTIONFromApparent - ");
+//         Serial.print(" Refract Amount(ARCMIN): ");
+//         Serial.print(deltaAlt);
+//         Serial.println("");
+// #endif
+// #endif
+//     }
 
     az = ln_deg_to_rad(hor->az);
     alt = ln_deg_to_rad(alt);
@@ -4392,7 +4524,8 @@ void considerTouchInput(int lx, int ly)
                         if (OBJECTS[zz] != "")
                         {
                             uint8_t n = ALIGN_STEP - 1;
-                            processAlignmentStar(zz, CURRENT_ALIGN_STAR);
+                            // processAlignmentStar(zz, CURRENT_ALIGN_STAR);
+                            processObject(zz, CURRENT_ALIGN_STAR);
                             // If catalogue star is higher than 10 degrees above the horizon.
                             if (CURRENT_ALIGN_STAR.hrzPos.alt > 10)
                             {
@@ -4466,21 +4599,21 @@ void considerTouchInput(int lx, int ly)
                 CURRENT_ALIGN_STAR.hrzPos.az += 90.0;
 #endif
 #endif
-                // Correct for atmospheric refraction before doing anything else
-                if (CORRECT_REFRACTION)
-                {
-                    double deltaAlt = ln_get_refraction_adj(CURRENT_ALIGN_STAR.hrzPos.alt, ATMO_PRESS, ATMO_TEMP);
-                    CURRENT_ALIGN_STAR.hrzPos.alt -= deltaAlt;
+//                 // Correct for atmospheric refraction before doing anything else
+//                 if (CORRECT_REFRACTION)
+//                 {
+//                     double deltaAlt = ln_get_refraction_adj(CURRENT_ALIGN_STAR.hrzPos.alt, ATMO_PRESS, ATMO_TEMP);
+//                     CURRENT_ALIGN_STAR.hrzPos.alt -= deltaAlt;
 
-#ifdef SERIAL_DEBUG
-#ifdef DEBUG_REFRACTION
-                    Serial.print("calREFRACTIONFromApparent - ");
-                    Serial.print(" Refract Amount(ARCMIN): ");
-                    Serial.print(deltaAlt);
-                    Serial.println("");
-#endif
-#endif
-                }
+// #ifdef SERIAL_DEBUG
+// #ifdef DEBUG_REFRACTION
+//                     Serial.print("calREFRACTIONFromApparent - ");
+//                     Serial.print(" Refract Amount(ARCMIN): ");
+//                     Serial.print(deltaAlt);
+//                     Serial.println("");
+// #endif
+// #endif
+//                 }
 
                 ALIGNMENT_STARS[starNum] = CURRENT_ALIGN_STAR;
 #ifdef SERIAL_DEBUG
