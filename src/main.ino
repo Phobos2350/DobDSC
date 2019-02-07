@@ -1335,6 +1335,161 @@ void processObject(int index, Object &object)
     }
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+// Calculate Planet Positions
+
+String getTimeString(struct ln_zonedate date)
+{
+    String toStr;
+    if (date.hours < 10)
+        toStr = '0' + String(date.hours);
+    else
+        toStr = String(date.hours);
+
+    toStr += ':';
+
+    if (date.minutes < 10)
+        toStr += '0' + String(date.minutes);
+    else
+        toStr += String(date.minutes);
+    return toStr;
+}
+
+void processPlanetPosition(int planetNum, Object &planet)
+{
+    struct ln_rst_time rst;
+    struct ln_zonedate rise, set;
+    String name;
+    int rstStatus = 0;
+    double dist = 0.0, mag = 0.0, size = 0.0, illum = 0.0;
+
+    switch (planetNum)
+    {
+    // MERCURY
+    case 1:
+        name = "MERCURY";
+        ln_get_mercury_equ_coords(SCOPE.JD, &planet.equPos);
+        dist = ln_get_mercury_earth_dist(SCOPE.JD);
+        mag = ln_get_mercury_magnitude(SCOPE.JD);
+        size = ln_get_mercury_sdiam(SCOPE.JD);
+        illum = ln_get_mercury_disk(SCOPE.JD);
+        rstStatus = ln_get_mercury_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst);
+        break;
+    case 2:
+        name = "VENUS";
+        ln_get_venus_equ_coords(SCOPE.JD, &planet.equPos);
+        dist = ln_get_venus_earth_dist(SCOPE.JD);
+        mag = ln_get_venus_magnitude(SCOPE.JD);
+        size = ln_get_venus_sdiam(SCOPE.JD);
+        illum = ln_get_venus_disk(SCOPE.JD);
+        rstStatus = ln_get_venus_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst);
+        break;
+    case 3:
+        name = "EARTH";
+        dist = 0.0;
+        mag = 0.0;
+        size = 0.0;
+        illum = 0.0;
+        rstStatus = 1;
+        break;
+    case 4:
+        name = "MARS";
+        ln_get_mars_equ_coords(SCOPE.JD, &planet.equPos);
+        dist = ln_get_mars_earth_dist(SCOPE.JD);
+        mag = ln_get_mars_magnitude(SCOPE.JD);
+        size = ln_get_mars_sdiam(SCOPE.JD);
+        illum = ln_get_mars_disk(SCOPE.JD);
+        rstStatus = ln_get_mars_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst);
+        break;
+    case 5:
+        name = "JUPITER";
+        ln_get_jupiter_equ_coords(SCOPE.JD, &planet.equPos);
+        dist = ln_get_jupiter_earth_dist(SCOPE.JD);
+        mag = ln_get_jupiter_magnitude(SCOPE.JD);
+        size = ln_get_jupiter_equ_sdiam(SCOPE.JD);
+        illum = ln_get_jupiter_disk(SCOPE.JD);
+        rstStatus = ln_get_jupiter_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst);
+        break;
+    case 6:
+        name = "SATURN";
+        ln_get_saturn_equ_coords(SCOPE.JD, &planet.equPos);
+        dist = ln_get_saturn_earth_dist(SCOPE.JD);
+        mag = ln_get_saturn_magnitude(SCOPE.JD);
+        size = ln_get_saturn_equ_sdiam(SCOPE.JD);
+        illum = ln_get_saturn_disk(SCOPE.JD);
+        rstStatus = ln_get_saturn_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst);
+        break;
+    case 7:
+        name = "URANUS";
+        ln_get_uranus_equ_coords(SCOPE.JD, &planet.equPos);
+        dist = ln_get_uranus_earth_dist(SCOPE.JD);
+        mag = ln_get_uranus_magnitude(SCOPE.JD);
+        size = ln_get_uranus_sdiam(SCOPE.JD);
+        illum = ln_get_uranus_disk(SCOPE.JD);
+        rstStatus = ln_get_uranus_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst);
+        break;
+    case 8:
+        name = "NEPTUNE";
+        ln_get_neptune_equ_coords(SCOPE.JD, &planet.equPos);
+        dist = ln_get_neptune_earth_dist(SCOPE.JD);
+        mag = ln_get_neptune_magnitude(SCOPE.JD);
+        size = ln_get_neptune_sdiam(SCOPE.JD);
+        illum = ln_get_neptune_disk(SCOPE.JD);
+        rstStatus = ln_get_neptune_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst);
+        break;
+    case 9:
+        name = "PLUTO";
+        ln_get_pluto_equ_coords(SCOPE.JD, &planet.equPos);
+        dist = ln_get_pluto_earth_dist(SCOPE.JD);
+        mag = ln_get_pluto_magnitude(SCOPE.JD);
+        size = ln_get_pluto_sdiam(SCOPE.JD);
+        illum = ln_get_pluto_disk(SCOPE.JD);
+        rstStatus = ln_get_pluto_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst);
+        break;
+    default:
+        name = "NONE";
+        dist = 0.0;
+        mag = 0.0;
+        size = 0.0;
+        illum = 0.0;
+        rstStatus = 1;
+        break;
+    }
+
+    planet.name = name;
+    planet.description = "DIST: " + String(dist, 2) + " AU";
+    planet.mag = String(mag, 2);
+    planet.size = String(size * 2.0, 2) + '"'; // Multiply semidiameter by 2.0 to get apparent diameter/size
+    planet.type = "ILUM: " + String(illum * 100.0, 2) + '%';
+    if (rstStatus == 0)
+    {
+        getLocalDate(rst.rise, &rise);
+        getLocalDate(rst.set, &set);
+        planet.constellation = "RISE: " + getTimeString(rise);
+        planet.constellation += "       SET: " + getTimeString(set);
+    }
+    else if (rstStatus == 1)
+    {
+        planet.constellation = "ALWAYS VISIBLE";
+    }
+    else
+    {
+        planet.constellation = "ALWAYS BELOW HORIZON";
+    }
+    // Correct for astronomical proper motion, aberration, precession and nutation
+    if (CORRECT_PRECESSION_ETC)
+    {
+        ln_get_apparent_posn(&planet.equPos, &planet.propMotion, SCOPE.JD, &planet.equPos);
+    }
+#ifdef SERIAL_DEBUG
+    Serial.print("Added Corrections - RA: ");
+    Serial.print(deg2hms(planet.equPos.ra, true, true));
+    Serial.print(" DEC: ");
+    Serial.print(deg2dms(planet.equPos.dec, true, false));
+    Serial.println("");
+#endif
+}
+
 void zeroArrays()
 {
     for (int i = 0; i < 4; i++)
@@ -1465,19 +1620,19 @@ void equatorialToScope(struct ln_equ_posn *pos, struct ln_lnlat_posn *obs, doubl
     // Bring alt back into degrees before adding refraction or mount error corrections
     alt = ln_rad_to_deg(alt);
 
-//     if (CORRECT_REFRACTION)
-//     {
-//         double deltaAlt = ln_get_refraction_adj(alt, ATMO_PRESS, ATMO_TEMP);
-//         alt += deltaAlt;
-// #ifdef SERIAL_DEBUG
-// #ifdef DEBUG_REFRACTION
-//         Serial.print("calREFRACTIONFromTrue - ");
-//         Serial.print(" Refract Amount(ARCMIN): ");
-//         Serial.print(deltaAlt);
-//         Serial.println("");
-// #endif
-// #endif
-//     }
+    if (CORRECT_REFRACTION)
+    {
+        double deltaAlt = ln_get_refraction_adj(alt, ATMO_PRESS, ATMO_TEMP);
+        alt += deltaAlt;
+#ifdef SERIAL_DEBUG
+#ifdef DEBUG_REFRACTION
+        Serial.print("calREFRACTIONFromTrue - ");
+        Serial.print(" Refract Amount(ARCMIN): ");
+        Serial.print(deltaAlt);
+        Serial.println("");
+#endif
+#endif
+    }
 
     hor->alt = alt - ln_rad_to_deg(Z3_ERR);
     // hor->az = ln_rad_to_deg(reverseRev(validRev(az)));
@@ -2078,161 +2233,6 @@ void bestZ123()
         calcBestZ3();
         calcBestZ12();
     }
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////
-// Calculate Planet Positions
-
-String getTimeString(struct ln_zonedate date)
-{
-    String toStr;
-    if (date.hours < 10)
-        toStr = '0' + String(date.hours);
-    else
-        toStr = String(date.hours);
-
-    toStr += ':';
-
-    if (date.minutes < 10)
-        toStr += '0' + String(date.minutes);
-    else
-        toStr += String(date.minutes);
-    return toStr;
-}
-
-void getPlanetPosition(int planetNum, Object &planet)
-{
-    struct ln_rst_time rst;
-    struct ln_zonedate rise, set;
-    String name;
-    int rstStatus = 0;
-    double dist = 0.0, mag = 0.0, size = 0.0, illum = 0.0;
-
-    switch (planetNum)
-    {
-    // MERCURY
-    case 1:
-        name = "MERCURY";
-        ln_get_mercury_equ_coords(SCOPE.JD, &planet.equPos);
-        dist = ln_get_mercury_earth_dist(SCOPE.JD);
-        mag = ln_get_mercury_magnitude(SCOPE.JD);
-        size = ln_get_mercury_sdiam(SCOPE.JD);
-        illum = ln_get_mercury_disk(SCOPE.JD);
-        rstStatus = ln_get_mercury_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst);
-        break;
-    case 2:
-        name = "VENUS";
-        ln_get_venus_equ_coords(SCOPE.JD, &planet.equPos);
-        dist = ln_get_venus_earth_dist(SCOPE.JD);
-        mag = ln_get_venus_magnitude(SCOPE.JD);
-        size = ln_get_venus_sdiam(SCOPE.JD);
-        illum = ln_get_venus_disk(SCOPE.JD);
-        rstStatus = ln_get_venus_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst);
-        break;
-    case 3:
-        name = "EARTH";
-        dist = 0.0;
-        mag = 0.0;
-        size = 0.0;
-        illum = 0.0;
-        rstStatus = 1;
-        break;
-    case 4:
-        name = "MARS";
-        ln_get_mars_equ_coords(SCOPE.JD, &planet.equPos);
-        dist = ln_get_mars_earth_dist(SCOPE.JD);
-        mag = ln_get_mars_magnitude(SCOPE.JD);
-        size = ln_get_mars_sdiam(SCOPE.JD);
-        illum = ln_get_mars_disk(SCOPE.JD);
-        rstStatus = ln_get_mars_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst);
-        break;
-    case 5:
-        name = "JUPITER";
-        ln_get_jupiter_equ_coords(SCOPE.JD, &planet.equPos);
-        dist = ln_get_jupiter_earth_dist(SCOPE.JD);
-        mag = ln_get_jupiter_magnitude(SCOPE.JD);
-        size = ln_get_jupiter_equ_sdiam(SCOPE.JD);
-        illum = ln_get_jupiter_disk(SCOPE.JD);
-        rstStatus = ln_get_jupiter_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst);
-        break;
-    case 6:
-        name = "SATURN";
-        ln_get_saturn_equ_coords(SCOPE.JD, &planet.equPos);
-        dist = ln_get_saturn_earth_dist(SCOPE.JD);
-        mag = ln_get_saturn_magnitude(SCOPE.JD);
-        size = ln_get_saturn_equ_sdiam(SCOPE.JD);
-        illum = ln_get_saturn_disk(SCOPE.JD);
-        rstStatus = ln_get_saturn_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst);
-        break;
-    case 7:
-        name = "URANUS";
-        ln_get_uranus_equ_coords(SCOPE.JD, &planet.equPos);
-        dist = ln_get_uranus_earth_dist(SCOPE.JD);
-        mag = ln_get_uranus_magnitude(SCOPE.JD);
-        size = ln_get_uranus_sdiam(SCOPE.JD);
-        illum = ln_get_uranus_disk(SCOPE.JD);
-        rstStatus = ln_get_uranus_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst);
-        break;
-    case 8:
-        name = "NEPTUNE";
-        ln_get_neptune_equ_coords(SCOPE.JD, &planet.equPos);
-        dist = ln_get_neptune_earth_dist(SCOPE.JD);
-        mag = ln_get_neptune_magnitude(SCOPE.JD);
-        size = ln_get_neptune_sdiam(SCOPE.JD);
-        illum = ln_get_neptune_disk(SCOPE.JD);
-        rstStatus = ln_get_neptune_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst);
-        break;
-    case 9:
-        name = "PLUTO";
-        ln_get_pluto_equ_coords(SCOPE.JD, &planet.equPos);
-        dist = ln_get_pluto_earth_dist(SCOPE.JD);
-        mag = ln_get_pluto_magnitude(SCOPE.JD);
-        size = ln_get_pluto_sdiam(SCOPE.JD);
-        illum = ln_get_pluto_disk(SCOPE.JD);
-        rstStatus = ln_get_pluto_rst(SCOPE.JD, &SCOPE.lnLatPos, &rst);
-        break;
-    default:
-        name = "NONE";
-        dist = 0.0;
-        mag = 0.0;
-        size = 0.0;
-        illum = 0.0;
-        rstStatus = 1;
-        break;
-    }
-
-    planet.name = name;
-    planet.description = "DIST: " + String(dist, 2) + " AU";
-    planet.mag = String(mag, 2);
-    planet.size = String(size * 2.0, 2) + '"'; // Multiply semidiameter by 2.0 to get apparent diameter/size
-    planet.type = "ILUM: " + String(illum * 100.0, 2) + '%';
-    if (rstStatus == 0)
-    {
-        getLocalDate(rst.rise, &rise);
-        getLocalDate(rst.set, &set);
-        planet.constellation = "RISE: " + getTimeString(rise);
-        planet.constellation += "       SET: " + getTimeString(set);
-    }
-    else if (rstStatus == 1)
-    {
-        planet.constellation = "ALWAYS VISIBLE";
-    }
-    else
-    {
-        planet.constellation = "ALWAYS BELOW HORIZON";
-    }
-    // Correct for astronomical proper motion, aberration, precession and nutation
-    if (CORRECT_PRECESSION_ETC)
-    {
-        ln_get_apparent_posn(&planet.equPos, &planet.propMotion, SCOPE.JD, &planet.equPos);
-    }
-#ifdef SERIAL_DEBUG
-    Serial.print("Added Corrections - RA: ");
-    Serial.print(deg2hms(planet.equPos.ra, true, true));
-    Serial.print(" DEC: ");
-    Serial.print(deg2dms(planet.equPos.dec, true, false));
-    Serial.println("");
-#endif
 }
 
 void drawButton(int X, int Y, int Width, int Height, String Caption, int16_t BodyColor, int16_t BorderColor, int16_t TextColor, int tSize)
@@ -4565,7 +4565,7 @@ void considerTouchInput(int lx, int ly)
             {
                 // BTN MERCURY pressed
                 drawButton(10, 50, 100, 40, "MERCURY", 0, BTN_L_BORDER, L_TEXT, 2);
-                getPlanetPosition(1, CURRENT_OBJECT);
+                processPlanetPosition(1, CURRENT_OBJECT);
                 objectAltAz();
                 delay(150);
                 drawMainScreen();
@@ -4574,7 +4574,7 @@ void considerTouchInput(int lx, int ly)
             {
                 // BTN VENUS pressed
                 drawButton(130, 50, 100, 40, "VENUS", 0, BTN_L_BORDER, L_TEXT, 2);
-                getPlanetPosition(2, CURRENT_OBJECT);
+                processPlanetPosition(2, CURRENT_OBJECT);
                 objectAltAz();
                 delay(150);
                 drawMainScreen();
@@ -4583,7 +4583,7 @@ void considerTouchInput(int lx, int ly)
             {
                 // BTN MARS pressed
                 drawButton(10, 110, 100, 40, "MARS", 0, BTN_L_BORDER, L_TEXT, 2);
-                getPlanetPosition(4, CURRENT_OBJECT);
+                processPlanetPosition(4, CURRENT_OBJECT);
                 objectAltAz();
                 delay(150);
                 drawMainScreen();
@@ -4592,7 +4592,7 @@ void considerTouchInput(int lx, int ly)
             {
                 // BTN JUPITER pressed
                 drawButton(130, 110, 100, 40, "JUPITER", 0, BTN_L_BORDER, L_TEXT, 2);
-                getPlanetPosition(5, CURRENT_OBJECT);
+                processPlanetPosition(5, CURRENT_OBJECT);
                 objectAltAz();
                 delay(150);
                 drawMainScreen();
@@ -4601,7 +4601,7 @@ void considerTouchInput(int lx, int ly)
             {
                 // BTN SATURN pressed
                 drawButton(10, 170, 100, 40, "SATURN", 0, BTN_L_BORDER, L_TEXT, 2);
-                getPlanetPosition(6, CURRENT_OBJECT);
+                processPlanetPosition(6, CURRENT_OBJECT);
                 objectAltAz();
                 delay(150);
                 drawMainScreen();
@@ -4610,7 +4610,7 @@ void considerTouchInput(int lx, int ly)
             {
                 // BTN URANUS pressed
                 drawButton(130, 170, 100, 40, "URANUS", 0, BTN_L_BORDER, L_TEXT, 2);
-                getPlanetPosition(7, CURRENT_OBJECT);
+                processPlanetPosition(7, CURRENT_OBJECT);
                 objectAltAz();
                 delay(150);
                 drawMainScreen();
@@ -4619,7 +4619,7 @@ void considerTouchInput(int lx, int ly)
             {
                 // BTN NEPTUNE pressed
                 drawButton(10, 230, 100, 40, "NEPTUNE", 0, BTN_L_BORDER, L_TEXT, 2);
-                getPlanetPosition(8, CURRENT_OBJECT);
+                processPlanetPosition(8, CURRENT_OBJECT);
                 objectAltAz();
                 delay(150);
                 drawMainScreen();
@@ -4628,7 +4628,7 @@ void considerTouchInput(int lx, int ly)
             {
                 // BTN PLUTO pressed
                 drawButton(130, 230, 100, 40, "PLUTO", 0, BTN_L_BORDER, L_TEXT, 2);
-                getPlanetPosition(9, CURRENT_OBJECT);
+                processPlanetPosition(9, CURRENT_OBJECT);
                 objectAltAz();
                 delay(150);
                 drawMainScreen();
