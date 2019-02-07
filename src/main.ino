@@ -1324,7 +1324,7 @@ void processAlignmentStar(int index, Object &star)
     //     star.riseSetStr = "ALWAYS BELOW HORIZON";
     // }
 
-    getRiseSetTimes(star);
+    getRiseSetTimes(star, false, -1);
 
     ln_get_hrz_from_equ(&star.equPos, &SCOPE.lnLatPos, SCOPE.JD, &star.hrzPos);
     // getAltAzTrig(&star.equPos, &SCOPE.lnLatPos, SCOPE.LST, &star.hrzPos);
